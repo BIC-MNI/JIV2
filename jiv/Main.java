@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
+// $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
+ * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -236,6 +236,7 @@ public final class Main extends java.applet.Applet {
 	catch( Exception e) {
 	    progressMessage( "error! see console for details...");
 	    System.err.println( "Error! " + e);
+	    e.printStackTrace( System.err);
 	    destroy();
 	    return;
 	}
@@ -699,7 +700,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
+     * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -718,7 +719,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
+     * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
