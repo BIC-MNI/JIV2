@@ -1,5 +1,5 @@
 #
-# $Header: /private-cvsroot/visualization/jiv/doc/Attic/Makefile,v 1.2 2000-04-11 22:22:48 cc Exp $
+# $Header: /private-cvsroot/visualization/jiv/doc/Attic/Makefile,v 1.3 2000-04-12 02:15:54 cc Exp $
 #
 # author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 #
@@ -15,9 +15,10 @@ help : help.tex gui.tex
 	latex help
 
 # NB: don't run this on shadow.bic (crashes), nor on bottom.bic (takes ages)
-html : manual help
-	latex2html -split 4 manual.tex
-	latex2html -split 4 help.tex
+html : manual.tex help.tex inputs.tex gui.tex
+	mkdir -p html
+	latex2html -split 4 -dir html/manual manual.tex
+	latex2html -split 0 -dir html/help help.tex
 
 clean : 
 	rm -f *.aux *.log *.dvi _region_.*
