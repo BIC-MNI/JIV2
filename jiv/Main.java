@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
+// $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
+ * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -195,7 +195,9 @@ public final class Main extends java.applet.Applet {
 		config= Util.readProperties( inline_config, config);
 	    if( config == null) 
 		throw new Exception( "no config found!");
+	    if( DEBUG) System.out.println( "parsing config...");
 	    _parseConfig( config, url_context);
+	    if( DEBUG) System.out.println( "config parsed.");
 
 	    /* compute list of volumes that are actually displayed in
                some panel */
@@ -223,7 +225,7 @@ public final class Main extends java.applet.Applet {
 		VolumeHeader vh= (VolumeHeader)headers.get( alias);
 		VolumeStruct vs= (VolumeStruct)volumes.get( alias);
 		vs.data= new Data3DVolume( common_sampling, 
-					   vs.file, 
+					   new URL( url_context, vs.file), 
 					   vh,
 					   alias,
 					   download_method );
@@ -520,6 +522,10 @@ public final class Main extends java.applet.Applet {
 		continue;
 	    if( name.endsWith( ".header")) {
 		alias= name.substring( 0, name.lastIndexOf( '.'));
+		if( DEBUG) 
+		    System.out.println( "VolumeHeader " + url_context + " + " + 
+					config.getProperty( name)
+					);
 		VolumeHeader vh= 
 		    new VolumeHeader( new URL( url_context, config.getProperty( name)));
 		headers.put( alias, vh);
@@ -531,10 +537,18 @@ public final class Main extends java.applet.Applet {
 	    // then it's a "volume alias"!
 	    alias= name;
 	    VolumeStruct vs= new VolumeStruct();
-	    String str= null;
-	    if( null == ( str= config.getProperty( alias)) ) 
+
+	    /* the reason why we don't store 'new URL(url_context,file)' 
+	       instead is to allow the old inline config hack
+	       (Dario's) to work: there will be lots of bogus aliases
+	       (which could be invalid URLs), but that's ok (actually
+	       not _always_ Ok, but less of a problem anyway) if we
+	       delay building URLs out of them until we know which
+	       volumes are actually displayed, ie until later, when
+	       loading data, see 'new Data3DVolume(...)'  
+	    */
+	    if( null == ( vs.file= config.getProperty( alias)) ) 
 		throw new IOException( "no data file given for volume alias " + alias);
-	    vs.file= new URL( url_context, str);
 	    volumes.put( alias, vs);
 	    /* NB: if the same volume alias is declared several times
                in the config file, it cannot be predicted which one
@@ -685,10 +699,10 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
+     * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
-	URL 		file;
+	String 		file;
 	Data3DVolume	data;
     }
 
@@ -704,7 +718,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
+     * @version $Id: Main.java,v 1.17 2003-09-02 19:41:04 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
