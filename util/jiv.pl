@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: jiv.pl,v 1.4 2001-10-02 01:27:23 cc Exp $
+# $Id: jiv.pl,v 1.5 2002-07-07 14:56:01 cc Exp $
 #
 # Description: this is a wrapper script for invoking JIV on
 #              one or more MNI MINC image volumes.
@@ -94,6 +94,7 @@ Getopt::Tabular::SetHelp( $help, $usage );
 my $labels = 0;
 my $sync = 0;
 my $view = 1;
+my $force = 0;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
     ['-labels', 'boolean', 0, \$labels,
@@ -102,6 +103,7 @@ my @options =
      "start with all volume cursors synchronized [default: $sync]"],
     ['-view', 'boolean', 0, \$view,
      "launch viewer [default: $view]"],
+    ['-force', 'boolean', 0, \$force, "accept non-standard direction cosines (rotated coordinate axes) [default: $force]"],
   );
 
 GetOptions( \@options, \@ARGV ) 
@@ -144,12 +146,14 @@ foreach (@ARGV) {
     @dimorder= map { $dim_names[$_] } @$order;
 
     # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
-    # TODO/FIXME: add a -force option, to allow "dummy" world coordinates
-    #     and 
-    #  $config .= "jiv.world_coords = false\n";
-    #
     unless( nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ]) ) {
-	die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported!\n";
+	if( $force) {
+	    warn "\nWARNING! $in_mnc : non-standard direction cosines : world coordinates will not be available!\n";
+	    $cfg .= "jiv.world_coords = false\n";
+	}
+	else {
+	    die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported! Use -force to override ... \n";
+	}
     }
 
     my $header= '';
