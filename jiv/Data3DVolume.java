@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.3 2001-09-22 00:24:50 crisco Exp $
+// $Id: Data3DVolume.java,v 1.4 2001-09-26 03:07:28 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.3 2001-09-22 00:24:50 crisco Exp $
+ * @version $Id: Data3DVolume.java,v 1.4 2001-09-26 03:07:28 cc Exp $
  */
 public final class Data3DVolume {
 
@@ -173,7 +173,7 @@ public final class Data3DVolume {
     {
 	InputStream input_stream= null;
 	try {
-	    input_stream= _openURL( source_url);
+	    input_stream= Util.openURL( source_url);
 
 	    int read_count, left;
 	    // for speed, use a stack variable instead of the instance field:
@@ -229,7 +229,7 @@ public final class Data3DVolume {
     {
 	InputStream input_stream= null;
 	try {
-	    input_stream= _openURL( source_url);
+	    input_stream= Util.openURL( source_url);
 
 	    // store the slice in "display order" (vertically flipped)
 	    int read_count, left, offset;
@@ -259,38 +259,6 @@ public final class Data3DVolume {
 	if( consumer != null ) 
 	    consumer.sliceDataUpdated( slice, slice_number);
     }
-
-    final /*private*/ InputStream _openURL( URL source_url) 
-	throws IOException, SecurityException 
-    {
-	InputStream input_stream= null;
-
-	URLConnection url_connection= source_url.openConnection();
-	// NB: the connection is not yet opened at this point; it'll be 
-	// actually done when calling getInputStream() below.
-	url_connection.setUseCaches( true);
-
-	if( url_connection instanceof HttpURLConnection ) {
-	    HttpURLConnection http_conn= (HttpURLConnection)url_connection;
-	    if( http_conn.getResponseCode() != HttpURLConnection.HTTP_OK)
-		throw new IOException( source_url.toString() + " : "
-				       + http_conn.getResponseCode() + " " 
-				       + http_conn.getResponseMessage() );
-	}	
-	input_stream= url_connection.getInputStream();
-	if( source_url.toString().endsWith( ".gz")) 
-	    // use a larger decompression buffer than the 512 default
-	    input_stream= new GZIPInputStream( input_stream, 4096);
-
-	// TODO: I once got a "IOException: server status 206" when loading
-	// the applet via http ... but couldn't reproduce it ever since.
-	// what went wrong?
-	// (btw, 206 == HTTP_PARTIAL : 
-	// "HTTP response code that means the partial request has been fulfilled") 
-
-	return input_stream;
-    }
-
 
     final public String getNickName() { return nick_name; }
 

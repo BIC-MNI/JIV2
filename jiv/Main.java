@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.8 2001-09-21 21:40:33 crisco Exp $
+// $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.8 2001-09-21 21:40:33 crisco Exp $
+ * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -437,19 +437,7 @@ public final class Main extends java.applet.Applet {
 
 	InputStream input_stream= null;
 	try {
-	    URLConnection url_connection= source_url.openConnection();
-	    // NB: the connection is not yet opened at this point; it'll be 
-	    // actually done when calling getInputStream() below.
-	    url_connection.setUseCaches( true);
-
-	    if( url_connection instanceof HttpURLConnection ) {
-		HttpURLConnection http_conn= (HttpURLConnection)url_connection;
-		if( http_conn.getResponseCode() != HttpURLConnection.HTTP_OK)
-		    throw new IOException( source_url.toString() + " : "
-					   + http_conn.getResponseCode() + " " 
-					   + http_conn.getResponseMessage() );
-	    }
-	    input_stream= url_connection.getInputStream();
+	    input_stream= Util.openURL( source_url);
 	    Properties result= new Properties();
 	    result.load( input_stream);
 	    return result;
@@ -669,7 +657,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.8 2001-09-21 21:40:33 crisco Exp $
+     * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -688,7 +676,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.8 2001-09-21 21:40:33 crisco Exp $
+     * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.3 2001-09-21 16:42:14 cc Exp $
+// $Id: Util.java,v 1.4 2001-09-26 03:07:28 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -24,12 +24,15 @@
 package jiv;
 
 import java.awt.*;
+import java.net.*;
+import java.io.*;
+import java.util.zip.*;
 
 /**
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.3 2001-09-21 16:42:14 cc Exp $
+ * @version $Id: Util.java,v 1.4 2001-09-26 03:07:28 cc Exp $
  */
 public final class Util {
 
@@ -94,6 +97,47 @@ public final class Util {
 	    Thread.sleep( millis);
 	}
 	catch( InterruptedException e) {}
+    }
+
+
+    /** 
+	Note1: it is the caller's responsibility to close the returned
+	InputStream.
+
+	Note2: it's not _required_ to declare SecurityException (since
+	it's a subclass of RuntimeException), but we do it for clarity
+	-- this error is likely to happen when working with url-s, so
+	it should be treated as a "checked exception" ...  
+    */
+    public static final InputStream openURL( URL source_url) 
+	throws IOException, SecurityException  {
+
+	InputStream input_stream= null;
+
+	URLConnection url_connection= source_url.openConnection();
+	// NB: the connection is not yet opened at this point; it'll be 
+	// actually done when calling getInputStream() below.
+	url_connection.setUseCaches( true);
+
+	if( url_connection instanceof HttpURLConnection ) {
+	    HttpURLConnection http_conn= (HttpURLConnection)url_connection;
+	    if( http_conn.getResponseCode() != HttpURLConnection.HTTP_OK)
+		throw new IOException( source_url.toString() + " : "
+				       + http_conn.getResponseCode() + " " 
+				       + http_conn.getResponseMessage() );
+	}	
+	input_stream= url_connection.getInputStream();
+	if( source_url.toString().endsWith( ".gz")) 
+	    // use a larger decompression buffer than the 512 default
+	    input_stream= new GZIPInputStream( input_stream, 4096);
+
+	// TODO: I once got a "IOException: server status 206" when loading
+	// the applet via http ... but couldn't reproduce it ever since.
+	// what went wrong?
+	// (btw, 206 == HTTP_PARTIAL : 
+	// "HTTP response code that means the partial request has been fulfilled") 
+
+	return input_stream;
     }
 
 
