@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
+// $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
+ * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -150,6 +150,7 @@ public final class Main extends java.applet.Applet {
 	   until we get something or we run out of choices... 
 	*/
 	String config_file= null; // local ("stack") vars don't have default values
+	VolumeHeader common_sampling= null;
 
 	if( false) {
 	    try {
@@ -177,22 +178,35 @@ public final class Main extends java.applet.Applet {
 	    progressMessage( "reading config...");
 	    _parseConfig( config_url);
 
-	    VolumeHeader common_sampling= 
-		VolumeHeader.getCommonSampling( headers.elements());
-	    CoordConv.set( common_sampling);
-
-	    progressMessage( "loading data...");
+	    /* compute list of volumes that are actually displayed in
+               some panel */
+	    // holds aliases (String) :
+	    Vector displayed_aliases= new Vector();
+	    // holds headers (VolumeHeader) :
+	    Vector displayed_headers= new Vector();
 	    for( i= 0; i < panels.size(); ++i) {
 		PanelStruct ps= (PanelStruct)panels.elementAt( i);
 		if( null == ps || 
 		    ps.alias1 != null) // skip combined panels
 		    continue;
-		VolumeHeader vh= (VolumeHeader)headers.get( ps.alias0);
-		VolumeStruct vs= (VolumeStruct)volumes.get( ps.alias0);
+		displayed_aliases.addElement( ps.alias0);
+		displayed_headers.addElement( headers.get( ps.alias0));
+	    }
+
+	    common_sampling= 
+		VolumeHeader.getCommonSampling( displayed_headers.elements());
+	    CoordConv.set( common_sampling);
+
+	    progressMessage( "loading data...");
+	    Enumeration e;
+	    for( e= displayed_aliases.elements(); e.hasMoreElements(); ) {
+		String alias= (String)e.nextElement();
+		VolumeHeader vh= (VolumeHeader)headers.get( alias);
+		VolumeStruct vs= (VolumeStruct)volumes.get( alias);
 		vs.data= new Data3DVolume( common_sampling, 
 					   new URL( config_url, vs.file), 
 					   vh,
-					   ps.alias0,
+					   alias,
 					   download_method );
 	    }
 	}
@@ -655,7 +669,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
+     * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -674,7 +688,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
+     * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

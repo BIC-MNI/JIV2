@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: minc2jiv.pl,v 1.1 2001-10-02 01:27:23 cc Exp $ 
+# $Id: minc2jiv.pl,v 1.2 2001-10-04 16:56:55 cc Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -41,7 +41,7 @@ use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
 
 
-MNI::Spawn::RegisterPrograms( [qw/ mincreshape mincextract /] )
+MNI::Spawn::RegisterPrograms( [qw/ cp mincexpand mincextract /] )
     or exit 1;
 
 my $usage = <<USAGE;
@@ -81,9 +81,21 @@ foreach my $in_mnc (@ARGV) {
 
     croak "duplicate base name in $in_mnc \n" if $base_names_seen{ $base};
     $base_names_seen{ $base}= 1;
+    
+    # make a local & un-compressed version (for efficiency when
+    # extracted the many-many slices ...)
+    #
+    my $local_file= "$TmpDir/${base}.mnc"; 
+    MNI::FileUtilities::check_output_path( $local_file) or exit 1;
+    Spawn( ( $ext =~ m/mnc$/ ) ?  
+	   "cp $in_mnc $local_file" : 
+	   "mincexpand $in_mnc $local_file" 
+	   ); 
+    $in_mnc= $local_file;
 
     $ext= ".raw_byte" . ($gzip ? ".gz" : "") ;
 
+    # these are in canonical (x,y,z) order!!
     my( @start, @step, @length, @dir_cosines, @dimorder)= 
 	( (), (), (), (), ());
     volume_params( $in_mnc, \@start, \@step, \@length, \@dir_cosines, undef);
@@ -92,7 +104,7 @@ foreach my $in_mnc (@ARGV) {
 
     my( $order, $perm)= get_dimension_order( $in_mnc);
     my( @dim_names)= qw/ x y z/;
-    @dimorder= map { $dim_names[$_] } @$order;
+    @dimorder= @dim_names[ @$order];
 
     # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
     # TODO/FIXME: add a -force option, to allow "dummy" world coordinates
@@ -115,6 +127,9 @@ foreach my $in_mnc (@ARGV) {
     my $out_header = "$dir/${base}.header";
     MNI::FileUtilities::check_output_path( $out_header) or exit 1;
     write_file( $out_header, $header );
+    print "\nVolume header info written to $out_header\n\n"
+	if $Verbose;
+
 
     ### VOLUME: ###
 
@@ -132,43 +147,40 @@ foreach my $in_mnc (@ARGV) {
 
     ### SLICES ###
 
-    $dir= "$output_path/$base";
-    foreach (qw/ t s c/) {
-        MNI::FileUtilities::check_output_path("$dir/$_/") or exit 1;
-    }
-
     # NB: the sign of the steps of the volume file is preserved, but
     # the dimensions are reordered in the "canonical" ordering (such
     # that a "transverse" is always y-x).
 
-    # as a side benefit, this also gives a local & un-compressed version
-    #
-    Spawn( "mincreshape -transverse $in_mnc $TmpDir/${base}_reordered.mnc");
-    $in_mnc= "$TmpDir/${base}_reordered.mnc";
-
+    # indexed by the file dimension orthogonal to the slice 
+    my( %slice_dirname)= ( 0 => "12", 1 => "02", 2 => "01" );
     my( $s, $out_raw);
 
-    for( $s= 0 ; $s < $length[2]; ++$s) {
-	$out_raw = "$dir/t/$s$ext";
-	croak "$out_raw exists and -clobber not given" 
-	    if (-e $out_raw) && !$Clobber;
-	Spawn( "mincextract ${norm_options} -byte -start $s,0,0 -count 1,$length[1],$length[0] $in_mnc $compress >$out_raw");
-    }
-    for( $s= 0 ; $s < $length[0]; ++$s) {
-	$out_raw = "$dir/s/$s$ext";
-	croak "$out_raw exists and -clobber not given" 
-	    if (-e $out_raw) && !$Clobber;
-	Spawn( "mincextract ${norm_options} -byte -start 0,0,$s -count $length[2],$length[1],1 $in_mnc $compress >$out_raw");
-    }
-    for( $s= 0 ; $s < $length[1]; ++$s) {
-	$out_raw = "$dir/c/$s$ext";
-	croak "$out_raw exists and -clobber not given" 
-	    if (-e $out_raw) && !$Clobber;
-	Spawn( "mincextract ${norm_options} -byte -start 0,$s,0 -count $length[2],1,$length[0] $in_mnc $compress >$out_raw");
+    my $dim; # file (not canonical) dimension !
+    for( $dim= 0 ; $dim < 3 ; ++$dim) {
+
+	$dir= "$output_path/$base/$slice_dirname{$dim}/";
+        MNI::FileUtilities::check_output_path($dir) or exit 1;
+
+	for( $s= 0 ; $s < $length[ $order->[$dim] ]; ++$s) {
+
+	    $out_raw = "$dir$s$ext";
+	    croak "$out_raw exists and -clobber not given" 
+		if (-e $out_raw) && !$Clobber;
+	    
+	    my( @slice_start)= ( 0, 0, 0);
+	    $slice_start[ $dim]= $s;
+	    my( @slice_len)= ( @length[ @$order]);
+	    $slice_len[ $dim]= 1;
+
+	    Spawn( "mincextract ${norm_options} -byte " . 
+		   " -start " . join( ',',@slice_start) . 
+		   " -count " . join( ',',@slice_len) . 
+		   " $in_mnc $compress >$out_raw"
+		   );
+	}
     }
 
-
-}
+} # for $in_mnc (@ARGV)
 
 # --- end of script ! ---
 

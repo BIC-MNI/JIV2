@@ -1,5 +1,5 @@
 
-// $Id: VolumeHeader.java,v 1.1 2001-10-02 01:27:09 cc Exp $
+// $Id: VolumeHeader.java,v 1.2 2001-10-04 16:56:48 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -32,7 +32,7 @@ import java.util.*;
  * 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: VolumeHeader.java,v 1.1 2001-10-02 01:27:09 cc Exp $
+ * @version $Id: VolumeHeader.java,v 1.2 2001-10-04 16:56:48 cc Exp $
  */
 public final class VolumeHeader {
 
@@ -171,16 +171,14 @@ public final class VolumeHeader {
 		image_low= Float.valueOf( s1).floatValue();
 		image_high= Float.valueOf( s2).floatValue();
 
-		if( DEBUG) {
-		    System.out.println( "imagerange: " + s1 +" "+ s2);
-		    System.out.println( "   -> : " + image_low +" "+ image_high);
-		}
 		if( image_low > image_high) 
 		    throw new IOException( "invalid imagerange: a > b");
 	    }
 	    else
 		throw new IOException( "invalid key: " + key);
-	} 
+	}
+
+	if( DEBUG) System.out.println( toString());
     }
 
     /** canonical (true) X ... */
@@ -206,10 +204,14 @@ public final class VolumeHeader {
     /* DimOrder and DimPermutation are one-to-one mappings between
        {0,1,2}; one is the inverse mapping of the other */
 
+
     /** DimOrder[i] = which canonical dimension is i-th dimension of
         the file. Canonical dim. 0 is 'x', 1 is 'y', 2 is 'z'. 
 
 	Eg: {1,2,0} means 'y,z,x' ordering (x changes fastest) 
+
+	Use this mapping to convert a list from canonical order to
+	file order.  
     */
     public final int[] getDimOrder() { 
 
@@ -223,6 +225,9 @@ public final class VolumeHeader {
 	order). Canonical dim. 0 is 'x', 1 is 'y', 2 is 'z'.
 
 	Eg: {2,0,1} means 'y,z,x' ordering (x changes fastest) 
+
+	Use this mapping to convert a list from file order to
+	canonical order.  
     */
     public final int[] getDimPermutation() { 
 	
@@ -236,6 +241,19 @@ public final class VolumeHeader {
 		    continue next_dim;
 		}
 	return result;
+    }
+
+    public String toString() {
+
+	MultiLineStringBuffer buf= new MultiLineStringBuffer();
+	buf.append_line( "VolumeHeader:");
+	buf.append_line( "\t start: " + start_x +" "+ start_y +" "+ start_z); 
+	buf.append_line( "\t step: " + step_x +" "+ step_y +" "+ step_z); 
+	buf.append_line( "\t size: " + size_x +" "+ size_y +" "+ size_z); 
+	buf.append_line( "\t dim_order: " + Util.arrayToString( dim_order));
+	buf.append_line( "\t imagerange: " + image_low +" "+ image_high);
+
+	return buf.toString();
     }
 
     /**
@@ -265,6 +283,9 @@ public final class VolumeHeader {
 	}
 	ret.step_x= ret.step_y= ret.step_z= common_step;
 
+	if( DEBUG) 
+	    System.out.println( "getCommonSampling:\n\t common_step: " + common_step);
+
 	for( int dim= 0; dim < 3; ++dim) {
 	    float min= Float.POSITIVE_INFINITY;
 	    float max= Float.NEGATIVE_INFINITY;
@@ -292,6 +313,9 @@ public final class VolumeHeader {
 	    min += common_step/2.0f;
 	    max -= common_step/2.0f;
 
+	    if( DEBUG) 
+		System.out.println( "\t min max: " + min +" "+ max);
+
 	    switch( dim ) {
 	    case 0 :
 		ret.start_x= min;
@@ -313,14 +337,28 @@ public final class VolumeHeader {
 	// these are volume-specific ...
 	ret.image_low= ret.image_high= Float.NaN;
 
+	if( DEBUG) System.out.println( ret.toString());
+
 	return ret;
     }
-    
 
+    /**
+     * @return world coordinates of the center of the field-of-view
+     * covered by this volume.
+     */
+    public final Point3Dfloat getFOVCenter() {
+
+	return new Point3Dfloat( start_x + size_x/2 * step_x,
+				 start_y + size_y/2 * step_y,
+				 start_z + size_z/2 * step_z );
+    }
+
+    /** @see #getResampleTable */
     public final class ResampleTable {
 
-	int[][] 	start;
-	int[][] 	end;
+	/** first index is the canonical dimension (0 for x, etc) */
+	public int[][] 	start;
+	public int[][] 	end;
 
 	public ResampleTable( int[] sizes) {
 

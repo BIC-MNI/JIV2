@@ -1,5 +1,5 @@
 
-// $Id: TransverseSliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $
+// $Id: TransverseSliceImageProducer.java,v 1.4 2001-10-04 16:56:48 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (Z=constant) 2D slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: TransverseSliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+ * @version $Id: TransverseSliceImageProducer.java,v 1.4 2001-10-04 16:56:48 cc Exp $ 
  */
 public final class TransverseSliceImageProducer extends SliceImageProducer {
 
@@ -39,12 +39,12 @@ public final class TransverseSliceImageProducer extends SliceImageProducer {
 					 IndexColorModel default_colormap ) {
 
 	super( default_slice, 
-	       data_volume.getTransverseSlice( default_slice),
+	       new byte[ data_volume.getXSize() * data_volume.getYSize()],
 	       data_volume.getXSize(), 
 	       data_volume.getYSize(),
 	       default_colormap,
 	       data_volume);
-	data_volume.getTransverseSlice( default_slice, slice_data, this);
+	_getNewSliceData( true);
     }
 
     // NB: any changes here should also be made 
