@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: minc2jiv.pl,v 1.3 2001-10-05 15:08:39 crisco Exp $ 
+# $Id: minc2jiv.pl,v 1.4 2001-10-06 01:25:18 cc Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -51,6 +51,7 @@ USAGE
 Getopt::Tabular::SetHelp( undef, $usage );
 
 my $output_path= '.';
+my $cfg_file= undef;
 my $jiv_ext= '.raw_byte';
 my $gzip= 1;
 my $slices = 0;
@@ -58,7 +59,8 @@ my $volume = 1;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
     ['-output_path', 'string', 1, \$output_path, "output path [default: $output_path]"], 
-    ['-ext', 'string', 1, \$jiv_ext, "extension for the JIV (raw byte) files [default: $jiv_ext]"], 
+    ['-config', 'string', 1, \$cfg_file, "JIV config file to produce [default: none]"], 
+    ['-ext', 'string', 1, \$jiv_ext, "extension for the JIV (raw byte) data files [default: $jiv_ext]"], 
     ['-gzip', 'boolean', 0, \$gzip, "gzip output [default: $gzip]"],
     ['-slices', 'boolean', 0, \$slices, "produce slices (for \"download on demand\") [default: $slices]"],
     ['-volume', 'boolean', 0, \$volume, "produce volume file [default: $volume]"],
@@ -67,6 +69,23 @@ GetOptions( \@options, \@ARGV )
   or exit 1;
 die "$usage\n" unless @ARGV > 0;
 
+
+my $cfg= 'jiv.download : ';
+if( $volume && $slices) {
+    $cfg .= "hybrid\n\n";
+}
+elsif( $volume && !$slices) {
+    $cfg .= "upfront\n\n";
+}
+elsif( !$volume && $slices) {
+    $cfg .= "on_demand\n\n";
+}
+else {
+    print "nothing to do!\n";
+    exit 0;
+}
+
+my $panel= 0;
 
 my $norm_options= "-norm -range 0 255";
 my $compress= ($gzip ? "| gzip -c9 " : "") ;
@@ -132,6 +151,9 @@ foreach my $in_mnc (@ARGV) {
     print "\nVolume header info written to $out_header\n\n"
 	if $Verbose;
 
+    $cfg .= "${base} = ${base}$ext\n";
+    $cfg .= "${base}.header = ${base}.header\n";
+    $cfg .= ("jiv.panel." . $panel++ . " = $base\n");
 
     ### VOLUME: ###
 
@@ -183,6 +205,13 @@ foreach my $in_mnc (@ARGV) {
     }
 
 } # for $in_mnc (@ARGV)
+
+if( $cfg_file) {
+    MNI::FileUtilities::check_output_path( $cfg_file) or exit 1;
+    write_file( $cfg_file, $cfg );
+    print "\nConfig file written to $cfg_file\n\n"
+	if $Verbose;
+}
 
 # --- end of script ! ---
 
