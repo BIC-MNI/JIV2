@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.7 2001-10-12 23:41:56 cc Exp $
+// $Id: Data3DVolume.java,v 1.8 2001-10-12 23:49:03 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,14 +47,14 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.7 2001-10-12 23:41:56 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.8 2001-10-12 23:49:03 cc Exp $
  */
 public final class Data3DVolume {
 
     /*private*/ static final boolean 	DEBUG= false;
 
     /** for development only: artificially delay the downloads */
-    /*private*/ static final boolean DELAY_DOWNLOAD= true;
+    /*private*/ static final boolean DELAY_DOWNLOAD= false;
 
     public static final int DOWNLOAD_UPFRONT=		1;
     public static final int DOWNLOAD_ON_DEMAND= 	2;
