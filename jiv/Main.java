@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
+// $Id: Main.java,v 1.19 2003-12-21 22:34:43 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
+ * @version $Id: Main.java,v 1.19 2003-12-21 22:34:43 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -210,9 +210,15 @@ public final class Main extends java.applet.Applet {
 		if( null == ps || 
 		    ps.alias1 != null) // skip combined panels
 		    continue;
+		Object v= volumes.get( ps.alias0);
+		Object h= headers.get( ps.alias0);
+		if( null == v || null == h) 
+		    throw new IOException( "volume alias " + ps.alias0 + " not defined");
 		displayed_aliases.addElement( ps.alias0);
-		displayed_headers.addElement( headers.get( ps.alias0));
+		displayed_headers.addElement( h);
 	    }
+	    if( displayed_headers.isEmpty()) 
+		throw new IOException( "no individual volume panels to display!?");
 
 	    common_sampling= 
 		VolumeHeader.getCommonSampling( displayed_headers.elements());
@@ -700,7 +706,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
+     * @version $Id: Main.java,v 1.19 2003-12-21 22:34:43 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -719,7 +725,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.18 2003-12-21 18:46:09 crisco Exp $
+     * @version $Id: Main.java,v 1.19 2003-12-21 22:34:43 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
