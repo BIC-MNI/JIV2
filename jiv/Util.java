@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: Util.java,v 1.2 2001-05-16 23:12:31 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -23,11 +23,13 @@
 
 package jiv;
 
+import java.awt.*;
+
 /**
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+ * @version $Id: Util.java,v 1.2 2001-05-16 23:12:31 crisco Exp $
  */
 public final class Util {
 
@@ -45,6 +47,18 @@ public final class Util {
 	// use a lookup table for speed
 	int mult= __chopFractionalPart_lookup[ no_of_digits];
 	return Math.round( original * mult) / (float)mult;
+    }
+
+    /**
+     * @return first enclosing <code>Frame</code> encountered up the
+     * component hierarchy
+     */
+    public static final Frame getParentFrame( Component component) {
+	
+	Component f= component;
+	while( f != null && !( f instanceof Frame ) ) 
+	    f= f.getParent();
+	return (Frame)f;
     }
 
     public static final String arrayToString( byte[] arg) {
@@ -68,4 +82,5 @@ public final class Util {
 	}
 	return s.toString();
     }
-}
+
+} // end of class Util

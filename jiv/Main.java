@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
+// $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
+ * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -264,39 +264,6 @@ public final class Main extends java.applet.Applet {
 	    public void windowClosing( WindowEvent e) { Main.this.destroy(); }
 	});
 
-	/* * Menu Bar * */
-	MenuBar mb= new MenuBar();
-	Menu fm= new Menu( "File");
-	fm.add( new QuitMenuItem( this));
-	mb.add( fm);
-	Menu vm= new Menu( "View");
-	// NB: make sure you create this only after 
-	//     this.getNumberOfPanels() can return the true value.
-	vm.add( sync_menu= new PositionSyncMenuItem( this));
-	mb.add( vm);
-	Menu hm= new Menu( "Help");
-	{
-	    MenuItem help= new MenuItem( "Help");
-	    help.addActionListener( new ActionListener() {
-		    public void actionPerformed( ActionEvent ev) {
-			Help.showHelp( Main.this);
-		    }
-		});
-	    hm.add( help); 
-	}
-	hm.addSeparator();
-	{
-	    MenuItem about= new MenuItem( "About...");
-	    about.addActionListener( new ActionListener() {
-		    public void actionPerformed( ActionEvent e) {
-			About.popFullVersion( jiv_frame);
-		    }
-		});
-	    hm.add( about);
-	}
-	mb.add( hm); mb.setHelpMenu( hm);
-	jiv_frame.setMenuBar( mb); 
-	
 	/* Window::pack() resizes the window according to the preferred size
 	   of its components -- Frame is a subclass of Window */
         jiv_frame.pack();
@@ -669,7 +636,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
+     * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -688,7 +655,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
+     * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

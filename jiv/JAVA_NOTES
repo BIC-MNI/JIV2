@@ -177,4 +177,18 @@ long.
 
 =======================
 
+Menu-bar woes:
+
+- Netscape 4.7 on win98 : if the jiv frame has a menu-bar, the popup
+  menus don't work properly (their text labels are not visible!)
+  It appears that one cannot simultaneously use a menu-bar and popup
+  menus directly attached to the same Frame !?
+
+- MacOS (with apple's mrj) : the menu-bar menus get included in the
+  system menu-bar; this is very confusing, as one cannot tell which
+  menu comes from which application (e.g. there are 2 file menus, 2
+  help menus, etc)
+
+=======================
+
 

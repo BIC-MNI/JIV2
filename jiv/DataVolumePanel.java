@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $
+// $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,7 +37,7 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
@@ -45,6 +45,7 @@ abstract public class DataVolumePanel
     protected static final boolean	DEBUG= false;
 
     /*private*/ Container 		parent_container;
+    /*private*/ Frame			parent_frame;
     /** our column in parent_container's grid */
     /*private*/ int 			grid_column;
     protected boolean 			enable_world_coords;
@@ -83,6 +84,10 @@ abstract public class DataVolumePanel
 	    throw new IllegalArgumentException( error_msg);
 	}
 	this.parent_container= parent_container;
+	parent_frame= Util.getParentFrame( parent_container);
+	if( null == parent_frame)
+	    System.err.println( this + ": cannot determine my parent frame!");
+
 	this.grid_column= grid_column;
 	this.enable_world_coords= enable_world_coords;
 	this.byte_voxel_values= byte_voxel_values; 
@@ -194,8 +199,28 @@ abstract public class DataVolumePanel
 	sync_menu_item= new PositionSyncMenuItem( applet_root);
 	popup_menu.add( sync_menu_item);
 	popup_menu.addSeparator();
-	MenuItem mi= new QuitMenuItem( applet_root);
-	popup_menu.add( mi);
+	Menu hm= new Menu( "Help", true /* a "tear-off" menu */ );
+	{
+	    MenuItem help= new MenuItem( "Help");
+	    help.addActionListener( new ActionListener() {
+		    public void actionPerformed( ActionEvent ev) {
+			Help.showHelp( applet_root);
+		    }
+		});
+	    hm.add( help); 
+	    MenuItem about= new MenuItem( "About JIV");
+	    about.addActionListener( new ActionListener() {
+		    public void actionPerformed( ActionEvent e) {
+			if( parent_frame != null)
+			    About.popFullVersion( parent_frame);
+			else
+			    applet_root.progressMessage( About.getShortVersion());
+		    }
+		});
+	    hm.add( about);
+	}
+	popup_menu.add( hm);
+	popup_menu.add( new QuitMenuItem( applet_root));
 	// TODO(maybe): add a kbd shortcut as well?
 
     } // end of _finish_initialization()
@@ -269,7 +294,7 @@ abstract public class DataVolumePanel
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateFields 
      */
@@ -291,7 +316,7 @@ abstract public class DataVolumePanel
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
