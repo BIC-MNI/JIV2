@@ -12,9 +12,17 @@ otherwise, slice viewports won't update properly.
 * with sun's jre-1.3.1_01-fcs and j2re-1.4.1_02-fcs:
   some popup menu cmds don't work (no effect): Quit, Sync-all-cursors,
   tie-colormap sliders
+  (but this bug is not present with "IBMJava2-SDK-13-{20001124,20010626}")
 
 * with sun's j2re-1.4.1_02-fcs:
   none of the kbd commands inside a slice2dviewport work!
+
+* on java runtime "IBMJava2-SDK-1.4.1-1.0.i386.rpm", none of the kbd
+  commands inside a slice2dviewport work because the keyboard focus
+  stays in one of the coordinate text valuators...
+
+* on java runtime "IBMJava2-SDK-13-{20001124,20010626}", often (but
+not always) all slice viewports are empty or black. 
 
 
 =============================================================================
