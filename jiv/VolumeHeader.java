@@ -1,5 +1,5 @@
 
-// $Id: VolumeHeader.java,v 1.3 2001-12-04 16:51:25 cc Exp $
+// $Id: VolumeHeader.java,v 1.4 2001-12-20 23:17:18 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -32,7 +32,7 @@ import java.util.*;
  * 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: VolumeHeader.java,v 1.3 2001-12-04 16:51:25 cc Exp $
+ * @version $Id: VolumeHeader.java,v 1.4 2001-12-20 23:17:18 cc Exp $
  */
 public final class VolumeHeader {
 
@@ -173,6 +173,10 @@ public final class VolumeHeader {
 
 		if( image_low > image_high) 
 		    throw new IOException( "invalid imagerange: a > b");
+
+		if( Float.isInfinite( image_low) || 
+		    Float.isInfinite( image_high)   ) 
+		    throw new IOException( "invalid imagerange: infinite value (for the 32bit IEEE 754 floating point format)");
 	    }
 	    else
 		throw new IOException( "invalid key: " + key);

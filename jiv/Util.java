@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.5 2001-10-02 01:27:09 cc Exp $
+// $Id: Util.java,v 1.6 2001-12-20 23:17:18 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.5 2001-10-02 01:27:09 cc Exp $
+ * @version $Id: Util.java,v 1.6 2001-12-20 23:17:18 cc Exp $
  */
 public final class Util {
 
@@ -54,16 +54,28 @@ public final class Util {
     }
 
 
-    /*private*/ static final float _log_e_10= (float)Math.log( 10);
+    /*private*/ static final float _log_e_10= (float)Math.log( 10.0);
 
     public static final float chopToNSignificantDigits( final float original,
-							int no_of_digits /** N */
+							int no_of_sig_digits 
 							) {
-	final int exp= (int)Math.floor( (float)Math.log( original)/_log_e_10
-					- no_of_digits + 1f );
-	final double mult= Math.pow( 10, exp);
+	if( original == 0f)
+	    return 0f;
 
-	return (float)( Math.round( original / mult) * mult);
+	/* a plain float->int conversion (which is a 'trunc' in java)
+           instead of the 'floor' won't be correct if the argument is
+           negative (eg original = 1.23e-7) */
+	final int exp= 
+	    (int)Math.floor( (float)Math.log( Math.abs( original)) 
+			     / _log_e_10
+			     - no_of_sig_digits + 1f 
+			     );
+
+	/* it's important to use double here! else, '1e{exp}' may be
+           <Float.MIN_VALUE for a very small 'original' */
+	final double mult= Math.pow( 10.0, exp);
+
+	return (float)( Math.round( original / mult) * mult );
     }
 
 
