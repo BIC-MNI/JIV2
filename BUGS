@@ -1,7 +1,16 @@
 
 ** serious:
 
-(none known...)
+(none known)
+
+
+=============================================================================
+
+** minor:
+
+- class ViewportDistanceDisplay: for the distance text, the 
+  xor draw mode, with black as bg_color, doesn't work with MS IE
+  version 6.0.2600.0000  
 
 
 =============================================================================
