@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.8 2003-08-17 16:02:14 crisco Exp $
+// $Id: Util.java,v 1.9 2003-09-01 10:16:25 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.8 2003-08-17 16:02:14 crisco Exp $
+ * @version $Id: Util.java,v 1.9 2003-09-01 10:16:25 crisco Exp $
  */
 public final class Util {
 
@@ -206,32 +206,31 @@ public final class Util {
 
 	PipedOutputStream os= new PipedOutputStream();
 	PipedInputStream is= new PipedInputStream( os);
-	final PrintWriter pw= new PrintWriter( os, 
-					       true); // autoflush each line
+	final Writer pw= new BufferedWriter( new OutputStreamWriter( os));
 
 	// cannot have a pair of Piped...Stream-s in the same thread
 	// (deadlock danger)
 	Thread t= new Thread( new Runnable() {
 		public void run() { 
-		    // replace ';' with newline
-		    StringTokenizer lines= new StringTokenizer( src, ";", false);
-		    while( lines.hasMoreTokens() ) {
-			pw.println( lines.nextToken());
+		    try {
+			String lineSeparator = System.getProperty("line.separator");
+			// replace ';' with newline
+			StringTokenizer lines= new StringTokenizer( src, ";", false);
+			while( lines.hasMoreTokens() ) {
+			    pw.write( lines.nextToken() + lineSeparator);
+			    pw.flush();
+			}
+			pw.close();
 		    }
-		    pw.close();
+		    catch( Exception x) {
+			System.err.println( "Exception (" + x + ") when writing to pipe in readProperties( " + src + " )");
+		    }
 		}
 	    });
 
 	try {
 	    t.start();
 	    Properties ret= _readAndTrimProperties( is, defaults);
-	    if( pw.checkError() ) { 
-		// FIXME: this happens sometimes (eg when the applet
-		// is run first time), but it seems to be
-		// harmless...???
-		System.err.println( "error when writing to pipe in readProperties( " 
-				    + src + " )");
-	    }
 	    return ret;
 	}
 	finally {
