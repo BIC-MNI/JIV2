@@ -1,8 +1,10 @@
 
-** ver_2_4_beta [02-sep-2003] :
+** ver_2_4 [26-apr-2004] :
 
 - inline config feature was in fact buggy! now done properly with a
   separate 'inline_cfg' applet parameter.
+- more informative error messages (e.g. when invalid config file).
+- bug fix: keyboard shortcuts in 2D viewports now work properly.
 
 
 ** ver_2_3  [07-jul-2002] :
