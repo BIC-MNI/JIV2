@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -39,7 +39,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
  */
 public final class Main extends java.applet.Applet {
 
@@ -357,6 +357,7 @@ public final class Main extends java.applet.Applet {
 	PanelStruct panel_struct_a, panel_struct_b;
 	DataVolumePanel panel_a, panel_b;
 	position_sync= new_setting;
+	boolean a_is_leftmost= true;
 	for( int a= 0; a < panels.size(); ++a) {
 	    // the panels vector may contain "gaps"...
 	    if( null == ( panel_struct_a= (PanelStruct)panels.elementAt( a)) ||
@@ -368,14 +369,17 @@ public final class Main extends java.applet.Applet {
 		if( null == ( panel_struct_b= (PanelStruct)panels.elementAt( b)) ||
 		    null == ( panel_b= panel_struct_b.gui) )
 		    continue;
-		if( true == new_setting) 
+		if( true == new_setting) {
 		    // turn sync mode on
-		    panel_a.addPositionListener( panel_b, 0 == a);
-		else 
+		    panel_a.addPositionListener( panel_b, a_is_leftmost);
+		}
+		else {
 		    // turn sync mode off
 		    panel_a.removePositionListener( panel_b);
+		}
 	    }
 	    panel_a.setPositionSync( new_setting);
+	    a_is_leftmost= false;
 	}
     }
 
@@ -628,7 +632,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+     * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -647,7 +651,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+     * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
