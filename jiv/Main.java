@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
+// $Id: Main.java,v 1.7 2001-09-21 21:03:41 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,13 +40,14 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
+ * @version $Id: Main.java,v 1.7 2001-09-21 21:03:41 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
     /*private*/ static final boolean 	DEBUG= false;
 
-    /*private*/ Thread 		initialization_thread;
+    /*private*/ Thread 		init_thread;
+    /*private*/ ThreadGroup	init_thread_group;
     /*private*/ Frame 		jiv_frame;
     /** keeps the current state of the postion sync */
     /*private*/ boolean 	position_sync;
@@ -96,12 +97,13 @@ public final class Main extends java.applet.Applet {
 	*/
 	// this test probably not needed: init() should always be called, 
 	// and exactly once...
-	if( initialization_thread == null) {
+	if( init_thread_group == null) {
 
-	    initialization_thread= new Thread( new Runnable() {
+	    init_thread_group= new ThreadGroup("JIV init thread group");
+	    init_thread= new Thread( init_thread_group, new Runnable() {
 		public void run() { _doInitialization(); }
 	    });
-	    initialization_thread.start();
+	    init_thread.start();
 	}
     }
 
@@ -289,30 +291,22 @@ public final class Main extends java.applet.Applet {
 	    jiv_frame.dispose();
 	    jiv_frame= null;
 	}
-	if( initialization_thread != null) {
-	    /* Note: The isAlive test is necessary -- under the
-	       Java1.2 JDK, if you try to stop this thread after it
-	       exited its "run()" method, the JVM will throw
-	       'java.security.AccessControlException: access denied
-	       (java.lang.RuntimePermission modifyThread )' */
-	    if( initialization_thread.isAlive()) {
-		if( DEBUG) 
-		    System.out.println( "init thread still alive: stopping it");
-		/* TODO: Thread::stop() is actually not recommended
-		   (it's even "deprecated" in Java1.2) -- see
-		   [jdk1.2.2]/docs/guide/misc/threadPrimitiveDeprecation.html
-		   Q: is this really a problem here? (the applet gets
-		   killed anyway, so we don't care if the thread
-		   leaves damaged objects behind, right?)  If it is a
-		   problem, then find another way to implement this
-		   functionality (see the doc file above) */
-		initialization_thread.stop();
+	if( init_thread_group != null) {
+	    /* TODO: Thread::stop() is actually not recommended (it's
+	       even "deprecated" in Java1.2) -- see
+	       [jdk1.2.2]/docs/guide/misc/threadPrimitiveDeprecation.html
+	       Q: is this really a problem here? (the applet gets
+	       killed anyway, so we don't care if the thread leaves
+	       damaged objects behind, right?)  If it is a problem,
+	       then find another way to implement this functionality
+	       (see the doc file above) */
+	    try { 
+		init_thread_group.stop(); 
 	    }
-	    else {
-		if( DEBUG) 
-		    System.out.println( "init thread is already dead");
+	    catch( SecurityException e ) {
+		System.err.println( e );
 	    }
-	    initialization_thread= null;
+	    init_thread_group= null;
 	}
 	if( volumes != null) {
 	    volumes.clear(); volumes= null;
@@ -334,15 +328,6 @@ public final class Main extends java.applet.Applet {
            (e.g. "clones") -- not a feature! 
 	*/
 	try { System.exit( 0); }
-	catch( SecurityException ex) { }
-
-	/* also stop any other threads that we may have running (NB:
-           this includes the thread executing this, so don't expect
-           any code after this to be ever executed :) */
-	/* FIXME: a better solution would be to create a threadgroup
-           for the init thread and kill that instead (that's where the
-           length download is... */
-	try { Thread.currentThread().getThreadGroup().stop(); }
 	catch( SecurityException ex) { }
     }
 
@@ -669,7 +654,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
+     * @version $Id: Main.java,v 1.7 2001-09-21 21:03:41 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -688,7 +673,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
+     * @version $Id: Main.java,v 1.7 2001-09-21 21:03:41 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
