@@ -1,5 +1,5 @@
 
-// $Id: About.java,v 1.2 2003-12-22 06:20:03 crisco Exp $
+// $Id: About.java,v 1.3 2004-04-27 01:20:41 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -31,7 +31,7 @@ import java.awt.event.*;
  * and license) for this software.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: About.java,v 1.2 2003-12-22 06:20:03 crisco Exp $ 
+ * @version $Id: About.java,v 1.3 2004-04-27 01:20:41 crisco Exp $ 
  */
 final class About {
 
@@ -39,7 +39,7 @@ final class About {
     /*private*/ static final String	raw_version= "$Name:  $";
     /*private*/ static final String 	program_name= "JIV";
     /*private*/ static final String 	copyright= 
-	"Copyright (C) 2000-2002 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)";
+	"Copyright (C) 2000-2003 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)";
     // musing: maybe the following should be read from a 
     //         separate text file, (packed inside the JAR file) ?
     /*private*/ static final String[]	license= new String[] {
