@@ -1,5 +1,5 @@
 
-// $Id: ColorCoding.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: ColorCoding.java,v 1.2 2001-11-28 10:55:16 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -34,8 +34,11 @@ import java.awt.*;
  * @author the specifications for the "hotmetal" and "spectral" color
  *       codings are by Peter Neelin, Montreal Neurological Institute
  *       (neelin@bic.mni.mcgill.ca).
+ * @author _compute_labels_lookup() is adapted from the "Display" software, 
+ *       copyright David MacDonald, Montreal Neurological Institute
+ *       (david@bic.mni.mcgill.ca).
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: ColorCoding.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: ColorCoding.java,v 1.2 2001-11-28 10:55:16 cc Exp $ 
  */
 public final class ColorCoding {
 
@@ -48,6 +51,7 @@ public final class ColorCoding {
     public static final int RED= 	4;
     public static final int GREEN= 	5;
     public static final int BLUE= 	6;
+    public static final int MNI_LABELS=	7;
     
     // it's assumed that the given points are equidistant
     /*private*/ static final double[][] spectral_specification = {
@@ -79,6 +83,9 @@ public final class ColorCoding {
     /*private*/ static byte[] spectral_lookup_red;
     /*private*/ static byte[] spectral_lookup_green;
     /*private*/ static byte[] spectral_lookup_blue;
+    /*private*/ static byte[] labels_lookup_red;
+    /*private*/ static byte[] labels_lookup_green;
+    /*private*/ static byte[] labels_lookup_blue;
     /*private*/ static byte[] zeros;
     /*private*/ byte[] map0;
     /*private*/ byte[] map1;
@@ -99,6 +106,11 @@ public final class ColorCoding {
 	spectral_lookup_green= new byte[ 256];
 	spectral_lookup_blue= new byte[ 256];
 	_compute_spectral_lookup();
+
+	labels_lookup_red= new byte[ 256];
+	labels_lookup_green= new byte[ 256];
+	labels_lookup_blue= new byte[ 256];
+	_compute_labels_lookup();
     }
 
     /*private*/ static final void _compute_hotmetal_lookup() {
@@ -141,6 +153,79 @@ public final class ColorCoding {
 	    spectral_lookup_green[ lookup]= (byte)components[ 1];
 	    spectral_lookup_blue[ lookup]= (byte)components[ 2];
 	}
+    }
+
+    /*private*/ static final void _set_colour_of_label( final int l, 
+							final Color col) {
+        labels_lookup_red[ l]= (byte)col.getRed();
+        labels_lookup_green[ l]= (byte)col.getGreen();
+        labels_lookup_blue[ l]= (byte)col.getBlue();
+    }
+
+    /* adapted from "Display", copyright David MacDonald, Montreal
+       Neurological Institute */
+    /*private*/ static final void _compute_labels_lookup() {
+
+	final int  	  n_labels= 256;
+	int 		  n_colours, n_around, n_up, u, a;
+	float      	  r, g, b, hue, sat;
+
+	n_colours = 0;
+	_set_colour_of_label( n_colours++, Color.black);
+	_set_colour_of_label( n_colours++, Color.red);
+	_set_colour_of_label( n_colours++, Color.green);
+	_set_colour_of_label( n_colours++, Color.blue);
+	_set_colour_of_label( n_colours++, Color.cyan);
+	_set_colour_of_label( n_colours++, Color.magenta);
+	_set_colour_of_label( n_colours++, Color.yellow);
+	_set_colour_of_label( n_colours++, 
+			      new Color( 0.541176f, 0.168627f, 0.886275f ) // BLUE_VIOLET 
+				);
+	_set_colour_of_label( n_colours++, 
+			      new Color( 1.0f, 0.0784314f, 0.576471f ) // DEEP_PINK 
+				);
+	_set_colour_of_label( n_colours++, 
+			      new Color( 0.678431f, 1.0f, 0.184314f ) // GREEN_YELLOW
+				);
+	_set_colour_of_label( n_colours++, 
+			      new Color( 0.12549f, 0.698039f, 0.666667f ) // LIGHT_SEA_GREEN
+				);
+	_set_colour_of_label( n_colours++,
+			      new Color( 0.282353f, 0.819608f, 0.8f ) // MEDIUM_TURQUOISE
+				);
+	_set_colour_of_label( n_colours++, 
+			      new Color( 0.627451f, 0.12549f, 0.941176f ) // PURPLE
+				);
+	_set_colour_of_label( n_colours++, Color.white);
+
+
+	// NB: this may be strange/weird/buggy, but that's how David coded it...
+
+	n_around = 12;
+	n_up = 1;
+	while( n_colours < n_labels ) {
+
+	  for( u= 0; u < n_up; ++u ) {
+
+	    if( (u % 2) == 1 )
+	      continue;
+
+	    for( a= 0; a < n_around; ++a ) {
+
+	      hue = (float) a / (float) n_around;
+	      //sat = 0.2f + (0.5f - 0.2f) * ((float) u / (float) n_up);
+	      sat = 0.5f + (0.9f - 0.5f) * ((float) u / (float) n_up);
+
+	      if( n_colours < n_labels )
+		_set_colour_of_label( n_colours++, 
+				      Color.getHSBColor( hue, 1.0f, sat) );
+	    }
+	  }
+	  n_up *= 2;
+	}
+
+	if( n_labels >= 256 )
+	  _set_colour_of_label( 255, Color.black );
     }
 
     // instance initializer
@@ -233,6 +318,19 @@ public final class ColorCoding {
 		    blue[ i]= spectral_lookup_blue[ idx];
 		}
 		break;
+	    case MNI_LABELS:
+		red= map0; green= map1; blue= map2;
+		// use "stack" variable aliases for faster access
+		final byte[] labels_lookup_red= ColorCoding.labels_lookup_red;
+		final byte[] labels_lookup_green= ColorCoding.labels_lookup_green;
+		final byte[] labels_lookup_blue= ColorCoding.labels_lookup_blue;
+		for( int i= 255; i >= 0; --i) {
+		    final int idx= 0xFF & map0[ i];
+		    red[ i]= labels_lookup_red[ idx];
+		    green[ i]= labels_lookup_green[ idx];
+		    blue[ i]= labels_lookup_blue[ idx];
+		}
+		break;
 	    default:
 		msg= color_coding + ": unknown color coding type!";
 		throw new IllegalArgumentException( msg);
@@ -300,6 +398,20 @@ public final class ColorCoding {
 		    red[ i]= spectral_lookup_red[ idx];
 		    green[ i]= spectral_lookup_green[ idx];
 		    blue[ i]= spectral_lookup_blue[ idx];
+		}
+		break;
+	    case MNI_LABELS:
+		_compute_linear_ramp( range_min, range_max,
+				      lower_limit, upper_limit, red);
+		// use "stack" variable aliases for faster access
+		final byte[] labels_lookup_red= ColorCoding.labels_lookup_red;
+		final byte[] labels_lookup_green= ColorCoding.labels_lookup_green;
+		final byte[] labels_lookup_blue= ColorCoding.labels_lookup_blue;
+		for( i= range_min; i <= range_max; ++i) {
+		    final int idx= 0xFF & red[ i];
+		    red[ i]= labels_lookup_red[ idx];
+		    green[ i]= labels_lookup_green[ idx];
+		    blue[ i]= labels_lookup_blue[ idx];
 		}
 		break;
 	    case RED:
