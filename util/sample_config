@@ -1,5 +1,5 @@
 #
-# $Id: sample_config,v 1.1 2001-04-08 00:24:13 cc Exp $
+# $Id: sample_config,v 1.2 2001-09-22 00:25:01 crisco Exp $
 #
 # sample JIV config file
 
@@ -10,6 +10,7 @@ beta : beta_volume.raw_byte
 
 jiv.sync : false
 #jiv.byte_values  : true  
+jiv.download : hybrid
 
 jiv.panel.0 : beta  
 jiv.panel.0.coding :	hotmetal	
