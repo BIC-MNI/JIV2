@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.4 2001-09-26 03:07:28 cc Exp $
+// $Id: Util.java,v 1.5 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -27,12 +27,13 @@ import java.awt.*;
 import java.net.*;
 import java.io.*;
 import java.util.zip.*;
+import java.util.*;
 
 /**
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.4 2001-09-26 03:07:28 cc Exp $
+ * @version $Id: Util.java,v 1.5 2001-10-02 01:27:09 cc Exp $
  */
 public final class Util {
 
@@ -51,6 +52,20 @@ public final class Util {
 	int mult= __chopFractionalPart_lookup[ no_of_digits];
 	return Math.round( original * mult) / (float)mult;
     }
+
+
+    /*private*/ static final float _log_e_10= (float)Math.log( 10);
+
+    public static final float chopToNSignificantDigits( final float original,
+							int no_of_digits /** N */
+							) {
+	final int exp= (int)Math.floor( (float)Math.log( original)/_log_e_10
+					- no_of_digits + 1f );
+	final double mult= Math.pow( 10, exp);
+
+	return (float)( Math.round( original / mult) * mult);
+    }
+
 
     /**
      * @return first enclosing <code>Frame</code> encountered up the
@@ -138,6 +153,36 @@ public final class Util {
 	// "HTTP response code that means the partial request has been fulfilled") 
 
 	return input_stream;
+    }
+
+    /** @return the Properties object described by the file at
+	source_url; trailing whitespace is trimmed off the property
+	values (the stock Java Properties.load() doesn't do it!)  
+    */
+    public static final Properties readPropertiesFromURL( URL source_url) 
+	throws IOException, SecurityException  {
+
+	InputStream input_stream= null;
+	try {
+	    input_stream= Util.openURL( source_url);
+	    Properties raw= new Properties();
+	    raw.load( input_stream);
+
+	    Enumeration prop_names;
+	    Properties ret= new Properties();
+	    for( prop_names= raw.propertyNames(); prop_names.hasMoreElements(); ) {
+		String key= (String)prop_names.nextElement();
+		ret.put( key, raw.getProperty( key).trim());
+	    }
+	    return ret;
+	}
+	finally {
+	    if( input_stream != null) {
+		// TODO: what if we try to close() a stream that wasn't 
+		// successfully opened? is this a problem?
+		input_stream.close();
+	    }
+	}
     }
 
 

@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $
+// $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,12 +37,40 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
 
     protected static final boolean	DEBUG= false;
+
+    /** as per the spec of Double.toString() (in jdk1.1), this should
+    be set to 11 in order to accomodate all posible outputs... but
+    this would waste a lot of space in the gui... */
+    protected static final int 		IMAGE_VALUE_TEXTFIELD_WIDTH= 8;
+
+    /** 
+     * Support interface for the inner class
+     * <code>DataVolumePanel.CoordinateFields</code>.
+     *
+     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
+     * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
+     *
+     * @see DataVolumePanel.CoordinateFields */
+    interface CoordinateTypes {
+
+	int	VOXEL_COORDINATES= 0;
+	int	WORLD_COORDINATES= 1;
+
+	/* Note: on some platforms, '-' & '.' use up almost the same
+           space as an '8' -- e.g. a world coords textfield width of 5
+           is only _guaranteed_ to display 3 significant digits (for
+           typical brain MNI-Talairach space world coordinates) ... */
+	int[]	TEXTFIELD_WIDTH= { 
+	    3, // voxel coords
+	    5  // world coords
+	};
+    }
 
     /*private*/ Container 		parent_container;
     /*private*/ Frame			parent_frame;
@@ -266,14 +294,17 @@ abstract public class DataVolumePanel
 
 	if( byte_voxel_values)
 	    return Short.parseShort( string);
-	return (short)Math.round( Float.valueOf( string).floatValue() * 255);
+
+	return _image_real2byte( Float.valueOf( string).floatValue());
     }
 
     protected final String _voxel2string( int voxel_value) {
 
 	if( byte_voxel_values)
 	    return String.valueOf( voxel_value);
-	return String.valueOf( Util.chopFractionalPart( voxel_value / 255f, 3));
+
+	float real_value= _image_byte2real( (short)voxel_value);
+	return String.valueOf( Util.chopToNSignificantDigits( real_value, 3));
     }
 
     abstract public int getXSize();
@@ -288,35 +319,17 @@ abstract public class DataVolumePanel
     */
     abstract protected int _getVoxelValue( Point3Dint voxel_pos);
 
+    abstract protected float _image_byte2real( short voxel_value);
 
-    /** 
-     * Support interface for the inner class
-     * <code>DataVolumePanel.CoordinateFields</code>.
-     *
-     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
-     *
-     * @see DataVolumePanel.CoordinateFields 
-     */
-    interface CoordinateTypes {
+    abstract protected short _image_real2byte( float image_value);
 
-	int	VOXEL_COORDINATES= 0;
-	int	WORLD_COORDINATES= 1;
 
-	/* Note: on some platforms, '-' & '.' use up almost the same
-           space as an '8' -- e.g. a world coords textfield width of 5
-           is only _guaranteed_ to display 3 significant digits... */
-	int[]	TEXTFIELD_WIDTH= { 
-	    3, // voxel coords
-	    5  // world coords
-	};
-    }
     /** 
      * Member (inner) class: the textual coordinate display/input
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.3 2001-05-16 23:12:25 crisco Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
@@ -401,7 +414,9 @@ abstract public class DataVolumePanel
 	    int voxel_value= _getVoxelValue( voxel_cursor);
 	    if( voxel_value >= 0) {
 		value_field= _add_field_with_label( "", _voxel2string( voxel_value), 
-						    byte_voxel_values ? 3 : 5,
+						    byte_voxel_values ? 
+						    3 : 
+						    IMAGE_VALUE_TEXTFIELD_WIDTH,
 						    gbc);
 		value_field.setEditable( false);
 	    }

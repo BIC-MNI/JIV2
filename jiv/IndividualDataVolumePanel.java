@@ -1,5 +1,5 @@
 
-// $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $
+// $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * displaying a single image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+ * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
  */
 public final class IndividualDataVolumePanel extends DataVolumePanel {
 
@@ -158,13 +158,21 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	return data_volume.getVoxelAsInt( voxel_pos);
     }
 
+    protected final float _image_byte2real( short voxel_value) {
+	return data_volume.voxel2image( voxel_value);
+    }
+
+    protected final short _image_real2byte( float image_value) {
+	return data_volume.image2voxel( image_value);
+    }
+
 
     /** 
      * Support interface for the inner class
      * <code>IndividualDataVolumePanel.ColormapControl</code>. 
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControl 
      */
@@ -202,7 +210,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * controls for adjusting the colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControlMenus 
      */
@@ -295,9 +303,13 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	    _old_over_color= (Color)over_color_menu.getSelection();
 
 	    lower_value_tf= new TextField( _voxel2string( lower_value), 
-					   byte_voxel_values ? 3 : 5);
+					   byte_voxel_values ? 
+					   3 : 
+					   IMAGE_VALUE_TEXTFIELD_WIDTH);
 	    upper_value_tf= new TextField( _voxel2string( upper_value), 
-					   byte_voxel_values ? 3 : 5);
+					   byte_voxel_values ? 
+					   3 : 
+					   IMAGE_VALUE_TEXTFIELD_WIDTH);
 	    lower_value_sb= _new_scrollbar( lower_value);
 	    upper_value_sb= _new_scrollbar( upper_value);
 
@@ -546,7 +558,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapDisplay</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplay 
      */
@@ -570,7 +582,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * the current colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplayConstants 
      */

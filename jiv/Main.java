@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
+// $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
+ * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -55,9 +55,11 @@ public final class Main extends java.applet.Applet {
     /*private*/ boolean	 	initial_position_sync;	// Java default is false
     /*private*/ boolean	 	byte_voxel_values;	// Java default is false
     /*private*/ boolean	 	enable_world_coords= true;
-    /*private*/ int		download_method= Data3DVolume.DOWNLOAD_HYBRID;
-    /** holds VolumeStruct */
+    /*private*/ int		download_method= Data3DVolume.DOWNLOAD_UPFRONT;
+    /** holds VolumeStruct, indexed by alias */
     /*private*/ Hashtable	volumes= new Hashtable();  
+    /** holds VolumeHeader, indexed by alias */
+    /*private*/ Hashtable	headers= new Hashtable();  
     /** holds PanelStruct (and may contain gaps) */
     /*private*/ Vector 		panels= new Vector(); 
     /*private*/ int		no_of_panels;
@@ -173,7 +175,11 @@ public final class Main extends java.applet.Applet {
 	       context value is expected by this constructor */
 	    URL config_url= new URL( document_base, config_file);
 	    progressMessage( "reading config...");
-	    _parseConfig( _readConfigFile( config_url));
+	    _parseConfig( config_url);
+
+	    VolumeHeader common_sampling= 
+		VolumeHeader.getCommonSampling( headers.elements());
+	    CoordConv.set( common_sampling);
 
 	    progressMessage( "loading data...");
 	    for( i= 0; i < panels.size(); ++i) {
@@ -181,8 +187,11 @@ public final class Main extends java.applet.Applet {
 		if( null == ps || 
 		    ps.alias1 != null) // skip combined panels
 		    continue;
+		VolumeHeader vh= (VolumeHeader)headers.get( ps.alias0);
 		VolumeStruct vs= (VolumeStruct)volumes.get( ps.alias0);
-		vs.data= new Data3DVolume( new URL( config_url, vs.file), 
+		vs.data= new Data3DVolume( common_sampling, 
+					   new URL( config_url, vs.file), 
+					   vh,
 					   ps.alias0,
 					   download_method );
 	    }
@@ -426,32 +435,6 @@ public final class Main extends java.applet.Applet {
 	}
     }
 
-    /**
-     Note: it's not _required_ to declare SecurityException (since
-     it's a subclass of RuntimeException), but we do it for clarity --
-     this error is likely to happen when working with url-s, so it
-     should be treated as a "checked exception" ...
-    */
-    /*private*/ Properties _readConfigFile( URL source_url)
-		    throws IOException, SecurityException {
-
-	InputStream input_stream= null;
-	try {
-	    input_stream= Util.openURL( source_url);
-	    Properties result= new Properties();
-	    result.load( input_stream);
-	    return result;
-	}
-	finally {
-	    if( input_stream != null) {
-		// TODO: what if we try to close() a stream that wasn't 
-		// successfully opened? is this a problem?
-		input_stream.close();
-		input_stream= null;
-	    }
-	}
-    }
-
     /** used by _parseConfig() 
 	in converting from the string representation (in the config file) to 
 	the internal int representation */    
@@ -486,32 +469,39 @@ public final class Main extends java.applet.Applet {
 	    dnld_method_convert.put( dnld_method_array[i][0], dnld_method_array[i][1]);
     }
 
-    /** fills-in the following fields of Main: volumes, panels, position_sync
+    /** fills-in the following fields of Main: volumes, headers, panels, 
+	position_sync;
 	throws an IOException if any errors were encountered 
 
 	Note: it's not _required_ to declare SecurityException (since
 	it's a subclass of RuntimeException), but we do it for clarity...
     */
-    /*private*/ void _parseConfig( Properties raw_config) 
-	throws IOException, NumberFormatException {
+    /*private*/ void _parseConfig( URL config_url) 
+	throws IOException, NumberFormatException, SecurityException {
 
+	Properties config= Util.readPropertiesFromURL( config_url);
 	Enumeration prop_names;
-	/* build 'config' : a version of 'config_file' having the trailing
-	   whitespace trimmed off the property values (the stock Java
-	   Properties.load() doesn't do it!)
-	*/
-	Properties config= new Properties();
-	for( prop_names= raw_config.propertyNames(); prop_names.hasMoreElements(); ) {
-	    String key= (String)prop_names.nextElement();
-	    config.put( key, raw_config.getProperty( key).trim());
-	}
-	/* ** first pass: extract the "volume aliases" ** 
+
+	/* ** first pass: extract the "volume aliases" and headers ** 
 	 */
+	VolumeHeader default_header= null;
 	for( prop_names= config.propertyNames(); prop_names.hasMoreElements(); ) {
-	    String alias= (String)prop_names.nextElement();
-	    if( alias.startsWith( "jiv."))
+	    String alias;
+	    String name= (String)prop_names.nextElement();
+	    if( name.startsWith( "jiv."))
 		continue;
+	    if( name.endsWith( ".header")) {
+		alias= name.substring( 0, name.lastIndexOf( '.'));
+		VolumeHeader vh= 
+		    new VolumeHeader( new URL( config_url, config.getProperty( name)));
+		headers.put( alias, vh);
+		/* the first header encountered becomes the default */
+		if( default_header == null ) 
+		    default_header= vh;
+		continue;
+	    }
 	    // then it's a "volume alias"!
+	    alias= name;
 	    VolumeStruct vs= new VolumeStruct();
 	    if( null == ( vs.file= config.getProperty( alias)) ) 
 		throw new IOException( "no data file given for volume alias " + alias);
@@ -520,6 +510,14 @@ public final class Main extends java.applet.Applet {
                in the config file, it cannot be predicted which one
                declaration will be considered! 
 	    */
+	}
+	if( default_header == null ) 
+	    default_header= new VolumeHeader();
+	/* set any headers that were not explicitly specified */
+	for( Enumeration aliases= volumes.keys(); aliases.hasMoreElements(); ) {
+	    String alias= (String)aliases.nextElement();
+	    if( headers.get( alias) == null )
+		headers.put( alias, default_header);
 	}
 	/* ** second pass: look for individual panels **
 	 */
@@ -657,7 +655,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
+     * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -676,7 +674,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.9 2001-09-26 03:07:28 cc Exp $
+     * @version $Id: Main.java,v 1.10 2001-10-02 01:27:09 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

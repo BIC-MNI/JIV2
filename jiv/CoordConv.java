@@ -1,5 +1,5 @@
 
-// $Id: CoordConv.java,v 1.2 2001-09-29 02:43:34 crisco Exp $
+// $Id: CoordConv.java,v 1.3 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,112 +30,78 @@ package jiv;
  * transformation is the same for all image volumes, and it doesn't
  * change after the initialization.
  *
+ * Note: currently, this class is simply a dumb wrapper around the
+ * methods from VolumeHeader -- it is only kept for convenience.
+ *
+ * @see VolumeHeader
+ *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CoordConv.java,v 1.2 2001-09-29 02:43:34 crisco Exp $ 
+ * @version $Id: CoordConv.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
  */
 public final class CoordConv {
 
-    static /*private*/ float start_x=  -90;
-    static /*private*/ float start_y= -126;
-    static /*private*/ float start_z=  -72; 
-    static /*private*/ float step_x=     1;
-    static /*private*/ float step_y=     1;
-    static /*private*/ float step_z=     1;
+    static /*private*/ VolumeHeader sampling= new VolumeHeader();
 
 
     /** Changes the global (common) voxel-to-world transformation. The
-        default is the one corresponding to the standard
-        "MNI-ICBM-Talairach" (181x217x181) sampling.  
-    */
-    static final public void set( VolumeHeader sampling ) {
-	set( sampling.getStartX(), sampling.getStartY(), sampling.getStartZ(),
-	     sampling.getStepX(), sampling.getStepY(), sampling.getStepZ() );
-    }
+        default is the one corresponding to the default
+        VolumeHeader(void) constructor.  */
+    static final public void set( VolumeHeader new_sampling ) {
 
-    static final public void set( float start_x, float start_y, float start_z, 
-				  float step_x, float step_y, float step_z ) {
-	CoordConv.start_x= start_x;
-	CoordConv.start_y= start_y;
-	CoordConv.start_z= start_z;
-	CoordConv.step_x= step_x;
-	CoordConv.step_y= step_y;
-	CoordConv.step_z= step_z;
+	CoordConv.sampling= new VolumeHeader( new_sampling);
     }
 
 
     /* ** world2voxel ** 
      */
 
-    /* Note: for supporting arbitrary cursor positions in the
-       Slice2DViewport-s, we'll need an overridden version of this
-       method that returns the result as Point3Dfloat! */
-
     static final public Point3Dint world2voxel( float x, float y, float z) {
-	Point3Dint voxel;
-	world2voxel( voxel= new Point3Dint(), x, y, z);
-	return voxel;
+	return sampling.world2voxel( x, y, z);
     }
 
     static final public void world2voxel( Point3Dint voxel, 
 					  float wx, float wy, float wz) {
-	voxel.x= Math.round( (wx - start_x) / step_x );
-	voxel.y= Math.round( (wy - start_y) / step_y );
-	voxel.z= Math.round( (wz - start_z) / step_z );
-	// Math.round() returns its float argument rounded to the nearest
-	// integral value. If the argument is equidistant from two integers,
-	// the method returns the greater of the two integers. 
+	sampling.world2voxel( voxel, wx, wy, wz);
     }
 
     static final public Point3Dint world2voxel( Point3Dfloat world) {
-	return world2voxel( world.x, world.y, world.z);
+	return sampling.world2voxel( world);
     }
 
     static final public void world2voxel( Point3Dint voxel, 
 					  Point3Dfloat world) {
-	world2voxel( voxel, world.x, world.y, world.z);
+	sampling.world2voxel( voxel, world);
     }
 
     /* ** voxel2world ** 
      */
 
     static final public Point3Dfloat voxel2world( int x, int y, int z) {
-	Point3Dfloat world;
-	voxel2world( world= new Point3Dfloat(), x, y, z);
-	return world;
+	return sampling.voxel2world( x, y, z);
     }
 
     static final public void voxel2world( Point3Dfloat world, 
 					  int vx, int vy, int vz) {
-	world.x= start_x + step_x * vx;
-	world.y= start_y + step_y * vy;
-	world.z= start_z + step_z * vz;
+	sampling.voxel2world( world, vx, vy, vz);
     }
 
-    /** this version can be used to prevent loss of precision (roundup errors),
-	where applicable or useful...
-    */
     static final public Point3Dfloat voxel2world( float x, float y, float z) {
-	Point3Dfloat world;
-	voxel2world( world= new Point3Dfloat(), x, y, z);
-	return world;
+	return sampling.voxel2world( x, y, z);
     }
 
-    /** this version can be used to prevent loss of precision (roundup errors),
-	where applicable or useful...
-    */
     static final public void voxel2world( Point3Dfloat world, 
 					  float vx, float vy, float vz) {
-	world.x= start_x + step_x * vx;
-	world.y= start_y + step_y * vy;
-	world.z= start_z + step_z * vz;
+	sampling.voxel2world( world, vx, vy, vz);
     }
 
     static final public Point3Dfloat voxel2world( Point3Dint voxel) {
-	return voxel2world( voxel.x, voxel.y, voxel.z);
+	return sampling.voxel2world( voxel);
     }
 
     static final public void voxel2world( Point3Dfloat world,
 					  Point3Dint voxel) {
-	voxel2world( world, voxel.x, voxel.y, voxel.z);
+	sampling.voxel2world( world, voxel);
     }
+
 }
+

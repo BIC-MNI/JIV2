@@ -1,5 +1,5 @@
 
-// $Id: TransverseSliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $
+// $Id: TransverseSliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (Z=constant) 2D slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: TransverseSliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $ 
+ * @version $Id: TransverseSliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
  */
 public final class TransverseSliceImageProducer extends SliceImageProducer {
 
@@ -54,19 +54,31 @@ public final class TransverseSliceImageProducer extends SliceImageProducer {
 
     synchronized public final void positionChanged( PositionEvent new_position) {
 	
-	if( new_position.isZValid()) {
+	if( !new_position.isZValid()) 
+	    return;
 	    
-	    if( DEBUG) 
-		System.out.println( this + " new z: " + new_position.getZ());
+	if( DEBUG) 
+	    System.out.println( this + " new z: " + new_position.getZ());
 
-	    CoordConv.world2voxel( new_voxel_pos, 0, 0, new_position.getZ());
-	    // don't update the image if we don't have to...
-	    if( crt_slice != new_voxel_pos.z) {
-
-		crt_slice= new_voxel_pos.z;
-		// reuse the existing slice_data array!
-		data_volume.getTransverseSlice( crt_slice, slice_data, this);
-	    }
-	}
+	CoordConv.world2voxel( new_voxel_pos, 0, 0, new_position.getZ());
+	// don't update the image if we don't have to...
+	if( crt_slice == new_voxel_pos.z) 
+	    return;
+	    
+	crt_slice= new_voxel_pos.z;
+	_getNewSliceData( true);
     }
+
+    /*private*/ final void _getNewSliceData( boolean future_notification) {
+
+	// reuse the existing slice_data array!
+	data_volume.getTransverseSlice( crt_slice, slice_data, 
+					future_notification ? this : null );
+
+	// Send another frame (i.e. update the image);
+	// this version of MemoryImageSource::newPixels() will send the
+	// data presently found in 'slice_data' (it stores a ref internally)
+	newPixels();
+    }
+
 }

@@ -1,5 +1,5 @@
 
-// $Id: CombinedDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $
+// $Id: CombinedDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -32,7 +32,7 @@ import java.awt.event.*;
  * displaying a combination of two image volumes.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CombinedDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+ * @version $Id: CombinedDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
  */
 public final class CombinedDataVolumePanel extends DataVolumePanel {
 
@@ -118,6 +118,14 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
 	return -1;
     }
 
+    protected final float _image_byte2real( short voxel_value) {
+	throw new IllegalArgumentException( this + " CombinedDataVolumePanel#_image_byte2real not yet implemented...");
+    }
+
+    protected final short _image_real2byte( float image_value) {
+	throw new IllegalArgumentException( this + " CombinedDataVolumePanel#_image_real2byte not yet implemented...");
+    }
+
 
     /**
      * Member (inner) class: a <code>CombinedImageSource</code> that
@@ -125,7 +133,7 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
      * (in RGB color space).
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: CombinedDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      */
     /*private*/ final class BlendedCombinedImageSource extends CombinedImageSource {
 
@@ -269,7 +277,7 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
      * adjusting the blending factor.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedDataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
+     * @version $Id: CombinedDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
      */
     /*private*/ final class BlendControl extends LightweightPanel {
 

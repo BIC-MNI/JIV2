@@ -1,8 +1,8 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: jiv.pl,v 1.3 2001-09-26 00:51:05 cc Exp $
+# $Id: jiv.pl,v 1.4 2001-10-02 01:27:23 cc Exp $
 #
-# Description: this is a preprocessing script for invoking JIV on
+# Description: this is a wrapper script for invoking JIV on
 #              one or more MNI MINC image volumes.
 # Requires: mni-perllib (available from ftp.bic.mni.mcgill.ca)
 #
@@ -32,7 +32,7 @@ use MNI::Startup qw/ nocputimes/;
 use MNI::FileUtilities;
 use MNI::PathUtilities;
 use MNI::Spawn;
-use MNI::MincUtilities qw(:geometry);
+use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
 
 # this _needs_ to be defined
@@ -50,9 +50,7 @@ my $JavaLib;
 # optional...
 my $JVMOptions= '-mx120m';
 
-
-
-MNI::Spawn::RegisterPrograms( [qw/ minctoraw  mincreshape /] )
+MNI::Spawn::RegisterPrograms( [qw/ minctoraw /] )
     or exit 1;
 $JavaVM ||= 'java';
 $JavaLib ||= '';
@@ -72,11 +70,10 @@ my $help = <<HELP;
 A simple wrapper around "JIV": it runs the Java viewer on all 
 the minc volumes given as arguments.
 
-Restrictions:
- - all volumes must have the dimensions: 181x217x181
- - all volumes must have the same sampling; if this is not the
-   standard MNI-ICBM sampling, then world coordinates will not
-   be available in JIV (only voxel coordinates)
+Limitations: 
+- non-standard direction cosines (that is, rotated coordinate axes)
+  are not supported.
+
 HELP
 
 my $usage = <<USAGE;
@@ -95,11 +92,11 @@ Getopt::Tabular::SetHelp( $help, $usage );
 
 # --- process options ---
 my $labels = 0;
-my $sync = 1;
+my $sync = 0;
 my $view = 1;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
-   ['-labels', 'boolean', 0, \$labels,
+    ['-labels', 'boolean', 0, \$labels,
      "image data are labels (show pixel values as bytes, and preserve the file\'s \"valid range\") [default: $labels]"],
     ['-sync', 'boolean', 0, \$sync,
      "start with all volume cursors synchronized [default: $sync]"],
@@ -113,7 +110,7 @@ die "$usage\n" unless @ARGV > 0;
 
 
 # --- process the input files ---
-my $config;
+my $config= '';
 $config .= "jiv.sync = true\n" if $sync;
 
 MNI::FileUtilities::check_output_path("${TmpDir}/raw/") 
@@ -121,7 +118,6 @@ MNI::FileUtilities::check_output_path("${TmpDir}/raw/")
 
 my $panel = 0;
 my %alias;
-my( @common_start, @common_step, @common_dir_cosines)= ( (), (), () );
 foreach (@ARGV) {
 
     next if /^--merge$/;  # $panel is not incremented
@@ -137,55 +133,44 @@ foreach (@ARGV) {
     $alias = find_unused_alias($alias || $base);
     $alias{$original}= $alias;
 
-    my( @start, @step, @length, @dir_cosines)= ( (), (), (), ());
+    my( @start, @step, @length, @dir_cosines, @dimorder)= 
+	( (), (), (), (), ());
     volume_params( $in_mnc, \@start, \@step, \@length, \@dir_cosines, undef);
 
-    unless( nlist_equal( \@length, [ 181, 217, 181] ) ) {
-	die "$in_mnc : wrong dimensions (should be 181x217x181)!\n";
+    my( @irange)= volume_minmax( $in_mnc);
+
+    my( $order, $perm)= get_dimension_order( $in_mnc);
+    my( @dim_names)= qw/ x y z/;
+    @dimorder= map { $dim_names[$_] } @$order;
+
+    # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
+    # TODO/FIXME: add a -force option, to allow "dummy" world coordinates
+    #     and 
+    #  $config .= "jiv.world_coords = false\n";
+    #
+    unless( nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ]) ) {
+	die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported!\n";
     }
-    my $reshape_args= '';
-    $reshape_args .= " +xdirection" if( $step[ 0] < 0);
-    $reshape_args .= " +ydirection" if( $step[ 1] < 0);
-    $reshape_args .= " +zdirection" if( $step[ 2] < 0);
-    my( $order, $permutation)= get_dimension_order( $in_mnc);
-    $reshape_args .= " -transverse" 
-	unless( nlist_equal( $order, [ 2, 1, 0]) );
-    if( $reshape_args) {
-	my $tmp_mnc= "${TmpDir}/mnc/$dir/${base}.mnc";
-        MNI::FileUtilities::check_output_path($tmp_mnc) or exit 1;
-	Spawn( "mincreshape ${reshape_args} $in_mnc $tmp_mnc",
-	       clobber => $Clobber)
-	    unless( (-e $tmp_mnc) && !$Clobber);  
-	$in_mnc= $tmp_mnc;
-	# @start and @step might have changed...
-	volume_params( $in_mnc, \@start, \@step, undef, undef, undef);
-    }
-    if( $panel == 0) {
-	@common_start= @start;
-	@common_step= @step;
-	@common_dir_cosines= @dir_cosines; 
-	unless( $step[ 0] == $step[ 1] && $step[ 1] == $step[ 2] ) {
-	    die "$in_mnc : sampling steps need be the same on all 3 axes!\n";
-	}
-	unless( nlist_equal( \@start, [ -90, -126, -72] ) &&
-		nlist_equal( \@step, [ 1, 1, 1] )  &&
-		nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ])  ) {
-	    warn "NOTE: non-ICBM sampling detected; " . 
-		"world coordinates won't be available...\n";
-	    $config .= "jiv.world_coords = false\n";
-	}
+
+    my $header= '';
+    $header .= "size   :  @length\n";
+    $header .= "start  :  @start\n";
+    $header .= "step   :  @step\n";
+    $header .= "order  :  @dimorder\n\n";
+
+    if( $labels) { 
+	$config .= "jiv.byte_values = true\n";
+	# NB: this may not be correct... (?)
+	$header .= "imagerange  : 0 255\n";
     }
     else {
-	unless( nlist_equal( \@start, \@common_start ) &&
-		nlist_equal( \@step, \@common_step ) &&
-		nlist_equal( \@dir_cosines, \@common_dir_cosines ) ) {
-	    die "$in_mnc : " . 
-		"has different sampling than previous volume(s)!\n";
-	}
+	$header .= "imagerange  :  @irange\n";
     }
 
     my $out_raw = "${TmpDir}/raw/$dir/$base";
-    MNI::FileUtilities::check_output_path($out_raw) or exit 1;
+    my $out_header = "${TmpDir}/raw/$dir/${base}.header";
+    MNI::FileUtilities::check_output_path( $out_header) or exit 1;
+    write_file( $out_header, $header );
 
     # NB: it's safer to '-norm' all the time (otherwise minctoraw
     # might decide to scale differently data from different slices --
@@ -200,8 +185,10 @@ foreach (@ARGV) {
     
     $config .= "jiv.panel.$panel = $alias\n";
     $config .= "$alias = $out_raw\n";
+    $config .= "${alias}.header = $out_header\n";
     ++$panel;
 }
+
 for( my $i= 0; $i < @ARGV; ++$i ) {
     $_= $ARGV[$i];
     next unless /^--merge$/ ;
@@ -217,6 +204,16 @@ if( $labels) {
 # --- set up config and html files then run appletviewer ---
 
 write_file( "${TmpDir}/jiv.conf", $config );
+
+print <<_EOM_;
+
+
+**** JIV (Chris Cocosco <crisco\@bic.mni.mcgill.ca>)     ****
+****                                                    ****
+**** use right mouse-button to access the pop-up menus  ****
+
+
+_EOM_
 
 my $cp= $JIVCode;
 $cp .= ":$JavaLib"  if $JavaLib;
