@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<!-- $Id: compatibility.html,v 1.4 2000-04-18 14:15:20 crisco Exp $ -->
+<!-- $Id: compatibility.html,v 1.5 2000-04-26 04:06:31 cc Exp $ -->
 <html> <head>
 <title>JIV compatibility information</title>
 </head>
@@ -42,7 +42,10 @@ applet support. An (incomplete) platform-specific list follows.
       has links to
       1.1.x (and later) plugins for several platforms; even if your
       browser is Java&nbsp;1.1 compliant, a plugin may provide a more
-      performant Java environment (e.g. by including a JIT compiler).
+      performant Java environment (e.g. by including a JIT
+      compiler).<br>
+      <em>Note:</em> plugins require custom, non-portable, HTML pages
+      to launch the applet, so use them only as a last resort.
 </dl>
   <li>
 <dl>
@@ -84,6 +87,10 @@ JIV:
     <dt> Netscape Navigator/Communicator 4.6-4.7
     <dd>
   </dl>
+  <li><dl>
+    <dt>Sun JDK for Linux, version&nbsp;1.2.2 (&quot;Java2 SDK, standard edition&quot;)
+    <dd><!-- http://java.sun.com/products/jdk/1.2/ -->
+  </dl>
   </ul>
 
 <h3>SGI IRIX</h3>
@@ -98,8 +105,13 @@ JIV:
     <dt>Netscape Navigator/Communicator 4.08 and later
     <dd><!-- do any of the sgi-customized versions have jit compilers?? -->
   </dl>
+  <li><dl>
+    <dt>SGI Java2 Software Development Kit v1.2.1 (a port of Sun's JDK 1.2.1) 
+    <dd>It has a JIT compiler.
+	<!-- http://www.sgi.com/Products/Evaluation/6.x_java2_1.2.1/ -->
+  </dl>
 </ul>
-Other versions of SGI JDK, Java plugins and Netscape browsers are available from 
+Several versions of SGI JDK, Java plugins and Netscape browsers are available from 
 <a href="http://www.sgi.com/Products/Evaluation/">www.sgi.com/Products/Evaluation/</a>
 (released versions), and
 <a href="http://www.sgi.com/developers/devtools/languages/java.html">www.sgi.com/developers/devtools/languages/java.html</a>
@@ -119,7 +131,7 @@ Other versions of SGI JDK, Java plugins and Netscape browsers are available from
   </dl>
   <li><dl>
     <dt> Microsoft Internet Explorer version&nbsp;4 and above, with
-	Microsoft Java VM&nbsp;version&nbsp;5.0&nbsp;<em>build&nbsp;3167</em>
+	Microsoft Java&nbsp;VM&nbsp;version&nbsp;5.0&nbsp;<em>build&nbsp;3167</em>
 	(or later)
     <dd>(older Microsoft Java&nbsp;VM versions, which were shipped
 	with IE4 and with some early IE5 versions, will <em>not</em> do!)
@@ -161,7 +173,7 @@ Other versions of SGI JDK, Java plugins and Netscape browsers are available from
 Chris Cocosco
 (<a href="mailto:crisco@bic.mni.mcgill.ca">crisco@bic.mni.mcgill.ca</a>)
 <br>
-$Date: 2000-04-18 14:15:20 $ UTC
+$Date: 2000-04-26 04:06:31 $ UTC
 </address>
 </small>
 </body> </html>
