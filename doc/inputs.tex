@@ -1,0 +1,151 @@
+%
+% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.1 2000-04-11 20:40:11 cc Exp $
+%
+% author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
+%
+
+\section{JIV Inputs}
+\label{sec:jiv-inputs}
+
+
+\subsection{Data files}
+\label{sec:data-files}
+Requirements for the 3D volume data read by JIV:
+\begin{itemize}
+\item the data file should be a sequence of $181 \times 217 \times 181
+  = 7109137$ bytes, with no header, scanning the volume in $z, y, x$
+  order (i.e.\ $z$ dimension changes fastest; this is also known as a
+  ``transverse'' 3D data set); optionally, this file can compressed
+  using \texttt{gnuzip} in which case its name needs to have the
+  \texttt{.gz} suffix.
+\item volumes are assumed to have the $(x,y,z)$ dimensions of
+  $(181,217,181)$.
+\item the $x, y, z$ axes and their positive direction are assumed to
+  be (respectively): left to right, posterior to anterior, inferior to
+  superior.
+\item the voxel (``file'') to world coordinates transformation assumes
+  that: voxels have an isotropic sampling of 1mm; the first voxel of
+  the data file has a world coordinate $(x,y,z)$ of
+  \mbox{$(-90,-126,-72)$mm}; voxel coordinates increase along the
+  positive direction of their axis.
+\end{itemize}
+
+Note that the above volume sampling and associated world coordinates
+correspond to the ``ICBM'' sampling and to the ``Talairach''
+stereotaxic coordinates systems used at the MNI.  
+
+
+\subsection{HTML code}
+\label{sec:html-code}
+
+JIV is a Java {\em applet}, thus needs through an HTML file; however,
+this can be a very simple file, containing only the \verb+applet+ tag.
+This applet needs to be given an run-time parameter (in the form of
+the \verb+cfg+ or \verb+config+ applet parameter): the URL of a config
+file, which contains information about which 3D data volumes to load,
+the layout of the user interface, initial settings of various
+controls, and so on.
+
+The applet can be launched by some HTML code like this:
+\begin{verbatim}
+<applet height=50 width=400 archive="jiv.jar" code="jiv/Main">
+        <param name="cfg" value="config_file">
+</applet>
+\end{verbatim}
+where \verb+jiv.jar+ should be the URL of the JAR file containing the
+JIV Java bytecode, and \verb+config_file+ should be the URL of the
+appropriate JIV config file (\verb+config+ can be used instead of
+\verb+cfg+ for the parameter name).
+
+
+\subsection{Config file}
+\label{sec:config-file}
+
+The config file is expected to be in the following format:
+\begin{itemize}
+\item Lines that begin with \verb|#| or \verb|!| are comments and are
+  ignored. 
+\item Blank lines are ignored.
+\item All other lines should specify a key/value pair and be of any of
+  the following three equivalent forms:
+\begin{verbatim}
+         key = value
+         key : value
+         key value
+\end{verbatim}
+  Leading/trailing whitespace and control characters in \verb|value|
+  are trimmed off.
+\item The following escape characters are also recognized and
+  treated as follows: 
+  \begin{itemize}
+  \item \verb|\newline| : 
+    an escaped newline character is ignored, along with the spaces or
+    tabs that follow it. 
+  \item \verb|\n| : expands to a newline character.
+  \item \verb|\r| : expands to a return character.
+  \item \verb|\t| : expands to a tab character.
+  \item \verb|\uxxxx| : expands to the Java Unicode character code
+    specified by the hexadecimal digits.  
+  \end{itemize}
+\end{itemize} 
+
+Keys which do not start with ``\verb+jiv.+'' represent {\em data
+  volume aliases}, i.e.\ a kind of a short name for a 3D data volume
+file. This is displayed as a title at the top of each panel, hence
+it's a good idea to choose something descriptive and also short (such
+that it will fit in the, possibly narrow, panel). The value associated
+with the alias is data file's URL\@. Relative URL-s are interpreted
+relative to the base URL of the HTML document from which the applet
+was launched, and not relative to the base URL of the config file (not
+exactly a feature \ldots).
+
+Keys which start with ``\verb+jiv.+'' are JIV configuration
+options. The following such keys are recognized:
+\begin{itemize}
+\item \verb+jiv.sync = [true|false]+ \\
+  Sets the initial state of the \mbox{\em Sync all cursors}\ control.
+  The default is false.
+\item \verb+jiv.byte_values = [true|false]+ \\
+  If true, all the voxel values, including the colormap range values,
+  are presented in the user interface as byte values (0--255). If
+  false, they are presented as fractional values (0.0--1.0). The
+  default is false.
+\item \verb+jiv.panel.N = alias+ \\
+  Specifies an {\em individual volume panel}, i.e.\ an interface panel
+  displaying a single data volume (specified by \verb+alias+, which
+  should be a data volume alias declared somewhere else in the same
+  config file).  \verb+N+ should be a non-negative integer and
+  represents this panel's number.
+\item \verb+jiv.panel.N.combine = alias1 alias2+ \\
+  Specifies an {\em combined volume panel}, i.e.\ an interface panel
+  displaying a combined view of two data volumes (specified by
+  \verb+alias1+ and \verb+alias2+). \verb+N+ should be a non-negative
+  integer and represents this panel's number. The two aliases should
+  be separated by one or more blanks (\verb*+ +) or tabs (\verb+\t+).
+  Also, these two aliases {\em should}\ be displayed in their
+  individual panels as well. If an alias is displayed in more than one
+  individual panel, then the lowest numbered such panel is used as the
+  ``source'' for that volume alias.
+\item \verb+jiv.panel.N.coding = [gray|grey|hotmetal|spectral|red|green|blue]+ \\
+  Specifies the initial color coding for panel \verb+N+, which has to
+  be an individual volume panel.
+\item \verb+jiv.panel.N.range = L U+ \\
+  Specifies the initial lower and upper limits of the color coding
+  range for panel \verb+N+, which has to be an individual volume
+  panel. \verb+L+ and \verb+U+ should be fractional (float) numbers in
+  the range 0.0--1.0.  The two should be separated by one or more
+  blanks (\verb*+ +) or tabs (\verb+\t+).
+\end{itemize}
+Panels are displayed left to right, sorted by their increasing number.
+Note that these numbers do not have to be consecutive --- ``gaps'' in
+the numbering sequence are silently skipped.  Note that the same alias
+(i.e.\ the same data volume) can be displayed in several individual
+and combined volume panels.
+
+The config file is parsed in several passes, so the order of the
+key/value pairs is irrelevant. However, if several conflicting
+key/value definitions are given (which is bad practice, by the way),
+not the last definition given but a random one of them will be
+considered!
+
+
