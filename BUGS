@@ -9,12 +9,12 @@ otherwise, slice viewports won't update properly.
 (from http://java.sun.com/products/java-media/2D/perf_graphics.html#33309
 "Disabling offscreen pixmap support can solve some rendering problem")
 
-* with sun's jre-1.3.1_01-fcs and j2re-1.4.1_02-fcs:
+* on linux, with sun's jre-1.3.1_01-fcs and j2re-{1.4.1_02,142_03}-fcs:
   some popup menu cmds don't work (no effect): Quit, Sync-all-cursors,
   tie-colormap sliders
   (but this bug is not present with "IBMJava2-SDK-13-{20001124,20010626}")
 
-* on java runtime "IBMJava2-SDK-13-{20001124,20010626}", often (but
+* on linux + java runtime "IBMJava2-SDK-13-{20001124,20010626}", often (but
 not always) all slice viewports are empty or black. 
 
 
@@ -22,8 +22,8 @@ not always) all slice viewports are empty or black.
 
 ** minor:
 
-- 'quit' menu cmd doesn't do anything on jre-1.4.1-02; but interactive
-ctrl-c does kill the jre
+- 'quit' menu cmd doesn't do anything on linux + sun jre-1.4.1-02; but
+interactive ctrl-c does kill the jre
 
 - class ViewportDistanceDisplay: for the distance text, the 
   xor draw mode, with black as bg_color, doesn't work with MS IE
