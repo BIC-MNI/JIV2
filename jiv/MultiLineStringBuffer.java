@@ -1,5 +1,5 @@
 
-// $Id: MultiLineStringBuffer.java,v 1.1 2001-05-15 16:07:28 crisco Exp $
+// $Id: MultiLineStringBuffer.java,v 1.2 2001-10-03 22:43:21 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -27,7 +27,7 @@ package jiv;
  * A buffer for multi-line text.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: MultiLineStringBuffer.java,v 1.1 2001-05-15 16:07:28 crisco Exp $ 
+ * @version $Id: MultiLineStringBuffer.java,v 1.2 2001-10-03 22:43:21 crisco Exp $ 
  */
 public class MultiLineStringBuffer {
 
@@ -46,7 +46,7 @@ public class MultiLineStringBuffer {
     /**
      * @param line should not contain the end-of-line (newline) character.
      */
-    public MultiLineStringBuffer append_line( String line ) {
+    public synchronized MultiLineStringBuffer append_line( String line ) {
 
 	str_buff.append( line + ls);
 	++line_count;
