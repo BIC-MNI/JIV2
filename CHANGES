@@ -1,4 +1,10 @@
 
+** ver_2_4_beta [02-sep-2003] :
+
+- inline config feature was in fact buggy! now done properly with a
+  separate 'inline_cfg' applet parameter.
+
+
 ** ver_2_3  [07-jul-2002] :
 
 - bug fix: a 1mm slice thickness was assumed by the commands
