@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<!-- $Id: compatibility.html,v 1.1 2000-04-06 15:37:07 cc Exp $ -->
+<!-- $Id: compatibility.html,v 1.2 2000-04-13 19:05:30 crisco Exp $ -->
 <html> <head>
 <title>JIV compatibility information</title>
 </head>
@@ -24,7 +24,8 @@ applet support. An (incomplete) platform-specific list follows.
 <ul>
   <li>
 <dl>
-  <dt>Netscape Navigator/Communicator version&nbsp;4.06 or above:
+  <dt>Netscape Navigator/Communicator version&nbsp;4.06 or above
+      (except on MacOS):
   <dd>available from Netscape (
       <a href="www.netscape.com/browser/"target=new>www.netscape.com/browsers/</a>
       ) for a variety of
@@ -122,6 +123,31 @@ Other versions of SGI JDK, Java plugins and Netscape browsers are available from
   </dl>
 </ul>
 
+<h3>MacOS (PowerPC)</h3>
+<ul>
+  <li><dl>
+    <dt> Apple MRJ (Mac OS Runtime for Java) version&nbsp;2.2
+
+    <dd> Available at no-cost from
+	<a href="www.apple.com/java/">www.apple.com/java/</a>.
+	It provides a JVM compatible with Sun's JDK&nbsp;1.1.8, 
+	and can be used in two ways:
+	<ul>
+	  <li>by using the &quot;Applet Runner&quot; 
+	      bundled with it.
+	  <li>by configuring a web browser to use it (MRJ)
+	      as its Java engine. Cooperating browsers include:
+	      Sun's HotJava, iCab (available from
+	      <a href="www.icab.de">www.icab.de</a>),
+	      and Microsoft Internet Explorer version&nbsp;4 or later. 
+	</ul>
+  </dl>
+  <li><dl>
+    <dt> Netscape Navigator/Communicator will <em>not</em> do.
+    <dd> (since it doesn't fully support Java AWT 1.1)
+  </dl>
+</ul>
+
 <p>
 <!-- TODO: include a request for feedback -->
 <!--       and contributions to the compatibility list ... -->
@@ -132,7 +158,7 @@ Other versions of SGI JDK, Java plugins and Netscape browsers are available from
 Chris Cocosco
 (<a href="mailto:crisco@bic.mni.mcgill.ca">crisco@bic.mni.mcgill.ca</a>)
 <br>
-$Date: 2000-04-06 15:37:07 $ UTC
+$Date: 2000-04-13 19:05:30 $ UTC
 </address>
 </small>
 </body> </html>
