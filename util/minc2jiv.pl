@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: minc2jiv.pl,v 1.2 2001-10-04 16:56:55 cc Exp $ 
+# $Id: minc2jiv.pl,v 1.3 2001-10-05 15:08:39 crisco Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -41,7 +41,7 @@ use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
 
 
-MNI::Spawn::RegisterPrograms( [qw/ cp mincexpand mincextract /] )
+MNI::Spawn::RegisterPrograms( [qw/ cp mincexpand mincextract gzip /] )
     or exit 1;
 
 my $usage = <<USAGE;
@@ -51,12 +51,14 @@ USAGE
 Getopt::Tabular::SetHelp( undef, $usage );
 
 my $output_path= '.';
+my $jiv_ext= '.raw_byte';
 my $gzip= 1;
 my $slices = 0;
 my $volume = 1;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
     ['-output_path', 'string', 1, \$output_path, "output path [default: $output_path]"], 
+    ['-ext', 'string', 1, \$jiv_ext, "extension for the JIV (raw byte) files [default: $jiv_ext]"], 
     ['-gzip', 'boolean', 0, \$gzip, "gzip output [default: $gzip]"],
     ['-slices', 'boolean', 0, \$slices, "produce slices (for \"download on demand\") [default: $slices]"],
     ['-volume', 'boolean', 0, \$volume, "produce volume file [default: $volume]"],
@@ -93,7 +95,7 @@ foreach my $in_mnc (@ARGV) {
 	   ); 
     $in_mnc= $local_file;
 
-    $ext= ".raw_byte" . ($gzip ? ".gz" : "") ;
+    $ext= $jiv_ext . ($gzip ? ".gz" : "") ;
 
     # these are in canonical (x,y,z) order!!
     my( @start, @step, @length, @dir_cosines, @dimorder)= 
