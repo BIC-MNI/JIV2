@@ -1,9 +1,9 @@
 
-# $Id: Makefile,v 1.1 2001-04-08 00:04:18 cc Exp $
+# $Id: Makefile,v 1.2 2001-05-06 01:23:16 cc Exp $
 
 all: prod jar
 
-devel:
+devel: clean
 	jikes -depend +P -deprecation -O jiv/Main.java
 
 devel-jdk: clean
