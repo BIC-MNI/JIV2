@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: jiv.pl,v 1.2 2001-04-08 00:41:06 cc Exp $
+# $Id: jiv.pl,v 1.3 2001-09-26 00:51:05 cc Exp $
 #
 # Description: this is a preprocessing script for invoking JIV on
 #              one or more MNI MINC image volumes.
@@ -40,17 +40,19 @@ my $JIVCode = '/some/path/jiv.jar';
 
 # optional (if not defined, a JVM named "java" will be searched for 
 # in the default path) 
-#my $JavaVM = '/usr/local/jdk118/bin/java';
+my $JavaVM;
+#$JavaVM = '/usr/local/jdk118/bin/java';
 
 # optional (define only if required by the JVM...)
-#my $JavaLib = '/usr/local/jdk118/lib/classes.zip';
+my $JavaLib;
+#$JavaLib = '/usr/local/jdk118/lib/classes.zip';
 
 # optional...
-my $JVMOptions= '-mx90m';
+my $JVMOptions= '-mx120m';
 
 
 
-MNI::Spawn::RegisterPrograms( [qw/minctoraw/] )
+MNI::Spawn::RegisterPrograms( [qw/ minctoraw  mincreshape /] )
     or exit 1;
 $JavaVM ||= 'java';
 $JavaLib ||= '';
@@ -80,6 +82,11 @@ HELP
 my $usage = <<USAGE;
 usage:  $ProgramName [options] mincfile1 [ mincfile2 ...]
      or $ProgramName [options] mincfile1:alias1 [ mincfile2:alias2 ...]
+
+     or $ProgramName [options] --merge mincfile1 mincfile2 [...]
+        --merge adds a "combined" view for the next 2 files; it can be
+        specified more than once; duplicate files are only displayed once.
+
         $ProgramName -help to list options
 USAGE
 
@@ -87,10 +94,13 @@ Getopt::Tabular::SetHelp( $help, $usage );
 
 
 # --- process options ---
-my $sync = 0;
+my $labels = 0;
+my $sync = 1;
 my $view = 1;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
+   ['-labels', 'boolean', 0, \$labels,
+     "image data are labels (show pixel values as bytes, and preserve the file\'s \"valid range\") [default: $labels]"],
     ['-sync', 'boolean', 0, \$sync,
      "start with all volume cursors synchronized [default: $sync]"],
     ['-view', 'boolean', 0, \$view,
@@ -110,16 +120,22 @@ MNI::FileUtilities::check_output_path("${TmpDir}/raw/")
   or exit 1;
 
 my $panel = 0;
+my %alias;
 my( @common_start, @common_step, @common_dir_cosines)= ( (), (), () );
 foreach (@ARGV) {
-    my ($in_mnc,$alias) = split(/:/);
 
+    next if /^--merge$/;  # $panel is not incremented
+    next if exists $alias{$_};
+
+    my $original= $_;
+    my ($in_mnc,$alias) = split(/:/);
     ($in_mnc) = MNI::FileUtilities::check_files( [$in_mnc], 1 ); 
     die unless defined $in_mnc;
 
     my( $dir, $base, $ext) = 
         MNI::PathUtilities::split_path( $in_mnc, 'last', [qw(gz z Z bz2)]);
     $alias = find_unused_alias($alias || $base);
+    $alias{$original}= $alias;
 
     my( @start, @step, @length, @dir_cosines)= ( (), (), (), ());
     volume_params( $in_mnc, \@start, \@step, \@length, \@dir_cosines, undef);
@@ -170,7 +186,14 @@ foreach (@ARGV) {
 
     my $out_raw = "${TmpDir}/raw/$dir/$base";
     MNI::FileUtilities::check_output_path($out_raw) or exit 1;
-    Spawn( "minctoraw -norm -byte -range 0 255 $in_mnc",
+
+    # NB: it's safer to '-norm' all the time (otherwise minctoraw
+    # might decide to scale differently data from different slices --
+    # e.g. if the volume has different min-max values for each
+    # slice...)
+    my $norm_options= $labels ? "-norm" : "-norm -range 0 255";
+
+    Spawn( "minctoraw ${norm_options} -byte $in_mnc",
 	   stdout => $out_raw,
 	   clobber => $Clobber)
       unless( (-e $out_raw) && !$Clobber);
@@ -179,14 +202,25 @@ foreach (@ARGV) {
     $config .= "$alias = $out_raw\n";
     ++$panel;
 }
+for( my $i= 0; $i < @ARGV; ++$i ) {
+    $_= $ARGV[$i];
+    next unless /^--merge$/ ;
 
+    $config .= "jiv.panel.${panel}.combine = $alias{$ARGV[$i+1]} $alias{$ARGV[$i+2]}\n";
+    ++$panel;
+}
+
+if( $labels) { 
+    $config .= "jiv.byte_values = true\n";
+}
 
 # --- set up config and html files then run appletviewer ---
 
 write_file( "${TmpDir}/jiv.conf", $config );
 
-Spawn( "jvm $JVMOptions -classpath ${JIVCode}:$JavaLib " . 
-       " jiv.Main ${TmpDir}/jiv.conf" )
+my $cp= $JIVCode;
+$cp .= ":$JavaLib"  if $JavaLib;
+Spawn( "jvm $JVMOptions -classpath $cp jiv.Main ${TmpDir}/jiv.conf" )
     if $view;
 
 # --- end of script ! ---
@@ -210,7 +244,7 @@ sub find_unused_alias {
 
     my $alias;
     if (defined $count) {
-	$alias .= "$base-$count";
+	$alias = "$base-$count";
     } else {
 	$alias = $base;
 	$count = 0;
