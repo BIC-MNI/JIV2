@@ -1,5 +1,5 @@
 
-// $Id: PositionGateway.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: PositionGateway.java,v 1.2 2003-07-19 08:46:39 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -28,13 +28,13 @@ import java.util.Vector;
 /**
  * Provides a gateway ("firewall") for exchanging
  * <code>PositionEvent</code>-s between two sets of
- * <code>PositionListener/PositionGenerator></code>-s.
+ * <code>PositionListener/PositionGenerator</code>-s.
  * This way, the two sets (called "internal" and "external") are not
  * aware of each other.  The two interfaces implemented by this class
  * are for the "internal" side of the gateway.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: PositionGateway.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: PositionGateway.java,v 1.2 2003-07-19 08:46:39 crisco Exp $ 
  */
 public final class PositionGateway extends PositionListenerAdapter 
     implements PositionGenerator {
