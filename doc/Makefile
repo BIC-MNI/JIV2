@@ -1,5 +1,5 @@
 #
-# $Header: /private-cvsroot/visualization/jiv/doc/Attic/Makefile,v 1.3 2000-04-12 02:15:54 cc Exp $
+# $Id: Makefile,v 1.4 2001-04-07 23:40:20 cc Exp $
 #
 # author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 #
