@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $
+// $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,7 +37,7 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
@@ -54,7 +54,7 @@ abstract public class DataVolumePanel
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see DataVolumePanel.CoordinateFields */
     interface CoordinateTypes {
@@ -89,18 +89,13 @@ abstract public class DataVolumePanel
     protected PopupMenu			popup_menu;
     /*private*/ PositionGateway		pos_event_gateway; 
     /*private*/ CheckboxMenuItem	sync_menu_item;
-	// Optimization: Slice2DViewport also initializes itself at world 
-	// coordinates (0, 0, 0), so initialize the producers with the
-	// same slices, s.th. they don't produce a slice that has to
-	// changed right away... 
-    /** tells the subclasses with what slices  to initialize slice_producers */
-    protected final Point3Dfloat	initial_world_cursor=
-	new Point3Dfloat( 0f, 0f, 0f);
+    /*private*/ Point3Dfloat		initial_world_cursor;
 
     public DataVolumePanel( /** it's expected to have a GridBagLayout-manager! */
 			    Container parent_container,
 			    /** to be used for GridBagConstraints.gridx */
 			    int grid_column,
+			    Point3Dfloat initial_world_cursor,
 			    boolean enable_world_coords,
 			    boolean byte_voxel_values,
 			    Main applet_root
@@ -117,6 +112,7 @@ abstract public class DataVolumePanel
 	    System.err.println( this + ": cannot determine my parent frame!");
 
 	this.grid_column= grid_column;
+	this.initial_world_cursor= initial_world_cursor;
 	this.enable_world_coords= enable_world_coords;
 	this.byte_voxel_values= byte_voxel_values; 
 	this.applet_root= applet_root;
@@ -170,11 +166,14 @@ abstract public class DataVolumePanel
 
 	slice_vports= new Slice2DViewport[] { 
 	    new TransverseSlice2DViewport( slice_producers[ 0], 
-					   (PositionListener)slice_producers[ 0]),
+					   (PositionListener)slice_producers[ 0],
+					   initial_world_cursor),
 	    new SagittalSlice2DViewport( slice_producers[ 1], 
-					 (PositionListener)slice_producers[ 1]),
+					 (PositionListener)slice_producers[ 1],
+					 initial_world_cursor),
 	    new CoronalSlice2DViewport( slice_producers[ 2], 
-					(PositionListener)slice_producers[ 2]) 
+					(PositionListener)slice_producers[ 2],
+					initial_world_cursor)
 	};
 	for( int i= 0; i < 3; ++i) 
 	    slice_vports[ i].addMouseListener( popup_adapter);
@@ -329,7 +328,7 @@ abstract public class DataVolumePanel
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.4 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */

@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.2 2001-05-15 03:12:40 cc Exp $
+// $Id: Slice2DViewport.java,v 1.3 2001-10-04 19:26:31 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.2 2001-05-15 03:12:40 cc Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.3 2001-10-04 19:26:31 cc Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -194,7 +194,7 @@ abstract public class Slice2DViewport extends Panel
     /*private*/ Graphics offscreen_gc;
     
     /** current cursor in world coordinates (3D) */
-    protected Point3Dfloat cursor= new Point3Dfloat( 0f, 0f, 0f);  
+    protected Point3Dfloat cursor;
     /** The (smart) cross-hair position cursor. Initialized to some
         position clearly outside the viewport, such that it'll be
         obvious if it's not further updated to the proper initial
@@ -223,10 +223,15 @@ abstract public class Slice2DViewport extends Panel
      * @param pos_listener_for_ip <code>PositionListener</code> that
      * will be used for requesting another slice (2D image) from
      * <code>ip</code>.  
+     * @param cursor object that will be used to store the current
+     * cursor position (in world coordinates); should be initialized
+     * to the desired starting position.
      */
     protected Slice2DViewport( ImageProducer ip, 
-			       PositionListener pos_listener_for_ip ) {
+			       PositionListener pos_listener_for_ip,
+			       Point3Dfloat cursor ) {
 
+	this.cursor= cursor;
 	addPositionListener( pos_listener_for_ip); 
 	// need to do this if we want to make sure we start with the 
 	// slice at the initial 'cursor' value specified above...

@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
+// $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
+ * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -256,6 +256,7 @@ public final class Main extends java.applet.Applet {
 	    }
 	    Data3DVolume data= ((VolumeStruct)volumes.get( ps.alias0)).data;
 	    ps.gui= new IndividualDataVolumePanel( data, jiv_frame, column++,
+						   common_sampling.getFOVCenter(),
 						   enable_world_coords,
 						   byte_voxel_values,
 						   ps.range_start, ps.range_end,
@@ -281,6 +282,7 @@ public final class Main extends java.applet.Applet {
 	    ps.gui= new CombinedDataVolumePanel( (IndividualDataVolumePanel)p0, 
 						 (IndividualDataVolumePanel)p1,
 						 jiv_frame, column++, 
+						 common_sampling.getFOVCenter(),
 						 enable_world_coords, 
 						 this);
 	}
@@ -669,7 +671,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
+     * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -688,7 +690,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.11 2001-10-04 16:56:48 cc Exp $
+     * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

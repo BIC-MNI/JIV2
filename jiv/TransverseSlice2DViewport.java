@@ -1,5 +1,5 @@
 
-// $Id: TransverseSlice2DViewport.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: TransverseSlice2DViewport.java,v 1.2 2001-10-04 19:26:31 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (Z=constant) slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: TransverseSlice2DViewport.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: TransverseSlice2DViewport.java,v 1.2 2001-10-04 19:26:31 cc Exp $ 
  */
 public final class TransverseSlice2DViewport extends Slice2DViewport {
 
@@ -38,8 +38,12 @@ public final class TransverseSlice2DViewport extends Slice2DViewport {
     // in the other two subclasses of Slice2DViewport !
 
     public TransverseSlice2DViewport( ImageProducer ip, 
-				      PositionListener pos_listener_for_ip) {
-	super( ip, pos_listener_for_ip);
+				      PositionListener pos_listener_for_ip,
+				      Point3Dfloat initial_world_cursor ) {
+	super( ip, pos_listener_for_ip, 
+	       // no re-ordering of coordinates necessary for 'transverse'
+	       new Point3Dfloat( initial_world_cursor) 
+		   );
     }
 
     // the "translation between the internal and external x,y,z is
@@ -60,6 +64,8 @@ public final class TransverseSlice2DViewport extends Slice2DViewport {
 
     final protected void _firePositionEvent( int changed_coords_mask) {
 	
+	// no re-ordering of coordinates necessary for 'transverse'
+
 	/* Note: the PositionEvent constructor makes a _copy_
 	   of its last argument (the cursor) */
 	__aid_to_firePositionEvent( new PositionEvent( this, 
@@ -69,11 +75,13 @@ public final class TransverseSlice2DViewport extends Slice2DViewport {
 
     final protected void _voxel2world( Point3Dfloat world, 
 				       float vx, float vy, float vz) {
+	// no re-ordering of coordinates necessary for 'transverse'
 	CoordConv.voxel2world( world, vx, vy, vz);
     }
 
     final protected void _world2voxel( Point3Dint voxel,
 				       float wx, float wy, float wz) {
+	// no re-ordering of coordinates necessary for 'transverse'
 	CoordConv.world2voxel( voxel, wx, wy, wz);
     }
 }

@@ -1,5 +1,5 @@
 
-// $Id: CoronalSlice2DViewport.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: CoronalSlice2DViewport.java,v 1.2 2001-10-04 19:26:31 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (Y=constant) slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CoronalSlice2DViewport.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: CoronalSlice2DViewport.java,v 1.2 2001-10-04 19:26:31 cc Exp $ 
  */
 public final class CoronalSlice2DViewport extends Slice2DViewport {
 
@@ -38,8 +38,13 @@ public final class CoronalSlice2DViewport extends Slice2DViewport {
     // in the other two subclasses of Slice2DViewport !
 
     public CoronalSlice2DViewport( ImageProducer ip, 
-				   PositionListener pos_listener_for_ip) {
-	super( ip, pos_listener_for_ip);
+				   PositionListener pos_listener_for_ip,
+				   Point3Dfloat initial_world_cursor ) {
+	super( ip, pos_listener_for_ip, 
+	       new Point3Dfloat( initial_world_cursor.x, // vport horiz
+				 initial_world_cursor.z, // vport vert
+				 initial_world_cursor.y ) // ortho to vport
+		   );
     }
 
     synchronized final public void positionChanged( PositionEvent e ) {

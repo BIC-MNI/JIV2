@@ -1,5 +1,5 @@
 
-// $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $
+// $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * displaying a single image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+ * @version $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
  */
 public final class IndividualDataVolumePanel extends DataVolumePanel {
 
@@ -54,7 +54,8 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 				      int grid_column,
 				      Main applet_root
 				      ) {
-	this( data_volume, parent_container, grid_column, true, false,
+	this( data_volume, parent_container, grid_column, 
+	      new Point3Dfloat(), true, false,
 	      DEFAULT_CMAP_START, DEFAULT_CMAP_END, DEFAULT_COLOR_CODING, 
 	      applet_root);
     }
@@ -62,6 +63,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
     public IndividualDataVolumePanel( Data3DVolume data_volume, 
 				      Container parent_container,
 				      int grid_column,
+				      Point3Dfloat initial_world_cursor,
 				      boolean enable_world_coords,
 				      boolean byte_voxel_values,
 				      short initial_cmap_start,
@@ -70,7 +72,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 				      Main applet_root
 				      ) {
 	// initialization done in the superclass (part 1/2)
-	super( parent_container, grid_column, 
+	super( parent_container, grid_column, initial_world_cursor,
 	       enable_world_coords, byte_voxel_values, 
 	       applet_root);
 
@@ -172,7 +174,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapControl</code>. 
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControl 
      */
@@ -210,7 +212,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * controls for adjusting the colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControlMenus 
      */
@@ -558,7 +560,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapDisplay</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplay 
      */
@@ -582,7 +584,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * the current colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplayConstants 
      */
