@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.2 2001-09-21 16:42:13 cc Exp $
+// $Id: Data3DVolume.java,v 1.3 2001-09-22 00:24:50 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -27,16 +27,32 @@ import java.net.*;
 import java.io.*;
 import java.util.zip.*;
 
+/*
+  WISH LIST:
+
+ 1. implement _downloadAllVolumeBySlice() : download all t slices,
+ starting with the "middle" ones (most useful!), and checking 
+ beforehand for each slice if not already done.
+ 
+
+ 2. have 3 states for {t,s,c}_slice_downloaded : 
+ no, in_progress (some thread working on it already), done .
+ 
+       -> this will eliminate useless duplicate downloads
+       (eg when using merged panels, and sync mode)
+       -> the new thread can wait() till state becomes 'done'...
+*/
+
 /**
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.2 2001-09-21 16:42:13 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.3 2001-09-22 00:24:50 crisco Exp $
  */
 public final class Data3DVolume {
 
     /** for development only: artificially delay the downloads */
-    /*private*/ static final boolean DELAY_DOWNLOAD= true;
+    /*private*/ static final boolean DELAY_DOWNLOAD= false;
 
     public static final int DOWNLOAD_UPFRONT=		1;
     public static final int DOWNLOAD_ON_DEMAND= 	2;
@@ -66,27 +82,19 @@ public final class Data3DVolume {
     {
 	voxels= new byte[ getZSize()][ getYSize()][ getXSize()];
 
-	// initialize it to the dummy pattern
-	byte[] 	dummy_line1= new byte[ getXSize()];;
-	byte[] 	dummy_line2= new byte[ getXSize()];;
+	// initialize it to the dummy pattern ("solid color", more exactly)
+	byte[] 	dummy_line1= new byte[ getXSize()];
+	byte 	dummy_val= (byte)(255*0.2);
 	for( int i= 0; i < getXSize(); ++i) {
-	    if( ((i/2) % 2) == 0 ) {
-		dummy_line1[ i]= (byte)0;
-		dummy_line2[ i]= (byte)255;
-	    }
-	    else {
-		dummy_line1[ i]= (byte)255;
-		dummy_line2[ i]= (byte)0;
-	    }
+	    dummy_line1[ i]= dummy_val;
 	}
 	for( int z= 0; z < getZSize(); ++z) {     
 	    for( int y= 0; y < getYSize(); ++y) {
-		byte[] pat= ( ((y/2) % 2) == 0 ) ? dummy_line1 : dummy_line2 ;
-		System.arraycopy( pat, 0, voxels[ z][ y], 0, getXSize());
+		System.arraycopy( dummy_line1, 0, voxels[ z][ y], 0, getXSize());
 	    }
 	}
 
-	// by default initialized to false (TODO: chk if is it guaranteed!)
+	// by default initialized to false (TODO: chk if is it guaranteed?!)
 	t_slice_downloaded= new boolean[ getZSize()];
 	s_slice_downloaded= new boolean[ getXSize()];
 	c_slice_downloaded= new boolean[ getYSize()];
@@ -160,7 +168,7 @@ public final class Data3DVolume {
 	}
     }
 
-    final private void _downloadAllVolume( URL source_url)
+    final /*private*/ void _downloadAllVolume( URL source_url)
 	throws IOException, SecurityException
     {
 	InputStream input_stream= null;
@@ -179,7 +187,7 @@ public final class Data3DVolume {
 		       anywhere!) */
 		    left= getXSize();
 		    while( left > 0) {
-			if( DELAY_DOWNLOAD ) Util.sleep( 7); 
+			if( DELAY_DOWNLOAD ) Util.sleep( 5); 
 			
 			read_count= input_stream.read( voxels[ z][ y], 
 						       getXSize()-left, left);
@@ -212,7 +220,7 @@ public final class Data3DVolume {
 	    c_slice_downloaded[ i]= true;
     }
 
-    final private void _downloadSlice( URL source_url, 
+    final /*private*/ void _downloadSlice( URL source_url, 
 				       byte[] slice, 
 				       final int slice_width,
 				       SliceImageProducer consumer, 
@@ -252,7 +260,7 @@ public final class Data3DVolume {
 	    consumer.sliceDataUpdated( slice, slice_number);
     }
 
-    final private InputStream _openURL( URL source_url) 
+    final /*private*/ InputStream _openURL( URL source_url) 
 	throws IOException, SecurityException 
     {
 	InputStream input_stream= null;
