@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.12 2001-12-20 19:26:42 crisco Exp $
+// $Id: Data3DVolume.java,v 1.13 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.12 2001-12-20 19:26:42 crisco Exp $
+ * @version $Id: Data3DVolume.java,v 1.13 2002-04-24 14:31:56 cc Exp $
  */
 public final class Data3DVolume {
 
@@ -240,6 +240,12 @@ public final class Data3DVolume {
     final public int getYSize() { return common_sampling.getSizeY(); }
 
     final public int getZSize() { return common_sampling.getSizeZ(); }
+
+    final public float getXStep() { return volume_header.getStepX(); }
+
+    final public float getYStep() { return volume_header.getStepY(); }
+
+    final public float getZStep() { return volume_header.getStepZ(); }
 
     final public String getNickName() { return nick_name; }
 

@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $
+// $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,7 +37,7 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
@@ -54,7 +54,7 @@ abstract public class DataVolumePanel
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
      *
      * @see DataVolumePanel.CoordinateFields */
     interface CoordinateTypes {
@@ -328,7 +328,7 @@ abstract public class DataVolumePanel
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
@@ -641,6 +641,7 @@ abstract public class DataVolumePanel
 	} // end of positionChanged()
 	
 	final public int getMaxSliceNumber() { return -1; }
+	final public float getOrthoStep() { return Float.NaN; }
 
 	synchronized public void addPositionListener( PositionListener pl) {
 	

@@ -1,5 +1,5 @@
 
-// $Id: PositionListener.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: PositionListener.java,v 1.2 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.util.*;
  * (receiver) classes must implement.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: PositionListener.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: PositionListener.java,v 1.2 2002-04-24 14:31:56 cc Exp $ 
  *
  * @see PositionEvent
  */
@@ -42,5 +42,7 @@ public interface PositionListener extends EventListener {
     /** the implementing class has to return some meaningful (ie >0) value 
 	only if it actually produces slice data... */
     int getMaxSliceNumber();
+
+    float getOrthoStep();
 }
 

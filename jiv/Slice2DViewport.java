@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.5 2001-12-20 18:54:15 crisco Exp $
+// $Id: Slice2DViewport.java,v 1.6 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.5 2001-12-20 18:54:15 crisco Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.6 2002-04-24 14:31:56 cc Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -140,6 +140,8 @@ abstract public class Slice2DViewport extends Panel
     /*private*/ ImageProducer	 image_source;
     /** the dimension orthogonal to this viewport (- 1) */
     /*private*/ int 		 max_slice_number; 
+    /** the original (not common) step orthogonal to this viewport, in world coords */
+    /*private*/ float 		 ortho_step; 
     /** the Image to be displayed; NB: it's a multiframe image! */
     /*private*/ Image		 original_image; 
     /*private*/ int		 original_image_width;
@@ -243,6 +245,7 @@ abstract public class Slice2DViewport extends Panel
 
 	original_image= createImage( image_source= ip);
 	max_slice_number= pos_listener_for_ip.getMaxSliceNumber();
+	ortho_step= pos_listener_for_ip.getOrthoStep();
 	original_image_width= original_image.getWidth( this);
 	original_image_height= original_image.getHeight( this);
 
@@ -396,7 +399,7 @@ abstract public class Slice2DViewport extends Panel
 		else {
 		    // == CHANGE SLICE ==
 		    final float multiplication= 0.5f;
-		    _newSlice( delta * multiplication);
+		    _newSlice( delta * multiplication * ortho_step);
 		}
 	    }
 	    else
@@ -443,9 +446,9 @@ abstract public class Slice2DViewport extends Panel
 	    switch( e.getKeyChar() ) {
 
 	    case '+': 
-		_newSlice( 1); break;
+		_newSlice( ortho_step); break;
 	    case '-': 
-		_newSlice( -1); break;
+		_newSlice( -ortho_step); break;
 	    case 'd': 
 	    case 'D': 
 		_startNewDistanceMeasurement(); break;
@@ -457,10 +460,10 @@ abstract public class Slice2DViewport extends Panel
 
 		case KeyEvent.VK_RIGHT:
 		case KeyEvent.VK_UP: 
-		    _newSlice( 1); break;
+		    _newSlice( ortho_step); break;
 		case KeyEvent.VK_LEFT: 
 		case KeyEvent.VK_DOWN: 
-		    _newSlice( -1); break;
+		    _newSlice( -ortho_step); break;
 		}
 	    }
 	    // see the comment at top of file (regarding CONSUME_INPUT_EVENTS)
@@ -1097,6 +1100,16 @@ abstract public class Slice2DViewport extends Panel
      * @see PositionListener 
      */
     final public int getMaxSliceNumber() { return -1; }
+
+    /**
+     * Required by the PositionListener interface.
+     *
+     * @return Float.NaN (that is, a clearly invalid value) since
+     * this class is not an <code>ImageProducer</code>.
+     * 
+     * @see PositionListener 
+     */
+    final public float getOrthoStep() { return Float.NaN; }
 
     /**
      * Registers another module who is interested in being notified of

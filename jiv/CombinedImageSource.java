@@ -1,5 +1,5 @@
 
-// $Id: CombinedImageSource.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -36,7 +36,7 @@ import java.util.*;
  * a <code>DirectColorModel</code>.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CombinedImageSource.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $ 
  */
 abstract public class CombinedImageSource implements ImageProducer, PositionListener {
 
@@ -216,13 +216,17 @@ abstract public class CombinedImageSource implements ImageProducer, PositionList
 	return src_pl[ 0].getMaxSliceNumber();
     }
 
+    public final float getOrthoStep() { 
+	return Math.min( src_pl[ 0].getOrthoStep(), src_pl[ 1].getOrthoStep());
+    }
+
 
     /** 
      * Inner (member) class: the interface to the source
      * <code>ImageProducer</code>-s.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedImageSource.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+     * @version $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $ 
      */
     /*private*/ final class InputReader implements ImageConsumer {
 

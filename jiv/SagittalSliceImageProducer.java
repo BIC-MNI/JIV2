@@ -1,5 +1,5 @@
 
-// $Id: SagittalSliceImageProducer.java,v 1.4 2001-10-04 16:56:48 cc Exp $
+// $Id: SagittalSliceImageProducer.java,v 1.5 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (X=constant) 2D slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: SagittalSliceImageProducer.java,v 1.4 2001-10-04 16:56:48 cc Exp $ 
+ * @version $Id: SagittalSliceImageProducer.java,v 1.5 2002-04-24 14:31:56 cc Exp $ 
  */
 public final class SagittalSliceImageProducer extends SliceImageProducer {
 
@@ -51,6 +51,8 @@ public final class SagittalSliceImageProducer extends SliceImageProducer {
     // in the other two subclasses of SliceImageProducer!
 
     public final int getMaxSliceNumber() { return data_volume.getXSize()-1; }
+
+    public final float getOrthoStep() { return data_volume.getXStep(); }
 
     synchronized public final void positionChanged( PositionEvent new_position) {
 	

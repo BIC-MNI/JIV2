@@ -1,5 +1,5 @@
 
-// $Id: SliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $
+// $Id: SliceImageProducer.java,v 1.4 2002-04-24 14:31:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -35,7 +35,7 @@ import java.awt.image.*;
  * <code>SagittalSliceImageProducer</code>. 
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: SliceImageProducer.java,v 1.3 2001-10-02 01:27:09 cc Exp $ 
+ * @version $Id: SliceImageProducer.java,v 1.4 2002-04-24 14:31:56 cc Exp $ 
  */
 public abstract class SliceImageProducer extends MemoryImageSource 
     implements PositionListener, ColormapListener {
@@ -92,6 +92,10 @@ public abstract class SliceImageProducer extends MemoryImageSource
     }
 
     abstract public int getMaxSliceNumber();
+
+    /** @return original (not common) step orthogonal to this slice,
+        in world coords */
+    abstract public float getOrthoStep();
 
     /** for the private use of positionChanged() in the 3 subclasses (using 
 	the same Point3Dint object everytime is easier on the heap...) */
