@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.4 2000-04-21 16:01:53 cc Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.5 2000-05-17 15:16:48 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -38,12 +38,12 @@ stereotaxic coordinates systems used at the MNI.
 \subsection{HTML code}
 \label{sec:html-code}
 
-JIV is a Java {\em applet}, thus needs through an HTML file; however,
-this can be a very simple file, containing only the \verb+applet+ tag.
-This applet needs to be given an run-time parameter (in the form of
-the \verb+cfg+ or \verb+config+ applet parameter): the URL of a config
-file, which contains information about which 3D data volumes to load,
-the layout of the user interface, initial settings of various
+JIV is a Java {\em applet}, thus needs to be run through an HTML file;
+however, this can be a very simple file, containing only the
+\verb+applet+ tag.  This applet expects a run-time parameter (in the
+form of the \verb+cfg+ or \verb+config+ applet parameter): the URL of
+a config file, which contains information about which 3D data volumes
+to load, the layout of the user interface, initial settings of various
 controls, and so on.
 
 The applet can be launched by some HTML code like this:
@@ -94,10 +94,8 @@ Keys which do not start with ``\verb+jiv.+'' represent {\em data
 file. This is displayed as a title at the top of each panel, hence
 it's a good idea to choose something descriptive and also short (such
 that it will fit in the, possibly narrow, panel). The value associated
-with the alias is data file's URL\@. Relative URL-s are interpreted
-relative to the base URL of the HTML document from which the applet
-was launched, and not relative to the base URL of the config file (not
-exactly a feature \ldots).
+with the alias is data file's URL\@; relative URL-s are interpreted
+relative to the base URL of the config file.
 
 Keys which start with ``\verb+jiv.+'' are JIV configuration
 options. The following such keys are recognized:
