@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.3 2000-04-13 17:20:38 crisco Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.4 2000-04-21 16:01:53 cc Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -105,6 +105,10 @@ options. The following such keys are recognized:
 \item \verb+jiv.sync = [true|false]+ \\
   Sets the initial state of the \mbox{\em Sync all cursors}\ control.
   The default is false.
+\item \verb+jiv.world_coords = [true|false]+ \\
+  If false, only voxel coordinates will be available in the user
+  interface (however, doing this is \emph{not} recommended practice!).
+  The default is true.
 \item \verb+jiv.byte_values = [true|false]+ \\
   If true, all the voxel values, including the colormap range values,
   are presented in the user interface as byte values (0--255). If
