@@ -43,4 +43,7 @@ license, when bundled with Java applets and applications.
 - header is read if listed in config, while vol data only if used in a panel!
 (confusing)
 
+- frequently, the default font is too large, hence crammed textfields at
+  the bottom of the frame (even with only 4 panels) ...
+
 =============================================================================
