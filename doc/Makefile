@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.6 2001-10-12 01:57:32 cc Exp $
+# $Id: Makefile,v 1.7 2002-07-07 15:37:42 cc Exp $
 #
 # author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 #
@@ -9,6 +9,9 @@ all : manual help
 manual : manual.tex inputs.tex gui.tex
 	latex manual
 	latex manual
+	dvips manual
+	pdflatex manual
+	pdflatex manual
 
 help : help.tex gui.tex
 	latex help
