@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<!-- $Id: compatibility.html,v 1.9 2003-12-21 23:53:48 crisco Exp $ -->
+<!-- $Id: compatibility.html,v 1.10 2003-12-29 00:01:27 crisco Exp $ -->
 <html> <head>
 <title>JIV compatibility information</title>
 </head>
@@ -7,69 +7,16 @@
 <body>
 <h1>JIV compatibility information</h1>
 
-&quot;JIV&quot; is a <em>Java&nbsp;1.1&nbsp;applet</em>.
-Theoretically, it should run on any appletviewer (browsers included)
-that properly supports Java&nbsp;1.1 (including AWT&nbsp;1.1), as per
-<a href="http://java.sun.com/">Sun</a>'s reference specification.
+&quot;JIV&quot; is a <em>Java&nbsp;1.1&nbsp;applet</em>.  It should
+run on any Web browser or appletviewer that properly supports
+Java&nbsp;1.1 (including AWT&nbsp;1.1), as per <a
+href="http://java.sun.com/">Sun</a>'s reference specification.
+The Java support, also known as &quot;Java Virtual Machine&quot; (JVM) or &quot;Java Runtime Environment&quot; (JRE), can be built-in the browser (for example, Netscape Navigator/Communicator version&nbsp;4.x, and Microsoft Internet Explorer), or can be provided by a browser plugin.  Java plugins can be upgraded/replaced independent of the browser.
 
 <p> JIV is quite memory-hungry: every loaded 3D data volume requires
 8-9Mb of memory. For faster interactive response, try to use a Java
 implementation that has a &quot;just-in-time&quot;&nbsp;(JIT)
 compiler.
-
-<p> Generally speaking (i.e. regardless of your particular operating
-system / platform), the following should provide full Java&nbsp;1.1
-applet support. An (incomplete) platform-specific list follows.
-
-<ul>
-  <li>
-<dl>
-  <dt>Netscape Navigator/Communicator version&nbsp;4.06 or above
-      (except on MacOS):
-  <dd>available from Netscape (
-      <a href="http://www.netscape.com/browsers/">www.netscape.com/browsers/</a>
-      ) for a variety of
-      platforms (operating systems); a JIT compiler is not used on all
-      platforms (e.g. all the Unix versions distributed by Netscape
-      don't have it), however some OS vendors may distribute customized
-      versions which do include a JIT compiler.
-</dl>
-  <li>
-<dl>
-  <dt>Java 1.1.x (or later) plugins for older, non-compliant or slow
-      browsers:
-  <dd><a href="http://java.sun.com/products/plugin/">java.sun.com/products/plugin/</a>
-      has links to
-      1.1.x (and later) plugins for several platforms; even if your
-      browser is Java&nbsp;1.1 compliant, a plugin may provide a more
-      performant Java environment (e.g. by including a JIT
-      compiler).<br>
-      <em>Note:</em> plugins require custom, non-portable, HTML pages
-      to launch the applet, so use them only as a last resort.
-</dl>
-  <li>
-<dl>
-  <dt>&quot;appletviewer&quot; from Sun's Java Development Kit
-      (&quot;JDK&quot;) 1.1.x (or later), or from its various ports: 
-  <dd>see <a href="http://java.sun.com/jdk/">java.sun.com/jdk/</a>
-      for pointers to versions for
-      various platforms (versions which are not provided by Sun are
-      listed in the &quot;ports&quot; section); also, see below for
-      more links to JDK ports.
-</dl>
-  <li>
-<dl>
-  <dt>Sun's HotJava web browser:
-  <dd>available from
-      <a href="http://java.sun.com/products/hotjava/">java.sun.com/products/hotjava/</a>
-      , for a handful of
-      platforms; this browser is written completely in Java,
-      so even if you don't find a version of it for your platform you
-      should be able to use it as long as you have a working
-      &quot;Java Virtual Machine&quot; (JVM), or
-      &quot;Java Runtime Environment&quot; (JRE), implementation.
-</dl>
-</ul>
 
 <p> The following Java environments were tested and appear to work for
 JIV:<br>
@@ -79,20 +26,21 @@ JIV:<br>
 <ul>
   <li><dl>
     <dt>IBM JDK for Linux, version&nbsp;1.1.8 (a port of Sun's JDK)
-    <dd>Available at no-cost from 
-	<a href="http://www.ibm.com/java/jdk/118/linux/">www.ibm.com/java/jdk/118/linux/</a>.
-	It uses a good JIT compiler, and is the recommended platform
-	for Linux.<br>
-	You can also get the JRE version from
+    <dd>Available at no-cost from IBM.
+	<!-- former url, now dead: www.ibm.com/java/jdk/118/linux/ -->
+	It uses a good JIT compiler, and is the fastest solution 
+	for JIV on Linux. However, it may not work on some modern Linux distributions (in which case use the IBM Java 1.4.1 below).<br>
+	You can download the JRE version from
 	<a href="http://www.bic.mni.mcgill.ca/~crisco/jiv/jre/">here</a>.
   </dl>
   <li><dl>
     <dt>IBM JRE or SDK for Linux, version&nbsp;1.4.1 (a good Linux port of Sun's SDK)
     <dd>Available at no-cost from 
 	<a href="http://www-106.ibm.com/developerworks/java/jdk/linux140/index.html">www-106.ibm.com/developerworks/java/jdk/linux140/index.html</a>.
+	It uses a good JIT compiler.
   </dl>
   <li><dl>
-    <dt> Netscape Navigator/Communicator 4.6-4.7
+    <dt> Netscape Navigator/Communicator 4.6-4.7 (built-in Java, but with no JIT compiler, hence slow).
     <dd>
   </dl>
   <li><dl>
@@ -112,7 +60,7 @@ JIV:<br>
 	IRIX 6.x. (SGI Java 3.1.1 also works, but it may be a bit slower)
   </dl>
   <li><dl>
-    <dt>Netscape Navigator/Communicator 4.08 and later
+    <dt>Netscape Navigator/Communicator 4.x (4.08 and later). Built-in Java, but with no JIT compiler.
     <dd><!-- do any of the sgi-customized versions have jit compilers?? -->
   </dl>
   <li><dl>
@@ -136,8 +84,8 @@ Several versions of SGI JDK, Java plugins and Netscape browsers are available fr
   <li><dl>
     <dt> IBM JDK for Windows, version&nbsp;1.1.8 (a port of
 	Sun's JDK)
-    <dd> Available at no-cost from
-      <a href="http://www.ibm.com/java/jdk/118/">www.ibm.com/java/jdk/118/</a>.
+    <dd> Available at no-cost from IBM.
+      <!-- former url, now dead? "http://www.ibm.com/java/jdk/118/" -->
   </dl>
   <li><dl>
     <dt> Sun J2SDK for Windows, version&nbsp;1.4.2 
@@ -176,6 +124,21 @@ Several versions of SGI JDK, Java plugins and Netscape browsers are available fr
   </dl>
 </ul>
 
+<h3>...Other operating systems</h3>
+<ul>
+  <li><dl>
+    <dt>Netscape Navigator/Communicator version&nbsp;4.x (4.06 or above).
+    <dd>Available for a variety of platforms; it has built-in Java support.
+  </dl>
+  <li><dl>
+  <dt>Sun's Java Runtime 1.1.x or later.
+  <dd>May be available for your platform ... check out <a href="http://java.sun.com/">java.sun.com</a> 
+      (versions not provided by Sun are
+      listed in the &quot;ports&quot; section), or check with your operating system vendor.
+
+  </dl>
+</ul>
+
 <p>
 
 <hr>
@@ -188,7 +151,7 @@ Several versions of SGI JDK, Java plugins and Netscape browsers are available fr
 Chris Cocosco
 (<a href="mailto:crisco+jiv@bic.mni.mcgill.ca">crisco+jiv@bic.mni.mcgill.ca</a>)
 <br>
-$Date: 2003-12-21 23:53:48 $ UTC
+$Date: 2003-12-29 00:01:27 $ UTC
 </address>
 </small>
 </body> </html>
