@@ -1,12 +1,22 @@
 
 ** serious:
 
-(none known)
+
+with j2re1.4.1_02 on linux (cocosco's old laptop), you need this
+runtime jvm option: -Dsun.java2d.pmoffscreen=false
+otherwise, slice viewports won't update properly.
+
+(from http://java.sun.com/products/java-media/2D/perf_graphics.html#33309
+"Disabling offscreen pixmap support can solve some rendering problem")
+
 
 
 =============================================================================
 
 ** minor:
+
+- 'quit' menu cmd doesn't do anything on jre-1.4.1-02; but interactive
+ctrl-c does kill the jre
 
 - class ViewportDistanceDisplay: for the distance text, the 
   xor draw mode, with black as bg_color, doesn't work with MS IE
