@@ -3,7 +3,9 @@
 # Script to publish a MINC file for viewing with JIV.  Basically
 # a fancy wrapper around Chris Cocosco's minc2jiv.pl
 #
-# $Id: jivpublish.pl,v 1.1 2003-05-05 15:33:20 bert Exp $
+# author: bert@bic.mni.mcgill.ca
+#
+# $Id: jivpublish.pl,v 1.1 2003-06-22 19:01:44 crisco Exp $
 #
 
 use Getopt::Tabular;
