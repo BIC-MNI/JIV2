@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: Data3DVolume.java,v 1.2 2001-09-21 16:42:13 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -31,22 +31,65 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.2 2001-09-21 16:42:13 cc Exp $
  */
 public final class Data3DVolume {
 
-    /*private*/ byte[][][] voxels; 			// (z,y,x)!
-    /*private*/ URL source_url;
-    /*private*/ String nick_name;
+    /** for development only: artificially delay the downloads */
+    /*private*/ static final boolean DELAY_DOWNLOAD= true;
+
+    public static final int DOWNLOAD_UPFRONT=		1;
+    public static final int DOWNLOAD_ON_DEMAND= 	2;
+    public static final int DOWNLOAD_HYBRID= 		3;
+
+
+    /*private*/ byte[][][] 	voxels;     // (z,y,x)!
+
+    /** indicates if that slice number was already downloaded */
+    /*private*/ volatile boolean    	t_slice_downloaded[];
+    /*private*/ volatile boolean	s_slice_downloaded[];
+    /*private*/ volatile boolean	c_slice_downloaded[];
+    
+    /*private*/ String 		volume_url;	// eg http://www/foo/colin27.raw.gz
+    /*private*/ String 		slice_url_base; // eg http://www/foo/colin27
+    /*private*/ String 		slice_url_ext;  // eg .raw.gz
+
+    /*private*/ String 		nick_name;
+
 
     final public int getXSize() { return 181; }
     final public int getYSize() { return 217; }
     final public int getZSize() { return 181; }
 
-    /** currently, this constructor is practically useless... */
+
     public Data3DVolume()
     {
 	voxels= new byte[ getZSize()][ getYSize()][ getXSize()];
+
+	// initialize it to the dummy pattern
+	byte[] 	dummy_line1= new byte[ getXSize()];;
+	byte[] 	dummy_line2= new byte[ getXSize()];;
+	for( int i= 0; i < getXSize(); ++i) {
+	    if( ((i/2) % 2) == 0 ) {
+		dummy_line1[ i]= (byte)0;
+		dummy_line2[ i]= (byte)255;
+	    }
+	    else {
+		dummy_line1[ i]= (byte)255;
+		dummy_line2[ i]= (byte)0;
+	    }
+	}
+	for( int z= 0; z < getZSize(); ++z) {     
+	    for( int y= 0; y < getYSize(); ++y) {
+		byte[] pat= ( ((y/2) % 2) == 0 ) ? dummy_line1 : dummy_line2 ;
+		System.arraycopy( pat, 0, voxels[ z][ y], 0, getXSize());
+	    }
+	}
+
+	// by default initialized to false (TODO: chk if is it guaranteed!)
+	t_slice_downloaded= new boolean[ getZSize()];
+	s_slice_downloaded= new boolean[ getXSize()];
+	c_slice_downloaded= new boolean[ getYSize()];
     }
 
     /** Note: it's not _required_ to declare SecurityException (since
@@ -56,34 +99,73 @@ public final class Data3DVolume {
     public Data3DVolume( URL source_url) 
 	throws IOException, SecurityException
     {
-	this( source_url, null);
+	this( source_url, null, DOWNLOAD_UPFRONT);
     }
 
     public Data3DVolume( URL source_url, String nick_name) 
 	throws IOException, SecurityException
     {
+	this( source_url, nick_name, DOWNLOAD_UPFRONT);
+    }
+
+    public Data3DVolume( final URL source_url, String nick_name, int download_method) 
+	throws IOException, SecurityException
+    {
 	this();
 	
-	this.source_url= source_url;
+	volume_url= source_url.toString();
+	slice_url_ext= Util.getExtension( volume_url);
+	if( slice_url_ext.length() > 0 ) {
+	    int ext= volume_url.lastIndexOf( slice_url_ext);
+	    slice_url_base= volume_url.substring( 0, ext);
+	}
+	else {
+	    slice_url_base= volume_url;
+	}
 	this.nick_name= (nick_name != null) ? nick_name : "(unnamed)";
+
+	switch( download_method) {
+
+	case DOWNLOAD_UPFRONT :
+
+	    _downloadAllVolume( source_url);
+	    break;
+
+	case DOWNLOAD_ON_DEMAND :
+
+	    break;
+
+	case DOWNLOAD_HYBRID :
+
+	    // start the parallel ("bg") download 
+	    Thread t= new Thread() {
+		    public void run() 
+		    {
+			try {
+			    _downloadAllVolume( source_url);
+			}
+			catch( Exception e) {
+			    System.err.println( e);
+			    return;
+			}
+		    }
+		};
+	    t.setPriority( Thread.NORM_PRIORITY - 1 ); 
+	    t.start();
+	    break;
+
+	default:
+	    throw new 
+		IllegalArgumentException( this + " unknown download method: " +	download_method);
+	}
+    }
+
+    final private void _downloadAllVolume( URL source_url)
+	throws IOException, SecurityException
+    {
 	InputStream input_stream= null;
 	try {
-	    URLConnection url_connection= source_url.openConnection();
-	    // NB: the connection is not yet opened at this point; it'll be 
-	    // actually done when calling getInputStream() below.
-	    url_connection.setUseCaches( true);
-
-	    if( url_connection instanceof HttpURLConnection ) {
-		HttpURLConnection http_conn= (HttpURLConnection)url_connection;
-		if( http_conn.getResponseCode() != HttpURLConnection.HTTP_OK)
-		    throw new IOException( source_url.toString() + " : "
-					   + http_conn.getResponseCode() + " " 
-					   + http_conn.getResponseMessage() );
-	    }
-	    input_stream= url_connection.getInputStream();
-	    if( source_url.toString().endsWith( ".gz")) 
-		// use a larger decompression buffer than the 512 default
-		input_stream= new GZIPInputStream( input_stream, 4096);
+	    input_stream= _openURL( source_url);
 
 	    int read_count, left;
 	    // for speed, use a stack variable instead of the instance field:
@@ -97,6 +179,8 @@ public final class Data3DVolume {
 		       anywhere!) */
 		    left= getXSize();
 		    while( left > 0) {
+			if( DELAY_DOWNLOAD ) Util.sleep( 7); 
+			
 			read_count= input_stream.read( voxels[ z][ y], 
 						       getXSize()-left, left);
 			if( read_count <= 0)
@@ -106,13 +190,8 @@ public final class Data3DVolume {
 			left -= read_count;
 		    }
 		}
+		t_slice_downloaded[ z]= true;
 	    }
-	    // TODO: I once got a "IOException: server status 206" when loading
-	    // the applet via http ... but couldn't reproduce it ever since.
-	    // what went wrong?
-	    // (btw, 206 == HTTP_PARTIAL : 
-	    // "HTTP response code that means the partial request has been fulfilled") 
-
 	    System.out.println( source_url + " loading done!");
 	}
 	finally {
@@ -126,7 +205,84 @@ public final class Data3DVolume {
 		input_stream= null;
 	    }
 	}
+	int i;
+	for( i= 0; i < getXSize(); ++i)
+	    s_slice_downloaded[ i]= true;
+	for( i= 0; i < getYSize(); ++i)
+	    c_slice_downloaded[ i]= true;
     }
+
+    final private void _downloadSlice( URL source_url, 
+				       byte[] slice, 
+				       final int slice_width,
+				       SliceImageProducer consumer, 
+				       int slice_number )
+	throws IOException, SecurityException
+    {
+	InputStream input_stream= null;
+	try {
+	    input_stream= _openURL( source_url);
+
+	    // store the slice in "display order" (vertically flipped)
+	    int read_count, left, offset;
+	    for( int l= slice.length/slice_width - 1; l >= 0; --l) {
+		left= slice_width;
+		offset= l * slice_width;
+		while( left > 0) {
+		    read_count= input_stream.read( slice, 
+						   offset + slice_width - left, 
+						   left);
+		    if( read_count <= 0)
+			throw new IOException( source_url.toString()
+					       + " : premature end of data : "
+					       + l + " : " + read_count);
+		    left -= read_count;
+		}
+	    }
+	    System.out.println( source_url + " loading done!");
+	}
+	finally {
+	    if( input_stream != null) {
+		input_stream.close();
+		input_stream= null;
+	    }
+	}
+
+	if( consumer != null ) 
+	    consumer.sliceDataUpdated( slice, slice_number);
+    }
+
+    final private InputStream _openURL( URL source_url) 
+	throws IOException, SecurityException 
+    {
+	InputStream input_stream= null;
+
+	URLConnection url_connection= source_url.openConnection();
+	// NB: the connection is not yet opened at this point; it'll be 
+	// actually done when calling getInputStream() below.
+	url_connection.setUseCaches( true);
+
+	if( url_connection instanceof HttpURLConnection ) {
+	    HttpURLConnection http_conn= (HttpURLConnection)url_connection;
+	    if( http_conn.getResponseCode() != HttpURLConnection.HTTP_OK)
+		throw new IOException( source_url.toString() + " : "
+				       + http_conn.getResponseCode() + " " 
+				       + http_conn.getResponseMessage() );
+	}	
+	input_stream= url_connection.getInputStream();
+	if( source_url.toString().endsWith( ".gz")) 
+	    // use a larger decompression buffer than the 512 default
+	    input_stream= new GZIPInputStream( input_stream, 4096);
+
+	// TODO: I once got a "IOException: server status 206" when loading
+	// the applet via http ... but couldn't reproduce it ever since.
+	// what went wrong?
+	// (btw, 206 == HTTP_PARTIAL : 
+	// "HTTP response code that means the partial request has been fulfilled") 
+
+	return input_stream;
+    }
+
 
     final public String getNickName() { return nick_name; }
 
@@ -160,55 +316,170 @@ public final class Data3DVolume {
     final public byte[] getTransverseSlice( final int z )
     {
 	byte[] slice= new byte[ getYSize() * getXSize()];
-	getTransverseSlice( z, slice);
+	getTransverseSlice( z, slice, null);
 	return slice;
     }
 
     /** this overloaded version is easier on the heap & garbage collector because
 	it encourages reuse of an already allocated 'slice' array (which has
-	to be large enough to hold the result, naturally)
+	to be large enough to hold the result, naturally).
+
+	<em>Note:</em> param 'slice' should not be used outside the 
+	current thread!!
     */
-    final public void getTransverseSlice( final int z, byte[] slice)
+    final public void getTransverseSlice( final int z, byte[] slice,
+					  final SliceImageProducer consumer )
     {
 	// for speed, use a stack variable instead of the instance field:
 	final byte[][][] voxels= this.voxels;
+	final boolean slice_downloaded= t_slice_downloaded[ z];
 
-	// decreasing index loops are rumored to run faster in Java
+	// NB: this vertically flips the image...
+	// (decreasing index loops are rumored to run faster in Java)
 	for( int y= getYSize()-1, offset= 0; y >= 0; --y, offset += getXSize())
 	    System.arraycopy( voxels[ z][ y], 0, slice, offset, getXSize());
+	
+	if( consumer != null )
+	    consumer.sliceDataUpdated( slice, z);
+
+	if( slice_downloaded )
+	    return;
+
+	// download the slice in a parallel (bg) thread
+	Thread t= new Thread() {
+		public void run() 
+		{ 
+		    byte[] buff= new byte[getXSize()*getYSize()];
+		    try { 
+			if( DELAY_DOWNLOAD ) Util.sleep( 3000); 
+			_downloadSlice( new URL( slice_url_base + "/t/" + z + 
+						 slice_url_ext ),
+					buff,
+					getXSize(),
+					consumer, 
+					z );
+		    }
+		    catch( Exception e) {
+			System.err.println( e);
+			return;
+		    }
+
+		    // the rest should be synchronized( Data3DVolume.this)
+		    // but nothing bad will happen if two parallel updates occur
+		    // (the info being written is identical)
+		    // TODO: verify this!!!
+
+		    for( int y= getYSize()-1, offset= 0; y >= 0; --y, offset += getXSize())
+			System.arraycopy( buff, offset, voxels[ z][ y], 0, getXSize());
+		    t_slice_downloaded[ z]= true;
+
+		    // TODO? chk if all transverse slices were downloaded,
+		    // and then set all c_slice & s_slice to true also ...
+		}
+	    };
+	t.start();
     }
 
     final public byte[] getSagittalSlice( final int x )
     {
 	byte[] slice= new byte[ getZSize() * getYSize()];
-	getSagittalSlice( x, slice);
+	getSagittalSlice( x, slice, null);
 	return slice;
     }
 
-    final public void getSagittalSlice( final int x, byte[] slice)
+    final public void getSagittalSlice( final int x, byte[] slice,
+					final SliceImageProducer consumer)
     {
 	// for speed, use a stack variable instead of the instance field:
 	final byte[][][] voxels= this.voxels;
+	final boolean slice_downloaded= s_slice_downloaded[ x];
 
+	// NB: this vertically flips the image...
 	for( int z= getZSize()-1, offset= 0; z >= 0; --z, offset += getYSize()) 
 	    for( int y= getYSize()-1; y >= 0; --y)
 		slice[ offset + y]= voxels[ z][ y][ x];
+
+	if( consumer != null )
+	    consumer.sliceDataUpdated( slice, x);
+
+	if( slice_downloaded )
+	    return;
+
+	// download the slice in a parallel (bg) thread
+	Thread t= new Thread() {
+		public void run() 
+		{ 
+		    byte[] buff= new byte[getZSize()*getYSize()];
+		    try { 
+			if( DELAY_DOWNLOAD ) Util.sleep( 3000); 
+			_downloadSlice( new URL( slice_url_base + "/s/" + x + 
+						 slice_url_ext ),
+					buff,
+					getYSize(),
+					consumer, 
+					x );
+		    }
+		    catch( Exception e) {
+			System.err.println( e);
+			return;
+		    }
+		    for( int z= getZSize()-1, offset= 0; z >= 0; --z, offset += getYSize()) 
+			for( int y= getYSize()-1; y >= 0; --y)
+			    voxels[ z][ y][ x]= buff[ offset + y]; 
+		    s_slice_downloaded[ x]= true;
+		}
+	    };
+	t.start();
     }
 
     final public byte[] getCoronalSlice( final int y )
     {
 	byte[] slice= new byte[ getZSize() * getXSize()];
-	getCoronalSlice( y, slice);
+	getCoronalSlice( y, slice, null);
 	return slice;
     }
 
-    final public void getCoronalSlice( final int y, byte[] slice)
+    final public void getCoronalSlice( final int y, byte[] slice,
+				       final SliceImageProducer consumer)
     {
 	// for speed, use a stack variable instead of the instance field:
 	final byte[][][] voxels= this.voxels;
+	final boolean slice_downloaded= c_slice_downloaded[ y];
 
+	// NB: this vertically flips the image...
 	for( int z= getZSize()-1, offset= 0; z >= 0; --z, offset += getXSize())
 	    System.arraycopy( voxels[ z][ y], 0, slice, offset, getXSize());
+
+	if( consumer != null )
+	    consumer.sliceDataUpdated( slice, y);
+
+	if( slice_downloaded )
+	    return;
+
+	// download the slice in a parallel (bg) thread
+	Thread t= new Thread() {
+		public void run() 
+		{ 
+		    byte[] buff= new byte[getZSize()*getXSize()];
+		    try { 
+			if( DELAY_DOWNLOAD ) Util.sleep( 3000); 
+			_downloadSlice( new URL( slice_url_base + "/c/" + y + 
+						 slice_url_ext ),
+					buff,
+					getXSize(),
+					consumer, 
+					y );
+		    }
+		    catch( Exception e) {
+			System.err.println( e);
+			return;
+		    }
+		    for( int z= getZSize()-1, offset= 0; z >= 0; --z, offset += getXSize())
+			System.arraycopy( buff, offset, voxels[ z][ y], 0, getXSize());
+		    c_slice_downloaded[ y]= true;
+		}
+	    };
+	t.start();
     }
 
     // debugging aid...

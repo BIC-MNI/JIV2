@@ -1,5 +1,5 @@
 
-// $Id: CoronalSliceImageProducer.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: CoronalSliceImageProducer.java,v 1.2 2001-09-21 16:42:13 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (Y=constant) 2D slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CoronalSliceImageProducer.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: CoronalSliceImageProducer.java,v 1.2 2001-09-21 16:42:13 cc Exp $ 
  */
 public final class CoronalSliceImageProducer extends SliceImageProducer {
 
@@ -44,6 +44,7 @@ public final class CoronalSliceImageProducer extends SliceImageProducer {
 	       data_volume.getZSize(),
 	       default_colormap,
 	       data_volume);
+	data_volume.getCoronalSlice( default_slice, slice_data, this);
     }
 
     // NB: any changes here should also be made 
@@ -64,11 +65,7 @@ public final class CoronalSliceImageProducer extends SliceImageProducer {
 
 		crt_slice= new_voxel_pos.y;
 		// reuse the existing slice_data array!
-		data_volume.getCoronalSlice( crt_slice, slice_data);
-		// Send another frame (i.e. update the image);
-		// this version of MemoryImageSource::newPixels() will send the
-		// data presently found in 'slice_data' (it stores a ref internally)
-		newPixels();
+		data_volume.getCoronalSlice( crt_slice, slice_data, this);
 	    }
 	}
     }

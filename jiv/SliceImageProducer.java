@@ -1,5 +1,5 @@
 
-// $Id: SliceImageProducer.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: SliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -35,7 +35,7 @@ import java.awt.image.*;
  * <code>SagittalSliceImageProducer</code>. 
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: SliceImageProducer.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: SliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $ 
  */
 public abstract class SliceImageProducer extends MemoryImageSource 
     implements PositionListener, ColormapListener {
@@ -46,6 +46,7 @@ public abstract class SliceImageProducer extends MemoryImageSource
     protected IndexColorModel colormap;
     protected int crt_slice;
     protected int slice_width;
+    protected int slice_height;
     /** this array is allocated by whoever creates this object (and passes
 	an allocated and initialized array to this class' constructor).
 	For efficiency, the same array is then reused over and over again
@@ -74,6 +75,7 @@ public abstract class SliceImageProducer extends MemoryImageSource
 	colormap= default_colormap;
 	crt_slice= default_slice;
 	this.slice_width= slice_width;
+	this.slice_height= slice_height;
 	slice_data= default_slice_data;
     }
 
@@ -108,5 +110,26 @@ public abstract class SliceImageProducer extends MemoryImageSource
 	colormap= e.getColormap();
 	// send another frame (i.e. update the image)
 	newPixels( slice_data, colormap, 0, slice_width);
+    }
+
+    synchronized void sliceDataUpdated( byte[] new_slice_data, int slice_number ) {
+	
+	if( DEBUG ) {
+	    System.out.println( this + "#sliceDataUpdated: ");
+	    System.out.println( "   slice_number= " + slice_number);
+	    System.out.println( "   crt_slice= " + crt_slice);
+	}
+	if( slice_number != crt_slice ) 
+	    // we already moved to another slice...
+	    return;
+
+	if( new_slice_data != slice_data ) 
+	    System.arraycopy( new_slice_data, 0, slice_data, 0, 
+			      slice_width*slice_height);
+
+	// Send another frame (i.e. update the image);
+	// this version of MemoryImageSource::newPixels() will send the
+	// data presently found in 'slice_data' (it stores a ref internally)
+	newPixels();
     }
 }

@@ -1,5 +1,5 @@
 
-// $Id: SagittalSliceImageProducer.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: SagittalSliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -30,7 +30,7 @@ import java.awt.image.*;
  * (X=constant) 2D slices.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: SagittalSliceImageProducer.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: SagittalSliceImageProducer.java,v 1.2 2001-09-21 16:42:14 cc Exp $ 
  */
 public final class SagittalSliceImageProducer extends SliceImageProducer {
 
@@ -44,6 +44,7 @@ public final class SagittalSliceImageProducer extends SliceImageProducer {
 	       data_volume.getZSize(),
 	       default_colormap,
 	       data_volume);
+	data_volume.getSagittalSlice( default_slice, slice_data, this);
     }
 
     // NB: any changes here should also be made 
@@ -64,11 +65,7 @@ public final class SagittalSliceImageProducer extends SliceImageProducer {
 
 		crt_slice= new_voxel_pos.x;
 		// reuse the existing slice_data array!
-		data_volume.getSagittalSlice( crt_slice, slice_data);
-		// Send another frame (i.e. update the image);
-		// this version of MemoryImageSource::newPixels() will send the
-		// data presently found in 'slice_data' (it stores a ref internally)
-		newPixels();
+		data_volume.getSagittalSlice( crt_slice, slice_data, this);
 	    }
 	}
     }

@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.2 2001-05-16 23:12:31 crisco Exp $
+// $Id: Util.java,v 1.3 2001-09-21 16:42:14 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -29,7 +29,7 @@ import java.awt.*;
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.2 2001-05-16 23:12:31 crisco Exp $
+ * @version $Id: Util.java,v 1.3 2001-09-21 16:42:14 cc Exp $
  */
 public final class Util {
 
@@ -60,6 +60,42 @@ public final class Util {
 	    f= f.getParent();
 	return (Frame)f;
     }
+
+
+    public static final String[] compress_extension= { ".gz", ".bz2" };
+
+    /**
+     * @return "extension" of a filename (or url), ignoring '.gz' and '.bz2'
+     */
+    public static final String getExtension( String s) {
+	
+	String ext= "";
+	for( int i= 0; i < compress_extension.length; ++i) 
+	    if( s.endsWith( compress_extension[ i]) ) {
+		ext= compress_extension[ i];
+		int chop= s.lastIndexOf( compress_extension[ i]);
+		s= s.substring( 0, chop);
+		break;
+	    }
+	int ei= s.lastIndexOf( '.');
+	if( ei >= 0 ) 
+	    return s.substring( ei) + ext;
+	else
+	    // hmm, no extension really...
+	    return ext;
+    }
+
+    /** sleeps the current thread, and (unlike Thread.sleep) doesn't throw
+	an exception if interrupted. 
+    */
+    public static final void sleep( long millis ) {
+
+	try {
+	    Thread.sleep( millis);
+	}
+	catch( InterruptedException e) {}
+    }
+
 
     public static final String arrayToString( byte[] arg) {
 

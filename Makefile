@@ -1,5 +1,5 @@
 
-# $Id: Makefile,v 1.2 2001-05-06 01:23:16 cc Exp $
+# $Id: Makefile,v 1.3 2001-09-21 16:42:13 cc Exp $
 
 all: prod jar
 
@@ -17,7 +17,7 @@ prod: clean
 
 jar: 
 	jar cf jiv/jiv.jar COPYING jiv/*.class
-#	mv jiv/jiv.jar ../../../www/work/jiv/
+	mv jiv/jiv.jar ../../../www/jiv/devel
 
 clean:
 	rm -f jiv/*.class jiv/*.jar

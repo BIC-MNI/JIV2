@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
+// $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
+ * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -55,6 +55,7 @@ public final class Main extends java.applet.Applet {
     /*private*/ boolean	 	initial_position_sync;	// Java default is false
     /*private*/ boolean	 	byte_voxel_values;	// Java default is false
     /*private*/ boolean	 	enable_world_coords= true;
+    /*private*/ int		download_method= Data3DVolume.DOWNLOAD_HYBRID;
     /** holds VolumeStruct */
     /*private*/ Hashtable	volumes= new Hashtable();  
     /** holds PanelStruct (and may contain gaps) */
@@ -181,7 +182,9 @@ public final class Main extends java.applet.Applet {
 		    ps.alias1 != null) // skip combined panels
 		    continue;
 		VolumeStruct vs= (VolumeStruct)volumes.get( ps.alias0);
-		vs.data= new Data3DVolume( new URL( config_url, vs.file), ps.alias0);
+		vs.data= new Data3DVolume( new URL( config_url, vs.file), 
+					   ps.alias0,
+					   download_method );
 	    }
 	}
 	// this will catch more than we should care about, but it saves us from
@@ -332,6 +335,15 @@ public final class Main extends java.applet.Applet {
 	*/
 	try { System.exit( 0); }
 	catch( SecurityException ex) { }
+
+	/* also stop any other threads that we may have running (NB:
+           this includes the thread executing this, so don't expect
+           any code after this to be ever executed :) */
+	/* FIXME: a better solution would be to create a threadgroup
+           for the init thread and kill that instead (that's where the
+           length download is... */
+	try { Thread.currentThread().getThreadGroup().stop(); }
+	catch( SecurityException ex) { }
     }
 
     /* see Java Programmer's FAQ (http://www.best.com/~pvdl/javafaq.html)
@@ -471,6 +483,21 @@ public final class Main extends java.applet.Applet {
 	    color_coding.put( color_codings_array[i][0], color_codings_array[i][1]);
     }
 
+    /** used by _parseConfig() 
+	in converting from the string representation (in the config file) to 
+	the internal int representation */    
+    /*private*/ static final Object[][] dnld_method_array= {
+	{ "upfront", new Integer( Data3DVolume.DOWNLOAD_UPFRONT) },
+	{ "on_demand", new Integer( Data3DVolume.DOWNLOAD_ON_DEMAND) },
+	{ "hybrid", new Integer( Data3DVolume.DOWNLOAD_HYBRID) },
+	};
+    /*private*/ static Hashtable dnld_method_convert;
+    static {
+	dnld_method_convert= new Hashtable();
+	for( int i= 0; i < dnld_method_array.length; ++i)
+	    dnld_method_convert.put( dnld_method_array[i][0], dnld_method_array[i][1]);
+    }
+
     /** fills-in the following fields of Main: volumes, panels, position_sync
 	throws an IOException if any errors were encountered 
 
@@ -594,6 +621,12 @@ public final class Main extends java.applet.Applet {
 	tmp_string= config.getProperty( "jiv.world_coords");
 	if( null != tmp_string) 
 	    enable_world_coords= Boolean.valueOf( tmp_string).booleanValue();
+	tmp_string= config.getProperty( "jiv.download");
+	if( null != tmp_string) 
+	    download_method= 
+		( (Integer)dnld_method_convert.get( tmp_string) ).intValue();
+	if( DEBUG)
+	    System.out.println( "* download method : " + download_method);
 
 	if( DEBUG) {
 	    System.out.println( "*** volumes:");
@@ -636,7 +669,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
+     * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -655,7 +688,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.5 2001-05-16 23:12:31 crisco Exp $
+     * @version $Id: Main.java,v 1.6 2001-09-21 16:42:13 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
