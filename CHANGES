@@ -1,4 +1,7 @@
 
+- new colormap: mni_labels 
+
+
 ** ver_2_1  [15-nov-2001] :
 
 - bug fix: 'quit' was crashing some browsers.
