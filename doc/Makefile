@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.5 2001-10-09 02:45:50 cc Exp $
+# $Id: Makefile,v 1.6 2001-10-12 01:57:32 cc Exp $
 #
 # author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 #
@@ -18,7 +18,7 @@ help : help.tex gui.tex
 html : manual.tex help.tex inputs.tex gui.tex
 	mkdir -p html/manual html/help
 	latex2html -split 4 -dir html/manual manual.tex
-	latex2html -split 0 -dir html/help help.tex
+	latex2html -split 0 -dir html/help -info '(this document was generated using latex2html)' help.tex
 
 clean : 
 	rm -rf *.aux *.log *.dvi _region_.* html/
