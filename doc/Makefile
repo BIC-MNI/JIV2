@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.4 2001-04-07 23:40:20 cc Exp $
+# $Id: Makefile,v 1.5 2001-10-09 02:45:50 cc Exp $
 #
 # author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 #
@@ -16,10 +16,10 @@ help : help.tex gui.tex
 
 # NB: don't run this on shadow.bic (crashes), nor on bottom.bic (takes ages)
 html : manual.tex help.tex inputs.tex gui.tex
-	mkdir -p html
+	mkdir -p html/manual html/help
 	latex2html -split 4 -dir html/manual manual.tex
 	latex2html -split 0 -dir html/help help.tex
 
 clean : 
-	rm -f *.aux *.log *.dvi _region_.*
+	rm -rf *.aux *.log *.dvi _region_.* html/
 
