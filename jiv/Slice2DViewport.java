@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: Slice2DViewport.java,v 1.2 2001-05-15 03:12:40 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.2 2001-05-15 03:12:40 cc Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -242,8 +242,8 @@ abstract public class Slice2DViewport extends Panel
 	original_image_height= original_image.getHeight( this);
 
 	max_scaled_image_width= original_image_width * MAX_SCALE_FACTOR;
-	// this makes sure that both dimensions cannot be less than 3 pixels
-	min_scaled_image_width= 3 * 
+	// this makes sure that none of the dimensions can be less than 1 pixel
+	min_scaled_image_width= 1 * 
 	    ( (original_image_width < original_image_height) ?
 	      ( 1) :
 	      (int)Math.ceil( original_image_width/(double)original_image_height) );
@@ -976,12 +976,16 @@ abstract public class Slice2DViewport extends Panel
     final synchronized public void doLayout() {
 	
 	// if we get called, then most probably the viewport size changed ...
+	final Dimension new_vport_dims= getSize();
+	if( new_vport_dims.height <= 0 || new_vport_dims.width <= 0)
+	    // silly values! just ignore them
+	    return;
+
 	if( DEBUG) {
 	    System.out.println( this + " vport_dims: " + vport_dims);
 	    System.out.println( "\timage_origin: " + image_origin);
 	    System.out.println( "\tscaled_image_width: " + scaled_image_width);
 	}
-	final Dimension new_vport_dims= getSize();
 	// TODO: optimization: maybe do nothing if vport_dims didn't change?
 	// (but careful to make sure you _do_ the computations the first time!)
 
@@ -1006,8 +1010,10 @@ abstract public class Slice2DViewport extends Panel
 	    old_fov_left + (old_fov_right - old_fov_left)/2;
 	final int vport_center_old_fov_y= 
 	    old_fov_top + (old_fov_bottom - old_fov_top)/2;
-	final int old_fov_width= old_fov_right - old_fov_left;
-	final int old_fov_height= old_fov_bottom - old_fov_top;
+	// will divide by this, so be extra careful
+	final int old_fov_width= Math.max( 1, old_fov_right - old_fov_left);
+	// will divide by this, so be extra careful
+	final int old_fov_height= Math.max( 1, old_fov_bottom - old_fov_top);
 	final float old_fov_aspect= ((float)old_fov_width) / old_fov_height;
 	final float new_vport_aspect= 
 	    ((float)new_vport_dims.width) / new_vport_dims.height;
@@ -1056,7 +1062,6 @@ abstract public class Slice2DViewport extends Panel
 	    System.out.println( "New values: " + " vport_dims: " + vport_dims);
 	    System.out.println( "\timage_origin: " + image_origin);
 	    System.out.println( "\tscaled_image_width: " + scaled_image_width);
-	    scaled_image_height= (int)( new_scale_factor * original_image_height);
 	    System.out.println( "\tscaled_image_height: " + scaled_image_height);
 	}
 
