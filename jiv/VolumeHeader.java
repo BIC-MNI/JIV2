@@ -1,5 +1,5 @@
 
-// $Id: VolumeHeader.java,v 1.2 2001-10-04 16:56:48 cc Exp $
+// $Id: VolumeHeader.java,v 1.3 2001-12-04 16:51:25 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -32,7 +32,7 @@ import java.util.*;
  * 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: VolumeHeader.java,v 1.2 2001-10-04 16:56:48 cc Exp $
+ * @version $Id: VolumeHeader.java,v 1.3 2001-12-04 16:51:25 cc Exp $
  */
 public final class VolumeHeader {
 
@@ -360,6 +360,11 @@ public final class VolumeHeader {
 	public int[][] 	start;
 	public int[][] 	end;
 
+	/** set if all volume steps are same as common step (implies
+            isotropic voxels, and positive steps/dir), and dimension
+            ordering is 'z y x' */
+	public boolean	fast_resample= false;
+
 	public ResampleTable( int[] sizes) {
 
 	    start= new int[ sizes.length][];
@@ -430,6 +435,16 @@ public final class VolumeHeader {
 		}
 	    }
 	}
+
+	float css= common_sampling.step_x;
+	int[] d_o= this.getDimOrder();
+	rt.fast_resample= 
+	    // fixme: comparing 2 float with == is asking for trouble...
+	    this.getStepX() == css && this.getStepY() == css && this.getStepZ() == css
+	    &&
+	    // 'z y x' dimension ordering:
+	    d_o[ 0] == 2 && d_o[ 1] == 1 && d_o[ 2] == 0 ;
+	    
 	return rt;
     }
 

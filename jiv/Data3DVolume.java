@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.10 2001-10-26 13:54:44 cc Exp $
+// $Id: Data3DVolume.java,v 1.11 2001-12-04 16:51:25 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.10 2001-10-26 13:54:44 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.11 2001-12-04 16:51:25 cc Exp $
  */
 public final class Data3DVolume {
 
@@ -471,7 +471,12 @@ public final class Data3DVolume {
 			    source_url.toString(),
 			    buff, size_2, size_1);
 		slab_start[ 0]= d_0;
-		_saveSlab( buff, slab_start, slab_size);
+
+		if( this.resample_table.fast_resample )
+		    _saveSlab_fast( buff, slab_start, slab_size);
+		else
+		    _saveSlab( buff, slab_start, slab_size);
+
 		slice_downloaded[ dim_order[0] ][ d_0 ]= true;
 		/* this should help on a slow & non-preemptive jvm ... */
 		Thread.yield();
@@ -672,7 +677,38 @@ public final class Data3DVolume {
 	// and then set all c_slice & s_slice to true also ...
     }
 
+    /** Version of _saveSlab for when
+	(this.resample_table.fast_resample == true).  NB: It assumes
+	the slab is in y-x order, and 1 voxel thick (size[0]==1) !!
 
+	It's basically a (ugly) speed hack for lousy slow JVM-s.
+
+	@param slab the "hyperslab" data
+	@param start slab start voxels (in slab dim order)
+	@param size slab length along each dim (in slab order) 
+    */
+    final /*private*/ void _saveSlab_fast( byte[] slab, 
+					   int[] start,
+					   int[] size )
+    {
+	// for speed, use a stack variable instead of the instance field:
+	byte[][][] 	voxels= this.voxels;
+	int[][] 	map_start= this.resample_table.start;
+	int[][] 	map_end= this.resample_table.end;
+
+	final int x_start= map_start[0][ start[2]];
+	final int y_start= map_start[1][ start[1]];
+	final int z_start= map_start[2][ start[0]];
+	final int x_size= size[2];
+	final int y_size= size[1];
+	final int y_end= y_start + y_size;
+
+	for( int y= y_start, offset= 0; y < y_end; ++y, offset += x_size)
+	    System.arraycopy( slab, offset, voxels[ z_start][ y], x_start, x_size);
+
+    }
+
+    
     /**
      * @return value of first element of <code>array</code>
      */
