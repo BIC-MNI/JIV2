@@ -1,39 +1,11 @@
 %
-% $Id: inputs.tex,v 1.8 2001-04-07 23:40:20 cc Exp $
+% $Id: inputs.tex,v 1.9 2001-10-06 02:39:59 cc Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
 
 \section{Inputs}
 \label{sec:inputs}
-
-
-\subsection{Data files}
-\label{sec:data-files}
-Requirements for the 3D volume data read by JIV:
-\begin{itemize}
-\item the data file should be a sequence of $181 \times 217 \times 181
-  = 7109137$ bytes, with no header, scanning the volume in $z, y, x$
-  order (i.e.\ $z$ dimension changes fastest; this is also known as a
-  ``transverse'' 3D data set); optionally, this file can compressed
-  using \texttt{gnuzip} in which case its name needs to have the
-  \texttt{.gz} suffix.
-\item volumes are assumed to have the $(x,y,z)$ dimensions of
-  $(181,217,181)$.
-\item the $x, y, z$ axes and their positive direction are assumed to
-  be (respectively): left to right, posterior to anterior, and
-  inferior to superior of a 3D medical image.
-\item the voxel (``file'') to world coordinates transformation assumes
-  that: voxels have an isotropic sampling of 1mm; the first voxel of
-  the data file has a world coordinate $(x,y,z)$ of
-  \mbox{$(-90,-126,-72)$mm}; voxel coordinates increase along the
-  positive direction of their axis.
-\end{itemize}
-
-Note that the above volume sampling and associated world coordinates
-correspond to the ``ICBM'' sampling and to the ``Talairach''
-stereotaxic coordinates systems used at the Montreal Neurological
-Institute (MNI), McGill University.
 
 
 \subsection{Environment}
@@ -68,7 +40,8 @@ or \verb+config+ Java system properties (``environment variables'').
 The top-level class that needs to be run is the same
 (\verb+jiv/Main.class+).
 
-\subsection{Config file}
+
+\subsection{Config File}
 \label{sec:config-file}
 
 The config file is expected to be in the following format:
@@ -99,16 +72,26 @@ The config file is expected to be in the following format:
   \end{itemize}
 \end{itemize} 
 
-Keys which do not start with ``\verb+jiv.+'' represent {\em data
-  volume aliases}, i.e.\ a kind of a short name for a 3D data volume
-file. This is displayed as a title at the top of each panel, hence
-it's a good idea to choose something descriptive and also short (such
-that it will fit in the, possibly narrow, panel). The value associated
-with the alias is data file's URL\@; relative URL-s are interpreted
-relative to the base URL of the config file.
+Keys which start with ``\verb+jiv.+'' are JIV configuration options.
+Keys which do not start with ``\verb+jiv.+'' give the location of the
+image data files (image volumes). JIV configuration options refer to
+data files by means of {\em data volume aliases}, i.e.\ a kind of a
+short name.  The alias is displayed as a title at the top of each
+panel, hence it's a good idea to choose something descriptive and
+short (such that it will fit in the, possibly narrow, panel).
 
-Keys which start with ``\verb+jiv.+'' are JIV configuration
-options. The following such keys are recognized:
+For a given alias ``myalias'', the value associated with key
+\verb+myalias+ is the volume image file's URL (URL-s for the
+individual slices are derived from the volume URL, as described in
+section~\ref{sec:data-files}). The value associated with key
+\verb+myalias.header+ is the URL of the header file associated with
+the image file(s). All relative URL-s are interpreted relative to the
+base URL of the config file.  If all volumes have the same header, it
+is acceptable to specify it only for one of the volumes; otherwise, a
+header should be specified for all volumes (see
+section~\ref{sec:header-files} for the header file format).
+
+The following JIV configuration options are supported:
 \begin{itemize}
 \item \verb+jiv.sync = [true|false]+ \\
   Sets the initial state of the \mbox{\em Sync all cursors}\ control.
@@ -147,7 +130,34 @@ options. The following such keys are recognized:
   panel. \verb+L+ and \verb+U+ should be fractional (float) numbers in
   the range 0.0--1.0.  The two should be separated by one or more
   blanks (\verb*+ +) or tabs (\verb+\t+).
+\item \verb+jiv.download = [upfront|on_demand|hybrid]+ \\
+  Specifies the data (down-)loading method. 
+
+  In mode \verb+upfront+, all of the data is loaded and stored in
+  memory before the user can view and interact with any of it. This
+  guarantees the best interactive response of the viewer, however the
+  user has to wait for all the data to load before the JIV interface
+  becomes available.  This mode is recommended when the data is
+  available locally, but is impractical for accessing remote data over
+  a slow network.
+
+  In mode \verb+on_demand+ image data is loaded one slice at a time,
+  and only if and when the user is viewing that particular slice
+  number.  This mode is recommended for remote access over very slow
+  networks.  It minimizes the data downloads and the amount of memory
+  required by JIV, but the interactive performance is completely
+  dependent on the network speed.
+
+  Mode \verb+hybrid+ combines the other two: the complete image volume
+  is downloaded in the background, and the slices at the cursor are
+  downloaded with priority, as soon as they are needed. This mode is
+  the recommended for typical remote data access situations; it
+  provides the fast startup of \verb+on_demand+ and, after the
+  background downloading completes, the optimal interactive
+  performance of \verb+upfront+.
+
 \end{itemize}
+
 Panels are displayed left to right, sorted by their increasing number.
 Note that these numbers do not have to be consecutive --- ``gaps'' in
 the numbering sequence are silently skipped.  Note that the same alias
@@ -159,5 +169,94 @@ key/value pairs is irrelevant. However, if several conflicting
 key/value definitions are given (which is bad practice, by the way),
 not the last definition given but a random one of them will be
 considered!
+
+
+\subsection{Data Files}
+\label{sec:data-files}
+\label{sec:header-files}
+JIV reads 3D image data from an image~file which should contain the
+image intensity (gray level) data represented as unsigned bytes
+(8-bit). The image data are interpreted using an associated header
+file, which specifies the volume sampling, world coordinates (real
+world mm), and real image values.
+All the data files can be optionally compressed using \texttt{gnuzip},
+in which case their names (URL-s) need to have the \texttt{.gz}
+suffix.  
+
+The \emph{header file} is a text file with the same syntax as the
+config file (see section~\ref{sec:config-file}). The following
+statements are supported (where the 3 values of the right-hand side
+can be separated by whitespace or ``\verb+,+'') :
+\begin{itemize}
+\item \verb+size : x_size y_size z_size+ \\
+  the sizes (voxel counts) of the 3D image along the x, y, and z axes
+  respectively.
+\item \verb+start : x_start y_start z_start+ \\
+  the distance (in real world mm) from the origin to the first voxel
+  along the x, y, and z axes respectively.
+\item \verb+step : x_step y_step z_step+ \\
+  the signed distance (in real world mm) between the centers of
+  consecutive voxels along the x, y, and z axes respectively; a
+  negative value indicates that the file scans the volume in negative
+  direction along that axis.
+\item \verb+order : (permutation of {x,y,z})+ \\
+  the order of dimensions in the file, i.e.\ the order in which the
+  volume file scans the (3D) data volume --- 
+  e.g.\ ``\verb+order : z y x+'' means that the $x$ coordinate changes
+  fastest (volumes using this particular dimension ordering are also
+  known as ``transverse'').
+\item \verb+imagerange : range_min range_max+ \\
+  the linear mapping from the byte voxel values to the real image
+  voxel values: 0 maps to range\_min, 255 maps to range\_max.
+\end{itemize}
+The $x, y, z$ axes and their positive direction are assumed to be
+(respectively): left to right, posterior to anterior, and inferior to
+superior of a 3D medical image. Note that the sizes, starts, and steps
+are always expected in \mbox{$x, y, z$} order, regardless of the file
+dimension order. If any of the header information is not specified,
+the following defaults are used (they correspond to the ``ICBM''
+sampling and to the ``Talairach'' stereotaxic coordinates systems used
+at the Montreal Neurological Institute, McGill University):
+\begin{verbatim}
+  size   :  181 217 181
+  start  :  -90 -126 -72
+  step   :  1 1 1
+  order  :  z y x
+  imagerange  :  0.0 1.0
+\end{verbatim}
+
+There are two kinds of image files: 
+\begin{description}
+\item[volume file:] contains the complete (3D) image volume data; it
+  is required by the \verb+upfront+ and the \verb+hybrid+ download
+  modes.
+\item[slice file(s):] contain a 2D slice of the 3D image volume; three
+  sets of all the slices orthogonal to each of the three coordinate
+  axes are required by the \verb+on_demand+ and the \verb+hybrid+
+  download modes.
+\end{description}
+The volume file URL is specified in the config file (as shown above in
+section~\ref{sec:config-file}); the slice files are expected at URL-s
+of the form: \texttt{base/orientation/slice\_number.extension}, where
+\texttt{orientation} is one of ``01'', ``02'', or ``12'' --- the name
+indicates which are the in-slice dimensions (in file dimension order)
+for that orientation. For example, for a ``transverse'' volume
+(\mbox{order: z y x}) 01, 02, 12 correspond to ``sagittal'' (z-y),
+``coronal'' (z-x), and ``transverse'' (y-x) slice orientations.
+
+\texttt{base} and \texttt{extension} are obtained by breaking the
+volume file URL at the last ``\verb+.+'' (other than the suffixes
+\verb+.gz+ or \verb+.bz2+); for example, all of the following:
+\begin{verbatim}
+  /some/dir/somename.raw_byte.gz
+  /some/dir/somename.raw_byte
+  /some/dir/somename.gz
+  /some/dir/somename
+\end{verbatim}
+result in \texttt{base} = \texttt{/some/dir/somename} .
+
+For converting MNI-MINC data to the JIV input format, two utilities
+(Perl scripts) are distributed along with JIV: \verb+minc2jiv.pl+, and
+\verb+jiv.pl+.
 
 
