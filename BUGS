@@ -1,4 +1,13 @@
 
+** serious:
+
+- Util#chopToNSignificantDigits() is buggy: takes log of a float which
+  can be 0, (or even negative??)
+
+  may be other problems with an imagerange start < 0
+  (I get a nullpointerexception with '-120 255' !?)
+
+
 =============================================================================
 
 ** unconfirmed:
