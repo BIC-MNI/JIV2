@@ -1,5 +1,5 @@
 %
-% $Id: inputs.tex,v 1.10 2001-12-21 02:47:30 cc Exp $
+% $Id: inputs.tex,v 1.11 2002-04-21 13:03:12 cc Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -31,7 +31,19 @@ The applet can be launched by some HTML code like this:
 where \verb+jiv.jar+ should be the URL of the JAR file containing the
 JIV Java bytecode, and \verb+config_file+ should be the URL of the
 appropriate JIV config file (\verb+config+ can be used instead of
-\verb+cfg+ for the parameter name).
+\verb+cfg+ for the parameter name). The config file can also be
+supplied ``inline'': simply insert its content instead of its URL; for
+example:
+\begin{verbatim}
+<applet height=50 width=400 archive="jiv.jar" code="jiv/Main.class">
+        <param name="cfg" value="#
+# config file's content here:
+data1 : data1.raw_byte.gz
+jiv.panel.0 : data1
+# ...
+">
+</applet>
+\end{verbatim}
 
 The HTML file is not needed when JIV is not run as an applet but as a
 regular Java application. In this case, the config file's URL can be
