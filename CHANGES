@@ -1,4 +1,11 @@
 
+** [21-apr-2002] :
+
+- documentation update: config file can also be provided inline
+  within the applet html tag.
+- util/minc2jiv.pl : added -force command line switch.
+
+
 ** ver_2_2  [20-dec-2001] :
 
 - new colormap: mni_labels .
