@@ -2,3 +2,5 @@
 *.dvi
 *.log
 _region_.*
+manual
+help
