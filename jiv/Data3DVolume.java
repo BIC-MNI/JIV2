@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.11 2001-12-04 16:51:25 cc Exp $
+// $Id: Data3DVolume.java,v 1.12 2001-12-20 19:26:42 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.11 2001-12-04 16:51:25 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.12 2001-12-20 19:26:42 crisco Exp $
  */
 public final class Data3DVolume {
 
@@ -207,7 +207,8 @@ public final class Data3DVolume {
 			}
 		    }
 		};
-	    bg_dnld.setPriority( Thread.currentThread().getPriority() - 2 ); 
+	    bg_dnld.setPriority( Thread.MIN_PRIORITY ); 
+	    //bg_dnld.setPriority( Thread.currentThread().getPriority() - 2 ); 
 	    bg_dnld.start();
 	    break;
 
@@ -321,6 +322,7 @@ public final class Data3DVolume {
 		    _asyncDownloadSlice( 1, 0, file_voxel.z, consumer, z); 
 		}
 	    };
+	// TODO: maybe use (MIN_PRIORITY+1), or even MIN_PRIORITY, instead???
 	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
     }
