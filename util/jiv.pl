@@ -1,9 +1,29 @@
 #!/usr/local/bin/perl5 -w
+
+# $Id: jiv.pl,v 1.2 2001-04-08 00:41:06 cc Exp $
 #
-# $Id: jiv.pl,v 1.1 2001-04-08 00:24:13 cc Exp $
+# Description: this is a preprocessing script for invoking JIV on
+#              one or more MNI MINC image volumes.
+# Requires: mni-perllib (available from ftp.bic.mni.mcgill.ca)
 #
-# authors: {stever,crisco}@bic.mni.mcgill.ca
+# Copyright (C) 2000, 2001 Steve Robbins and Chris Cocosco
+# ({stever,crisco}@bic.mni.mcgill.ca)
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+# License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation, 
+# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
+# or see http://www.gnu.org/copyleft/gpl.html
+
 
 use strict;
 
@@ -16,16 +36,14 @@ use MNI::MincUtilities qw(:geometry);
 use MNI::MiscUtilities qw(:all);
 
 # this _needs_ to be defined
-my $JIVCode = '/data/web/users/crisco/jiv/prod/jiv.jar';
+my $JIVCode = '/some/path/jiv.jar';
 
 # optional (if not defined, a JVM named "java" will be searched for 
 # in the default path) 
-#my $JavaVM= '/usr/local/jdk_3.1.1/usr/java/bin/java';
-#my $JavaVM = '/data/web/tools/java/Linux/jdk118/bin/java';
+#my $JavaVM = '/usr/local/jdk118/bin/java';
 
 # optional (define only if required by the JVM...)
-#my $JavaLib= '/usr/local/jdk_3.1.1/usr/java/lib/classes.zip';
-#my $JavaLib = '/data/web/tools/java/Linux/jdk118/lib/classes.zip';
+#my $JavaLib = '/usr/local/jdk118/lib/classes.zip';
 
 # optional...
 my $JVMOptions= '-mx90m';
