@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.6 2000-07-04 02:57:25 crisco Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.7 2000-08-12 14:16:18 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -44,6 +44,7 @@ panel, additional controls are available through a panel-specific
 pop-up menu.
 
 \subsubsection{Slice viewport}
+\label{sec:gui:slice-viewport}
 
 Inside a 2D slice viewport, the following mouse actions are available:
 \begin{description}
@@ -187,7 +188,7 @@ panels only:
 \item \verb+Tie colormap sliders+ [toggle] : If \verb+on+, the two
   color-coding limits behave like being connected together by a solid
   rod --- adjusting one value implies changing the other one such that
-  their difference remains the same.
+  their difference (``distance'') remains the same.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -200,7 +201,7 @@ panels, then the left-most such panel is used as the coloring source
 for that data volume.
 
 Currently, the only method available for combining (``compositing'')
-the two data volumes is {\em blended}\ : the color of each pixel of
+the two data volumes is {\em blended}: the color of each pixel of
 the combined image is given by
 \[ color\_in\_volume\_1 \times ( 1 - \beta ) + 
 color\_in\_volume\_2 \times \beta \] where $\beta$ is the blend

@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.6 2000-07-02 05:21:00 crisco Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/inputs.tex,v 1.7 2000-08-12 14:16:18 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -21,8 +21,8 @@ Requirements for the 3D volume data read by JIV:
 \item volumes are assumed to have the $(x,y,z)$ dimensions of
   $(181,217,181)$.
 \item the $x, y, z$ axes and their positive direction are assumed to
-  be (respectively): left to right, posterior to anterior, inferior to
-  superior.
+  be (respectively): left to right, posterior to anterior, and
+  inferior to superior of a 3D medical image.
 \item the voxel (``file'') to world coordinates transformation assumes
   that: voxels have an isotropic sampling of 1mm; the first voxel of
   the data file has a world coordinate $(x,y,z)$ of
@@ -32,7 +32,8 @@ Requirements for the 3D volume data read by JIV:
 
 Note that the above volume sampling and associated world coordinates
 correspond to the ``ICBM'' sampling and to the ``Talairach''
-stereotaxic coordinates systems used at the MNI.  
+stereotaxic coordinates systems used at the Montreal Neurological
+Institute (MNI), McGill University.
 
 
 \subsection{Environment}
