@@ -1,5 +1,6 @@
 
-// $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $
+// $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
+
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -39,13 +40,11 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
+ * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
     /*private*/ static final boolean 	DEBUG= false;
-    /** NB: getAppletInfo() assumes that the symbolic tags start with "ver" */
-    /*private*/ static final String 	JIVVersion= "$Name:  $";
 
     /*private*/ Thread 		initialization_thread;
     /*private*/ Frame 		jiv_frame;
@@ -60,6 +59,9 @@ public final class Main extends java.applet.Applet {
     /*private*/ Hashtable	volumes= new Hashtable();  
     /** holds PanelStruct (and may contain gaps) */
     /*private*/ Vector 		panels= new Vector(); 
+    /*private*/ int		no_of_panels;
+
+    /*private*/ CheckboxMenuItem sync_menu;
 
     /** entry point when running as a standalone application */
     public static void main( String argv[])
@@ -100,6 +102,20 @@ public final class Main extends java.applet.Applet {
 	    });
 	    initialization_thread.start();
 	}
+    }
+
+    public String getAppletInfo()
+    {
+	return About.getShortVersion();
+    }
+
+    public String[][] getParameterInfo()
+    {
+	final String[][] param_info= {
+	    { "config",	"URL", "location of a JIV config file"},
+	    { "cfg",	"URL", "location of a JIV config file"}
+	};
+	return param_info;
     }
 
     /*private*/ void _doInitialization() {
@@ -178,7 +194,7 @@ public final class Main extends java.applet.Applet {
 	}
 	_progressMessage( "opening window...");
 	jiv_frame = new Frame("JIV");
-	
+
 	/* Note about setting the applet size: it doesn't work in NS,
 	   and sort of works in JDK... -- the reliable way to do it to
 	   specify the dimension in the applet html tag.  But the best
@@ -191,7 +207,7 @@ public final class Main extends java.applet.Applet {
 	gbc.gridy= 0;
 	gbc.gridheight= GridBagConstraints.REMAINDER;
 
-	int no_of_panels= 0;
+	no_of_panels= 0;
 	for( i= 0; i < panels.size(); ++i) 
 	    if( null != panels.elementAt( i)) 
 		++no_of_panels;
@@ -218,7 +234,6 @@ public final class Main extends java.applet.Applet {
 						   byte_voxel_values,
 						   ps.range_start, ps.range_end,
 						   ps.color_coding, 
-						   ( 1 == no_of_panels),
 						   this);
 	}
 	for( i= 0, column= 0; i < panels.size(); ++i) {
@@ -241,7 +256,6 @@ public final class Main extends java.applet.Applet {
 						 (IndividualDataVolumePanel)p1,
 						 jiv_frame, column++, 
 						 enable_world_coords, 
-						 ( 1 == no_of_panels),
 						 this);
 	}
 	setPositionSync( initial_position_sync);
@@ -249,29 +263,41 @@ public final class Main extends java.applet.Applet {
 	jiv_frame.addWindowListener( new WindowAdapter() {
 	    public void windowClosing( WindowEvent e) { Main.this.destroy(); }
 	});
+
+	/* * Menu Bar * */
+	MenuBar mb= new MenuBar();
+	Menu fm= new Menu( "File");
+	fm.add( new QuitMenuItem( this));
+	mb.add( fm);
+	Menu vm= new Menu( "View");
+	// NB: make sure you create this only after 
+	//     this.getNumberOfPanels() can return the true value.
+	vm.add( sync_menu= new PositionSyncMenuItem( this));
+	mb.add( vm);
+	Menu hm= new Menu( "Help");
+	{
+	    MenuItem help= new MenuItem( "Help");
+	    help.setEnabled( false);
+	    hm.add( help); 
+	}
+	hm.addSeparator();
+	{
+	    MenuItem about= new MenuItem( "About...");
+	    about.addActionListener( new ActionListener() {
+		    public void actionPerformed( ActionEvent e) {
+			About.popFullVersion( jiv_frame);
+		    }
+		});
+	    hm.add( about);
+	}
+	mb.add( hm); mb.setHelpMenu( hm);
+	jiv_frame.setMenuBar( mb); 
+	
 	/* Window::pack() resizes the window according to the preferred size
 	   of its components -- Frame is a subclass of Window */
         jiv_frame.pack();
         jiv_frame.show();
 	_progressMessage( "init done.");
-    }
-
-    public String getAppletInfo()
-    {
-	int offset= JIVVersion.indexOf( "ver");
-	String version_string= (offset < 0 || offset > JIVVersion.length()-1) ?
-	    "(unknown version)" : 
-	    JIVVersion.substring( offset, JIVVersion.length()-1);
-	return "JIV "+version_string+", by Chris Cocosco <crisco@bic.mni.mcgill.ca>";
-    }
-
-    public String[][] getParameterInfo()
-    {
-	final String[][] param_info= {
-	    { "config",	"URL", "location of a JIV config file"},
-	    { "cfg",	"URL", "location of a JIV config file"}
-	};
-	return param_info;
     }
 
     /** This is called (by the applet's environment) when the applet is about
@@ -280,7 +306,7 @@ public final class Main extends java.applet.Applet {
 
 	We also call it in response to the 'Quit' command from 
 	DataVolumePanel-s and in response to "window closing" events received
-	my jiv_frame...
+	by jiv_frame...
     */
     public void destroy()
     {
@@ -381,10 +407,16 @@ public final class Main extends java.applet.Applet {
 	    panel_a.setPositionSync( new_setting);
 	    a_is_leftmost= false;
 	}
+	if( sync_menu != null) 
+	    sync_menu.setState( new_setting);
     }
 
     public boolean getPositionSync() {
 	return position_sync;
+    }
+
+    public int getNumberOfPanels() {
+	return no_of_panels;
     }
 
     /*private*/ Label msg;
@@ -632,7 +664,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
+     * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -651,7 +683,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.2 2001-05-15 15:09:41 crisco Exp $ 
+     * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

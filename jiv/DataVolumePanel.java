@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.1 2001-04-08 00:04:27 cc Exp $
+// $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,21 +37,18 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
 
     protected static final boolean	DEBUG= false;
-    /** used for debugging the IE4/5 checkboxmenuitem problem */
-    protected static final boolean	DEBUG_IE= false;
 
     /*private*/ Container 		parent_container;
     /** our column in parent_container's grid */
     /*private*/ int 			grid_column;
     protected boolean 			enable_world_coords;
     protected boolean 			byte_voxel_values;
-    protected boolean 			lonely_volume;
     /*private*/ Main			applet_root;
     /** initialized by the subclasses; 
 	NB: they are expected to implement PositionListener too! */
@@ -77,7 +74,6 @@ abstract public class DataVolumePanel
 			    int grid_column,
 			    boolean enable_world_coords,
 			    boolean byte_voxel_values,
-			    boolean lonely_volume,
 			    Main applet_root
 			    ) {
 
@@ -90,7 +86,6 @@ abstract public class DataVolumePanel
 	this.grid_column= grid_column;
 	this.enable_world_coords= enable_world_coords;
 	this.byte_voxel_values= byte_voxel_values; 
-	this.lonely_volume= lonely_volume;
 	this.applet_root= applet_root;
 	controls_panel= new LightweightPanel( new GridBagLayout());
 	popup_menu= new PopupMenu();
@@ -196,32 +191,10 @@ abstract public class DataVolumePanel
 	    }
 
 	// any general (shared) popup menu commands should be added here:
-	sync_menu_item= new CheckboxMenuItem( "Sync all cursors", 
-					      applet_root.getPositionSync());
-	if( lonely_volume)
-	    sync_menu_item.setEnabled( false);
-	else
-	    sync_menu_item.addItemListener( new ItemListener() {
-		public void itemStateChanged( ItemEvent e) {
-		    if( DEBUG_IE) System.out.println( this + ":" + e);
-		    switch( e.getStateChange()) {
-		    case ItemEvent.SELECTED:
-			if( DEBUG_IE) System.out.println( this + ": selected");
-			applet_root.setPositionSync( true); break;
-		    case ItemEvent.DESELECTED:
-			if( DEBUG_IE) System.out.println( this + ": DEselected");
-			applet_root.setPositionSync( false); break;
-		    }
-		}
-	    });
+	sync_menu_item= new PositionSyncMenuItem( applet_root);
 	popup_menu.add( sync_menu_item);
 	popup_menu.addSeparator();
-	MenuItem mi= new MenuItem( "Quit");
-	mi.addActionListener( new ActionListener() {
-		public void actionPerformed( ActionEvent e) {
-		    applet_root.destroy();
-		}
-	    });
+	MenuItem mi= new QuitMenuItem( applet_root);
 	popup_menu.add( mi);
 	// TODO(maybe): add a kbd shortcut as well?
 
@@ -296,7 +269,7 @@ abstract public class DataVolumePanel
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateFields 
      */
@@ -318,7 +291,7 @@ abstract public class DataVolumePanel
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.1 2001-04-08 00:04:27 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.2 2001-05-15 16:07:27 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
