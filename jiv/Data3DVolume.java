@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.6 2001-10-04 16:56:48 cc Exp $
+// $Id: Data3DVolume.java,v 1.7 2001-10-12 23:41:56 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,14 +47,14 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.6 2001-10-04 16:56:48 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.7 2001-10-12 23:41:56 cc Exp $
  */
 public final class Data3DVolume {
 
     /*private*/ static final boolean 	DEBUG= false;
 
     /** for development only: artificially delay the downloads */
-    /*private*/ static final boolean DELAY_DOWNLOAD= false;
+    /*private*/ static final boolean DELAY_DOWNLOAD= true;
 
     public static final int DOWNLOAD_UPFRONT=		1;
     public static final int DOWNLOAD_ON_DEMAND= 	2;
@@ -204,7 +204,7 @@ public final class Data3DVolume {
 			}
 		    }
 		};
-	    t.setPriority( Thread.NORM_PRIORITY - 1 ); 
+	    t.setPriority( Thread.currentThread().getPriority() - 2 ); 
 	    t.start();
 	    break;
 
@@ -301,6 +301,7 @@ public final class Data3DVolume {
 		    _asyncDownloadSlice( 1, 0, file_voxel.z, consumer, z); 
 		}
 	    };
+	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
     }
 
@@ -340,6 +341,7 @@ public final class Data3DVolume {
 		    _asyncDownloadSlice( 2, 1, file_voxel.x, consumer, x); 
 		}
 	    };
+	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
     }
 
@@ -378,6 +380,7 @@ public final class Data3DVolume {
 		    _asyncDownloadSlice( 2, 0, file_voxel.y, consumer, y); 
 		}
 	    };
+	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
     }
 
