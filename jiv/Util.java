@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.7 2003-08-01 07:31:44 crisco Exp $
+// $Id: Util.java,v 1.8 2003-08-17 16:02:14 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.7 2003-08-01 07:31:44 crisco Exp $
+ * @version $Id: Util.java,v 1.8 2003-08-17 16:02:14 crisco Exp $
  */
 public final class Util {
 
@@ -169,26 +169,22 @@ public final class Util {
 	return input_stream;
     }
 
+
     /** @return the Properties object described by the file at
 	source_url; trailing whitespace is trimmed off the property
 	values (the stock Java Properties.load() doesn't do it!)  
     */
-    public static final Properties readPropertiesFromURL( URL source_url) 
+    public static final Properties readProperties( URL source_url, 
+						   Properties defaults) 
 	throws IOException, SecurityException  {
+
+	if( source_url == null) 
+	    return null;
 
 	InputStream input_stream= null;
 	try {
 	    input_stream= Util.openURL( source_url);
-	    Properties raw= new Properties();
-	    raw.load( input_stream);
-
-	    Enumeration prop_names;
-	    Properties ret= new Properties();
-	    for( prop_names= raw.propertyNames(); prop_names.hasMoreElements(); ) {
-		String key= (String)prop_names.nextElement();
-		ret.put( key, raw.getProperty( key).trim());
-	    }
-	    return ret;
+	    return _readAndTrimProperties( input_stream, defaults);
 	}
 	finally {
 	    if( input_stream != null) {
@@ -197,6 +193,68 @@ public final class Util {
 		input_stream.close();
 	    }
 	}
+    }
+
+    /** @return the Properties object described inline in the source
+	String (with ';' instead of newlines); trailing whitespace is
+	trimmed off the property values (the stock Java
+	Properties.load() doesn't do it!)  
+    */
+    public static final Properties readProperties( final String src, 
+						   Properties defaults) 
+	throws IOException {
+
+	PipedOutputStream os= new PipedOutputStream();
+	PipedInputStream is= new PipedInputStream( os);
+	final PrintWriter pw= new PrintWriter( os, 
+					       true); // autoflush each line
+
+	// cannot have a pair of Piped...Stream-s in the same thread
+	// (deadlock danger)
+	Thread t= new Thread( new Runnable() {
+		public void run() { 
+		    // replace ';' with newline
+		    StringTokenizer lines= new StringTokenizer( src, ";", false);
+		    while( lines.hasMoreTokens() ) {
+			pw.println( lines.nextToken());
+		    }
+		    pw.close();
+		}
+	    });
+
+	try {
+	    t.start();
+	    Properties ret= _readAndTrimProperties( is, defaults);
+	    if( pw.checkError() ) { 
+		// FIXME: this happens sometimes (eg when the applet
+		// is run first time), but it seems to be
+		// harmless...???
+		System.err.println( "error when writing to pipe in readProperties( " 
+				    + src + " )");
+	    }
+	    return ret;
+	}
+	finally {
+	    is.close(); os.close(); 
+	}
+    }
+    
+    /** @return trims trailing whitespace off the values (the stock Java
+	Properties.load() doesn't do it!)  
+    */
+    /*private*/ static final Properties _readAndTrimProperties( InputStream src,
+								Properties defaults) 
+	throws IOException {
+
+	Properties raw= new Properties( defaults);
+	raw.load( src);
+	Enumeration prop_names;
+	Properties ret= new Properties();
+	for( prop_names= raw.propertyNames(); prop_names.hasMoreElements(); ) {
+	    String key= (String)prop_names.nextElement();
+	    ret.put( key, raw.getProperty( key).trim());
+	}
+	return ret;
     }
 
 

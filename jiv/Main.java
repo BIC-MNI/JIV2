@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
+// $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
+ * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -116,7 +116,9 @@ public final class Main extends java.applet.Applet {
     {
 	final String[][] param_info= {
 	    { "config",	"URL", "location of a JIV config file"},
-	    { "cfg",	"URL", "location of a JIV config file"}
+	    { "cfg",	"URL", "location of a JIV config file"},
+	    { "inline_config",	"String", "inline JIV config"},
+	    { "inline_cfg",	"String", "inline JIV config"}
 	};
 	return param_info;
     }
@@ -150,6 +152,7 @@ public final class Main extends java.applet.Applet {
 	   until we get something or we run out of choices... 
 	*/
 	String config_file= null; // local ("stack") vars don't have default values
+	String inline_config= null;
 	VolumeHeader common_sampling= null;
 
 	if( false) {
@@ -171,13 +174,28 @@ public final class Main extends java.applet.Applet {
 	    config_file= getParameter( "config");	// i.e. from the html file
 	if( null == config_file) 
 	    config_file= getParameter( "cfg");
+	if( null == inline_config) 
+	    inline_config= getParameter( "inline_config");
+	if( null == inline_config) 
+	    inline_config= getParameter( "inline_cfg");
 	try {
-	    /* NB: if config_file is not a full URL, then a non-null
-	       context value is expected by this constructor */
-	    URL config_url= new URL( document_base, config_file);
-	    if( DEBUG) System.out.println( "config_url:" + config_url);
+	    Properties config= null;
+	    URL url_context= document_base;
 	    progressMessage( "reading config...");
-	    _parseConfig( config_url);
+
+	    if( config_file != null) {
+		/* NB: if config_file is not a full URL, then a non-null
+		   context value is expected by this constructor */
+		URL config_url= new URL( url_context, config_file);
+		if( DEBUG) System.out.println( "config_url:" + config_url);
+		config= Util.readProperties( config_url, null);
+		url_context= config_url;
+	    }
+	    if( inline_config != null)
+		config= Util.readProperties( inline_config, config);
+	    if( config == null) 
+		throw new Exception( "no config found!");
+	    _parseConfig( config, url_context);
 
 	    /* compute list of volumes that are actually displayed in
                some panel */
@@ -205,7 +223,7 @@ public final class Main extends java.applet.Applet {
 		VolumeHeader vh= (VolumeHeader)headers.get( alias);
 		VolumeStruct vs= (VolumeStruct)volumes.get( alias);
 		vs.data= new Data3DVolume( common_sampling, 
-					   new URL( config_url, vs.file), 
+					   vs.file, 
 					   vh,
 					   alias,
 					   download_method );
@@ -485,15 +503,11 @@ public final class Main extends java.applet.Applet {
 
     /** fills-in the following fields of Main: volumes, headers, panels, 
 	position_sync;
-	throws an IOException if any errors were encountered 
-
-	Note: it's not _required_ to declare SecurityException (since
-	it's a subclass of RuntimeException), but we do it for clarity...
+	throws an Exception if any errors were encountered 
     */
-    /*private*/ void _parseConfig( URL config_url) 
-	throws IOException, NumberFormatException, SecurityException {
+    /*private*/ void _parseConfig( Properties config, URL url_context) 
+	throws IOException, NumberFormatException {
 
-	Properties config= Util.readPropertiesFromURL( config_url);
 	Enumeration prop_names;
 
 	/* ** first pass: extract the "volume aliases" and headers ** 
@@ -507,7 +521,7 @@ public final class Main extends java.applet.Applet {
 	    if( name.endsWith( ".header")) {
 		alias= name.substring( 0, name.lastIndexOf( '.'));
 		VolumeHeader vh= 
-		    new VolumeHeader( new URL( config_url, config.getProperty( name)));
+		    new VolumeHeader( new URL( url_context, config.getProperty( name)));
 		headers.put( alias, vh);
 		/* the first header encountered becomes the default */
 		if( default_header == null ) 
@@ -517,8 +531,10 @@ public final class Main extends java.applet.Applet {
 	    // then it's a "volume alias"!
 	    alias= name;
 	    VolumeStruct vs= new VolumeStruct();
-	    if( null == ( vs.file= config.getProperty( alias)) ) 
+	    String str= null;
+	    if( null == ( str= config.getProperty( alias)) ) 
 		throw new IOException( "no data file given for volume alias " + alias);
+	    vs.file= new URL( url_context, str);
 	    volumes.put( alias, vs);
 	    /* NB: if the same volume alias is declared several times
                in the config file, it cannot be predicted which one
@@ -669,10 +685,10 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
+     * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
-	String 		file;
+	URL 		file;
 	Data3DVolume	data;
     }
 
@@ -688,7 +704,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
+     * @version $Id: Main.java,v 1.16 2003-08-17 16:02:14 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

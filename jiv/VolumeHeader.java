@@ -1,5 +1,5 @@
 
-// $Id: VolumeHeader.java,v 1.4 2001-12-20 23:17:18 cc Exp $
+// $Id: VolumeHeader.java,v 1.5 2003-08-17 16:02:14 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -32,7 +32,7 @@ import java.util.*;
  * 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: VolumeHeader.java,v 1.4 2001-12-20 23:17:18 cc Exp $
+ * @version $Id: VolumeHeader.java,v 1.5 2003-08-17 16:02:14 crisco Exp $
  */
 public final class VolumeHeader {
 
@@ -101,7 +101,7 @@ public final class VolumeHeader {
 	    // stick with the defaults...
 	    return;
 
-	Properties header= Util.readPropertiesFromURL( source_url);
+	Properties header= Util.readProperties( source_url, null);
 
 	/* todo: the following is ugly and should be rewritten some
            day using a parser and a parse table (ie: "programming with
