@@ -1,5 +1,5 @@
 
-// $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $
+// $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,9 +33,12 @@ import java.util.*;
  * displaying a single image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $ 
+ * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
  */
 public final class IndividualDataVolumePanel extends DataVolumePanel {
+
+    /** used for debugging the problem with non-working popup menu cmds */
+    /*protected*/ static final boolean		DEBUG_POPUP_CMDS= false;
 
     /** initial "low" setting of the colormap controls slider */
     /*private*/ static final short		DEFAULT_CMAP_START= 0;
@@ -174,7 +177,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapControl</code>. 
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControl 
      */
@@ -213,7 +216,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * controls for adjusting the colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControlMenus 
      */
@@ -282,12 +285,20 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	    CheckboxMenuItem tied_cmi= new CheckboxMenuItem( "Tie colormap sliders", 
 							     INITIAL_CMAP_TIED_MODE);
 	    tied_cmi.addItemListener( new ItemListener() {
-		public void itemStateChanged( ItemEvent e) {
+		public synchronized void itemStateChanged( ItemEvent e) {
+		    if( DEBUG_POPUP_CMDS) 
+			System.out.println( "Tie colormap sliders: itemStateChanged(): " + e);
 		    switch( e.getStateChange()) {
 		    case ItemEvent.SELECTED:
-			ColormapControl.this.setTiedMode( true); break;
+			ColormapControl.this.setTiedMode( true); 
+			if( DEBUG_POPUP_CMDS) 
+			    System.out.println( "setting tied mode to true...");
+			break;
 		    case ItemEvent.DESELECTED:
-			ColormapControl.this.setTiedMode( false); break;
+			ColormapControl.this.setTiedMode( false); 
+			if( DEBUG_POPUP_CMDS) 
+			    System.out.println( "setting tied mode to false...");
+			break;
 		    }
 		}
 	    });
@@ -561,7 +572,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapDisplay</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplay 
      */
@@ -585,7 +596,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * the current colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.5 2001-11-28 10:55:16 cc Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplayConstants 
      */
