@@ -169,11 +169,18 @@ but with the Java1.2 API it doesn't work anymore!
 
 Multi-threading issues:
 
-instance fields are shared amoung threads; however, local variables
-are <i>not</i> shared amoung threads!
+- instance fields are shared amoung threads; however, local variables
+  are <i>not</i> shared amoung threads!
 
-assignments are atomic for all primitive Java types, except double &
-long.
+- assignments are atomic for all primitive Java types, except double &
+  long.
+
+- apparently Netscape does not allow applets to create other
+  threadgroups
+
+- on some browsers (win98 netscape, macos ie5), calling this from the
+  applet will crash/freeze the entire browser:
+       Thread.currentThread().getThreadGroup().stop();
 
 =======================
 
@@ -190,5 +197,7 @@ Menu-bar woes:
   help menus, etc)
 
 =======================
+
+
 
 

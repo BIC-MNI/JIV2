@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.9 2001-10-26 03:31:44 cc Exp $
+// $Id: Data3DVolume.java,v 1.10 2001-10-26 13:54:44 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.9 2001-10-26 03:31:44 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.10 2001-10-26 13:54:44 cc Exp $
  */
 public final class Data3DVolume {
 
@@ -95,6 +95,9 @@ public final class Data3DVolume {
         which means that all elements of
         <code>{t,s,c}_slice_downloaded</code> are true */
     /*private*/ boolean			all_data_downloaded;
+
+    /** the full-volume (background) download thread */
+    /*private*/ Thread 			bg_dnld;
 
     /*private*/ String 		volume_url;	// eg http://www/foo/colin27.raw.gz
     /*private*/ String 		slice_url_base; // eg http://www/foo/colin27
@@ -192,7 +195,7 @@ public final class Data3DVolume {
 
 	case DOWNLOAD_HYBRID :
 	    // start the parallel ("bg") download 
-	    Thread t= new Thread() {
+	    bg_dnld= new Thread() {
 		    public void run() 
 		    {
 			try {
@@ -204,14 +207,31 @@ public final class Data3DVolume {
 			}
 		    }
 		};
-	    t.setPriority( Thread.currentThread().getPriority() - 2 ); 
-	    t.start();
+	    bg_dnld.setPriority( Thread.currentThread().getPriority() - 2 ); 
+	    bg_dnld.start();
 	    break;
 
 	default:
 	    throw new 
 		IllegalArgumentException( this + " unknown download method: " +	download_method);
 	}
+    }
+
+    /** Kills the background download threads. (note: currently, only
+        the lengthy full-volume download thread is killed...) 
+    */
+    final public void stopDownloads() 
+    { 
+	if( bg_dnld != null && bg_dnld.isAlive() ) {
+	    bg_dnld.stop();
+	}
+	bg_dnld= null;
+
+	/* Also killing the slice download threads would be nice, but
+           it's not trivial: you need to store a ref to each new
+           thread (when created by getTransverseSlice & co). This list
+           of refs will keep growing, and will also prevent dead
+           threads to be garbage-collected... */
     }
 
     final public int getXSize() { return common_sampling.getSizeX(); }

@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
+// $Id: Main.java,v 1.13 2001-10-26 13:54:45 cc Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
+ * @version $Id: Main.java,v 1.13 2001-10-26 13:54:45 cc Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -340,13 +340,17 @@ public final class Main extends java.applet.Applet {
 	    initialization_thread= null;
 	}
 	if( volumes != null) {
+	    for( Enumeration e= volumes.elements(); e.hasMoreElements(); ) {
+		Data3DVolume v= ( (VolumeStruct)e.nextElement() ).data;
+		if( v != null )
+		    v.stopDownloads();
+	    }
 	    volumes.clear(); volumes= null;
 	}
 	if( panels != null) {
 	    panels.removeAllElements(); panels= null;
 	}
 	progressMessage( "exited.");
-	// TODO: anything else to dispose of ?
 
 	/* Note: If we run as a standalone application, this will
            terminate the JVM (and the application with it).  If we run
@@ -359,15 +363,6 @@ public final class Main extends java.applet.Applet {
            (e.g. "clones") -- not a feature! 
 	*/
 	try { System.exit( 0); }
-	catch( SecurityException ex) { }
-
-	/* also stop any other threads that we may have running (NB:
-           this includes the thread executing this, so don't expect
-           any code after this to be ever executed :) */
-	/* FIXME: a better solution would be to create a threadgroup
-           for the init thread and kill that instead (that's where the
-           length download is... */
-	try { Thread.currentThread().getThreadGroup().stop(); }
 	catch( SecurityException ex) { }
     }
 
@@ -671,7 +666,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
+     * @version $Id: Main.java,v 1.13 2001-10-26 13:54:45 cc Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -690,7 +685,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.12 2001-10-04 19:26:31 cc Exp $
+     * @version $Id: Main.java,v 1.13 2001-10-26 13:54:45 cc Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;
