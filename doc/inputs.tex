@@ -1,5 +1,5 @@
 %
-% $Id: inputs.tex,v 1.11 2002-04-21 13:03:12 cc Exp $
+% $Id: inputs.tex,v 1.12 2003-07-19 16:58:14 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -238,6 +238,14 @@ at the Montreal Neurological Institute, McGill University):
   imagerange  :  0.0 1.0
 \end{verbatim}
 
+\emph{Performance tip:} Due to internal optimizations, the initial
+download of the image data will be faster if all the steps are
+positive and equal (for all dimensions and all image volumes) and the
+dimension ordering is \verb+'z y x'+.  However this performance
+difference will be hardly noticeable when using a modern Java runtime
+environment (JVM)...
+
+
 There are two kinds of image files: 
 \begin{description}
 \item[volume file:] contains the complete (3D) image volume data; it
@@ -271,5 +279,10 @@ result in \texttt{base} = \texttt{/some/dir/somename} .
 For converting MNI-MINC data to the JIV input format, two utilities
 (Perl scripts) are distributed along with JIV: \verb+minc2jiv.pl+, and
 \verb+jiv.pl+.
+
+\emph{Note:} the \verb+upfront+ download mode requires the volume
+file(s), the \verb+on_demand+ mode requires the slice files, and the
+\verb+hybrid+ download mode requires both the volume and the slice
+files.
 
 
