@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.2 2000-04-12 02:16:26 cc Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.3 2000-04-12 16:53:00 cc Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -179,12 +179,13 @@ volume (i.e.\ a volume alias) is displayed by more individual volume
 panels, then the left-most such panel is used as the coloring source
 for that data volume.
 
-Currently, the only method available for ``combining'' the two data
-volumes is {\em blended}\ : the color of each pixel of the combined
-image is given by
+Currently, the only method available for combining (``compositing'')
+the two data volumes is {\em blended}\ : the color of each pixel of
+the combined image is given by
 \[ color\_in\_volume\_1 \times ( 1 - \beta ) + 
-color\_in\_volume\_2 \times \beta \] where $\beta$ is the blend factor
---- a fractional value in the range 0.0--1.0.
+color\_in\_volume\_2 \times \beta \] where $\beta$ is the blend
+factor: a fractional value in the range 0.0--1.0 (this compositing is
+done in RGB color space).
 
 \subsubsection{Controls area}
 Below the coordinate text fields, there is a blend factor ($\beta$)
