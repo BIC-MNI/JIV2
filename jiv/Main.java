@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.14 2001-11-28 10:55:16 cc Exp $
+// $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.14 2001-11-28 10:55:16 cc Exp $
+ * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -175,6 +175,7 @@ public final class Main extends java.applet.Applet {
 	    /* NB: if config_file is not a full URL, then a non-null
 	       context value is expected by this constructor */
 	    URL config_url= new URL( document_base, config_file);
+	    if( DEBUG) System.out.println( "config_url:" + config_url);
 	    progressMessage( "reading config...");
 	    _parseConfig( config_url);
 
@@ -668,7 +669,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.14 2001-11-28 10:55:16 cc Exp $
+     * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -687,7 +688,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.14 2001-11-28 10:55:16 cc Exp $
+     * @version $Id: Main.java,v 1.15 2003-08-01 07:31:44 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

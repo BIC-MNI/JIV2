@@ -1,5 +1,5 @@
 
-// $Id: Util.java,v 1.6 2001-12-20 23:17:18 cc Exp $
+// $Id: Util.java,v 1.7 2003-08-01 07:31:44 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -33,7 +33,7 @@ import java.util.*;
  * A collection of various (<code>static</code>) utility functions.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Util.java,v 1.6 2001-12-20 23:17:18 cc Exp $
+ * @version $Id: Util.java,v 1.7 2003-08-01 07:31:44 crisco Exp $
  */
 public final class Util {
 
@@ -138,6 +138,8 @@ public final class Util {
     */
     public static final InputStream openURL( URL source_url) 
 	throws IOException, SecurityException  {
+
+	if( false ) { System.out.println( "Util::openUrl( " + source_url +" )"); }
 
 	InputStream input_stream= null;
 
