@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<!-- $Id: compatibility.html,v 1.1 2000-04-06 15:37:07 cc Exp $ -->
+<html> <head>
+<title>JIV compatibility information</title>
+</head>
+
+<body>
+<h1>JIV compatibility information</h1>
+
+&quot;JIV&quot; is a <em>Java&nbsp;1.1&nbsp;applet</em>.
+Theoretically, it should run on any appletviewer (browsers included)
+that properly supports Java&nbsp;1.1 (including AWT&nbsp;1.1), as per
+<a href="java.sun.com/" target=new>Sun</a>'s reference specification.
+
+<p> JIV is quite memory-hungry: every loaded 3D data volume requires
+8-9Mb of memory. For faster interactive response, try to use a Java
+implementation that has a &quot;just-in-time&quot;&nbsp;(JIT)
+compiler.
+
+<p> Generally speaking (i.e. regardless of your particular operating
+system / platform), the following should provide full Java&nbsp;1.1
+applet support. An (incomplete) platform-specific list follows.
+
+<ul>
+  <li>
+<dl>
+  <dt>Netscape Navigator/Communicator version&nbsp;4.06 or above:
+  <dd>available from Netscape (
+      <a href="www.netscape.com/browser/"target=new>www.netscape.com/browsers/</a>
+      ) for a variety of
+      platforms (operating systems); a JIT compiler is not used on all
+      platforms (e.g. all the Unix versions distributed by Netscape
+      don't have it), however some OS vendors may distribute customized
+      versions which do include a JIT compiler.
+</dl>
+  <li>
+<dl>
+  <dt>Java 1.1.x (or later) plugins for older, non-compliant or slow
+      browsers:
+  <dd><a href="java.sun.com/products/plugin/" target=new>java.sun.com/products/plugin/</a>
+      has links to
+      1.1.x (and later) plugins for several platforms; even if your
+      browser is Java&nbsp;1.1 compliant, a plugin may provide a more
+      performant Java environment (e.g. by including a JIT compiler).
+</dl>
+  <li>
+<dl>
+  <dt>&quot;appletviewer&quot; from Sun's Java Development Kit
+      (&quot;JDK&quot;) 1.1.x (or later), or from its various ports: 
+  <dd>see <a href="java.sun.com/jdk/" target=new>java.sun.com/jdk/</a>
+      for pointers to versions for
+      various platforms (versions which are not provided by Sun are
+      listed in the &quot;ports&quot; section); also, see below for
+      more links to JDK ports.
+</dl>
+  <li>
+<dl>
+  <dt>Sun's HotJava web browser:
+  <dd>available from
+      <a href="java.sun.com/products/hotjava/" target=new>java.sun.com/products/hotjava/</a>
+      , for a handful of
+      platforms; this browser is written completely in Java,
+      so even if you don't find a version of it for your platform you
+      should be able to use it as long as you have a working
+      &quot;Java Virtual Machine&quot; (JVM), or
+      &quot;Java Runtime Environment&quot; (JRE), implementation.
+</dl>
+</ul>
+
+<p> The following Java environments were tested and appear to work for
+JIV:
+
+<h3>Linux (i386)</h3>
+<ul>
+  <li><dl>
+    <dt>IBM JDK for Linux, version&nbsp;1.1.8 (a port of Sun's JDK)
+    <dd>Available at no-cost from 
+	<a href="www.ibm.com/java/jdk/118/linux/" target=new>www.ibm.com/java/jdk/118/linux/</a>.
+	It uses a good JIT compiler, and is the recommended platform
+	for Linux.
+  </dl>
+  <li><dl>
+    <dt> Netscape Navigator/Communicator 4.6-4.7
+    <dd>
+  </dl>
+  </ul>
+
+<h3>SGI IRIX</h3>
+<ul>
+  <li><dl>
+    <dt>SGI Java Development Environment 3.1.1 (a port of Sun's JDK 1.1.6)
+    <dd>Available at no-cost from
+	<a href="www.sgi.com/Products/Evaluation/6.x_jdk_3.1.1/" target=new>www.sgi.com/Products/Evaluation/6.x_jdk_3.1.1/</a>.
+	It has a JIT compiler, and is the recommended platform for IRIX 6.x.
+  </dl>
+  <li><dl>
+    <dt>Netscape Navigator/Communicator 4.08 and later
+    <dd><!-- do any of the sgi-customized versions have jit compilers?? -->
+  </dl>
+</ul>
+Other versions of SGI JDK, Java plugins and Netscape browsers are available from 
+<a href="www.sgi.com/Products/Evaluation/" target=new>www.sgi.com/Products/Evaluation/</a>
+(released versions), and
+<a href="www.sgi.com/developers/devtools/languages/java.html" target=new>www.sgi.com/developers/devtools/languages/java.html</a>
+(development/beta versions).
+  
+<h3>Windows 95/98/NT/2000</h3>
+<ul>
+  <li><dl>
+    <dt> Netscape Navigator/Communicator 4.6-4.7
+    <dd> This uses a fast JIT compiler by Symantec.
+  </dl>
+  <li><dl>
+    <dt> IBM JDK for Windows, version&nbsp;1.1.8 (a port of
+	Sun's JDK)
+    <dd> Available at no-cost from
+      <a href="www.ibm.com/java/jdk/118/" target=new>www.ibm.com/java/jdk/118/</a>.
+  </dl>
+  <li><dl>
+    <dt> Microsoft Internet Explorer version&nbsp;5
+    <dd>(IE&nbsp;4 will <em>not</em> do)
+  </dl>
+</ul>
+
+<p>
+<!-- TODO: include a request for feedback -->
+<!--       and contributions to the compatibility list ... -->
+
+<hr>
+<small>
+<address>
+Chris Cocosco
+(<a href="mailto:crisco@bic.mni.mcgill.ca">crisco@bic.mni.mcgill.ca</a>)
+<br>
+$Date: 2000-04-06 15:37:07 $ UTC
+</address>
+</small>
+</body> </html>
