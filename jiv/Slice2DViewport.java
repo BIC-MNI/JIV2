@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.4 2001-10-27 15:27:25 cc Exp $
+// $Id: Slice2DViewport.java,v 1.5 2001-12-20 18:54:15 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.4 2001-10-27 15:27:25 cc Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.5 2001-12-20 18:54:15 crisco Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -750,7 +750,7 @@ abstract public class Slice2DViewport extends Panel
 	repaint( bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
-    /** for the private internal use of _world2viewport() */
+    /** for the private internal use of _updateVportCursorPosition() */
     /*private*/ Point __updateVportCursorPosition_vport_cursor= new Point( -1, -1);
 
     /* currently, this is thread unsafe */
