@@ -1,6 +1,9 @@
 
 ** serious:
 
+- voxel value r/o text field is not updated when coordinate is changed
+  via kbd text input in one of the 3 boxes (eg Z)!
+
 - Util#chopToNSignificantDigits() is buggy: takes log of a float which
   can be 0, (or even negative??)
 
