@@ -1,5 +1,5 @@
 %
-% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.4 2000-04-12 17:32:00 cc Exp $
+% $Header: /private-cvsroot/visualization/jiv/doc/gui.tex,v 1.5 2000-07-02 05:21:00 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -52,30 +52,50 @@ Inside a 2D slice viewport, the following mouse actions are available:
 \item[secondary-mouse-button] Combined with a vertical mouse movement,
   moves the cursor along the axis orthogonal to slice's plane
   (i.e.\ {\em changes the displayed slice}). The cursor displacement
-  is proportional to the relative vertical mouse movement.
+  is proportional to the relative vertical mouse drag movement. This
+  operation can also be performed using keyboard commands (see below).
 \item[Shift or Ctrl + primary-mouse-button] Moves the field of view
-  (i.e.\ does a {\em pan}) by following the mouse movement/drag.
+  (i.e.\ does a {\em pan}) by following the mouse drag movement.
 \item[Shift or Ctrl + secondary-mouse-button] Combined with a vertical
   mouse movement, {\em changes the zoom/scaling factor}.  The change
   in the scaled image dimensions is proportional to the relative
-  vertical mouse movement.
+  vertical mouse drag movement.
+\item[double-click primary-mouse-button] {\em Marks} the current
+  cursor position as the origin (first point) for the in-slice
+  distance measurement. Also, it {\em enables} the distance measurement
+  mode, if necessary.
+\item[double-click secondary-mouse-button] {\em Disables} the distance
+  measurement mode.
 \end{description}
 The meaning of ``primary'' and ``secondary'' mouse buttons is provided
-by the Java implementation running this applet, and is
-platform-dependent --- e.g.\ on a Unix/X-Windows platform, with the
-common right-handed mouse configuration, primary is the left button,
-and secondary is either of the middle or right mouse buttons.  On all
-platforms, the secondary button can be emulated by pressing the
-\verb+Meta+ or \verb+Alt+ key together with the primary button.
+by the Java implementation used to run JIV, and is platform-dependent
+--- e.g.\ on a Unix/X-Windows platform, with the common right-handed
+mouse configuration, primary is the left button, and secondary is
+either of the middle or right mouse buttons.  On all platforms, the
+secondary button can be emulated by pressing the \verb+Meta+ or
+\verb+Alt+ key together with the primary button.
 
-Also, the following keys can be used for moving the cursor along the
-coordinate axis orthogonal to slice's plane by an amount of 1mm
-(one voxel):
+The following keys can be used for changing the displayed slice --
+that is, moving the cursor along the coordinate axis orthogonal to
+slice's plane by an amount of 1mm (one voxel):
 \begin{itemize}
-\item \verb+Right+($\rightarrow$) or \verb+Up+($\uparrow$) : positive
-  increment (next slice).
-\item \verb+Left+($\leftarrow$) or \verb+Down+($\downarrow$) :
-  negative increment (previous slice).
+\item \verb+Right+($\rightarrow$), \verb+Up+($\uparrow$), or \verb|+|
+  : positive increment (next slice).
+\item \verb+Left+($\leftarrow$), \verb+Down+($\downarrow$), or
+  \verb|-| : negative increment (previous slice).
+\end{itemize}
+
+The in-slice distance measurement feature interactively displays the
+world-coordinates distance between the origin (``marked point'') and
+the current cursor position.  The value is always given in real world
+units (mm). The measurement origin is preserved across slice changes,
+same as the current in-slice cursor position is.  The following keys
+can also be used for controlling this measurement feature:
+\begin{itemize}
+\item \verb+d+ : same as {\em double-click primary-mouse-button} (see
+  above). 
+\item \verb+c+ : same as {\em double-click secondary-mouse-button}
+  (see above).
 \end{itemize}
 
 The image scaling (i.e.\ zoom-up/down) is done using {\em
@@ -117,13 +137,13 @@ The following menu actions are available in all panels:
   control from \verb+off+ to \verb+on+, all cursors will be set to the
   cursor position of the first panel (from the left).
 \item \verb+Quit+ : Closes the JIV window and exists the application.
-  However, depending on the particular web browser or appletviewer you
-  are using, this is probably not enough; in order to completely
-  dispose of this running copy of the JIV applet you may have to move
-  out of the HTML document that launched it, or maybe even close that
-  browser frame/window. To make things worse, some web browsers don't
-  release the (possibly large amount of) memory formerly used by the
-  applet unless you completely shutdown the browser!
+  However, when running JIV using a web browser or an appletviewer,
+  this action is probably not enough; in order to completely dispose
+  of this running copy of the JIV applet you may have to move out of
+  the HTML document that launched it, or maybe even close that browser
+  frame/window. To make things worse, some web browsers don't release
+  the (possibly large amount of) memory formerly used by the applet
+  unless you completely shutdown the browser!
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
