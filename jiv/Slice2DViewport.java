@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.6 2002-04-24 14:31:56 cc Exp $
+// $Id: Slice2DViewport.java,v 1.7 2003-12-21 17:32:17 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.6 2002-04-24 14:31:56 cc Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.7 2003-12-21 17:32:17 crisco Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -300,14 +300,13 @@ abstract public class Slice2DViewport extends Panel
 	return value;
     }
 
-    /* MUSING: is overriding this method useful for anything? in the
-     current context, returning true or false doesn't seem to make any
-     difference ?!
-    */
     /** 
-     * @see java.awt.Component#isFocusTraversable
+     * Note: this needs to return 'true' if you want requestFocus() to
+     * have any effect (this was not enforced in Java 1.1...)
+     *
+     * @see java.awt.Component#isFocusTraversable 
      */
-    final public boolean isFocusTraversable() { return false; }
+    final public boolean isFocusTraversable() { return true; }
 
     /** 
      * Overrides <code>Component#getPreferredSize</code>. Necessary,
@@ -338,8 +337,8 @@ abstract public class Slice2DViewport extends Panel
 	switch( e.getID()) {
 
 	case MouseEvent.MOUSE_ENTERED:
-	    if( DEBUG) { System.out.println( "requesting focus..."); }
 	    /* this is VERY IMPORTANT! otherwise you won't get any KeyEvent-s! */
+	    if( DEBUG) { System.out.println( "requesting focus..."); }
 	    requestFocus();
 	    break;
 	case MouseEvent.MOUSE_PRESSED:
