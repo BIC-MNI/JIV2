@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: jiv.pl,v 1.5 2002-07-07 14:56:01 cc Exp $
+# $Id: jiv.pl,v 1.6 2002-07-07 15:19:02 cc Exp $
 #
 # Description: this is a wrapper script for invoking JIV on
 #              one or more MNI MINC image volumes.
@@ -148,8 +148,8 @@ foreach (@ARGV) {
     # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
     unless( nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ]) ) {
 	if( $force) {
-	    warn "\nWARNING! $in_mnc : non-standard direction cosines : world coordinates will not be available!\n";
-	    $cfg .= "jiv.world_coords = false\n";
+	    warn "\nWARNING! $in_mnc : non-standard direction cosines : world coordinates will not be available!\n\n";
+	    $config .= "jiv.world_coords = false\n";
 	}
 	else {
 	    die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported! Use -force to override ... \n";
