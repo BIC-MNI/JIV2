@@ -1,5 +1,5 @@
 
-// $Id: ViewportDistanceDisplay.java,v 1.2 2001-09-30 17:19:22 cc Exp $
+// $Id: ViewportDistanceDisplay.java,v 1.3 2001-10-27 15:27:25 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -35,7 +35,7 @@ import java.awt.*;
  * drawing font won't change after the initialization.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: ViewportDistanceDisplay.java,v 1.2 2001-09-30 17:19:22 cc Exp $ 
+ * @version $Id: ViewportDistanceDisplay.java,v 1.3 2001-10-27 15:27:25 cc Exp $ 
  */
 public final class ViewportDistanceDisplay {
 
@@ -60,7 +60,7 @@ public final class ViewportDistanceDisplay {
     /*private*/ Point 		     end;
     /** text to be displayed along with the distance measurement
         "rubber band" */
-    /*private*/ String		     label;
+    /*private*/ String		     label= String.valueOf( Float.NaN);
     /** metrics of the default drawing font */
     /*private*/ FontMetrics	     font_metrics;
 

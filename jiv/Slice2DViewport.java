@@ -1,5 +1,5 @@
 
-// $Id: Slice2DViewport.java,v 1.3 2001-10-04 19:26:31 cc Exp $
+// $Id: Slice2DViewport.java,v 1.4 2001-10-27 15:27:25 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -46,7 +46,7 @@ import java.util.*;
  * 3 different subclasses.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.3 2001-10-04 19:26:31 cc Exp $ 
+ * @version $Id: Slice2DViewport.java,v 1.4 2001-10-27 15:27:25 cc Exp $ 
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -738,6 +738,10 @@ abstract public class Slice2DViewport extends Panel
      * Disables the distance measurement mode.
      */
     final synchronized /*private*/ void _clearDistanceMeasurement() {
+
+	if( distance_origin == null ) 
+	    // the distance measurement mode is already off
+	    return;
 
 	Rectangle bounds; 
 	distance_display.getBounds( bounds= __DistanceMeasurement_old_bounds);
