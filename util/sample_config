@@ -1,0 +1,26 @@
+#
+# $Id: sample_config,v 1.1 2001-04-08 00:24:13 cc Exp $
+#
+# sample JIV config file
+
+#jiv.world_coords : false
+
+alpha : alpha_volume.raw_byte
+beta : beta_volume.raw_byte
+
+jiv.sync : false
+#jiv.byte_values  : true  
+
+jiv.panel.0 : beta  
+jiv.panel.0.coding :	hotmetal	
+
+jiv.panel.4.combine : alpha   beta
+
+jiv.panel.2 : alpha
+jiv.panel.2.coding: grey
+jiv.panel.2.range: 0.05 0.75
+
+
+
+
+
