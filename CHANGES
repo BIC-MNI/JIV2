@@ -1,5 +1,14 @@
 
-- new colormap: mni_labels 
+** ver_2_2  [20-dec-2001] :
+
+- new colormap: mni_labels .
+- bug fixes related to image-value: negative/zero values, 
+  display updating.
+- optimization: volumes that don't need resampling or reordering
+  now load much faster (important for slow Java platforms, 
+  e.g. Netscape on Unix).
+- minor optimization in the multi-threading code: JIV may 
+  be more responsive on some platforms.
 
 
 ** ver_2_1  [15-nov-2001] :
