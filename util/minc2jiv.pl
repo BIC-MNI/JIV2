@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 
-# $Id: minc2jiv.pl,v 1.4 2001-10-06 01:25:18 cc Exp $ 
+# $Id: minc2jiv.pl,v 1.5 2002-04-06 14:37:52 cc Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -56,6 +56,7 @@ my $jiv_ext= '.raw_byte';
 my $gzip= 1;
 my $slices = 0;
 my $volume = 1;
+my $force = 0;
 my @options = 
   ( @DefaultArgs,     # from MNI::Startup
     ['-output_path', 'string', 1, \$output_path, "output path [default: $output_path]"], 
@@ -64,6 +65,7 @@ my @options =
     ['-gzip', 'boolean', 0, \$gzip, "gzip output [default: $gzip]"],
     ['-slices', 'boolean', 0, \$slices, "produce slices (for \"download on demand\") [default: $slices]"],
     ['-volume', 'boolean', 0, \$volume, "produce volume file [default: $volume]"],
+    ['-force', 'boolean', 0, \$force, "accept non-standard direction cosines (rotated coordinate axes) [default: $force]"],
   );
 GetOptions( \@options, \@ARGV ) 
   or exit 1;
@@ -128,12 +130,15 @@ foreach my $in_mnc (@ARGV) {
     @dimorder= @dim_names[ @$order];
 
     # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
-    # TODO/FIXME: add a -force option, to allow "dummy" world coordinates
-    #     and 
-    #  $config .= "jiv.world_coords = false\n";
     #
     unless( nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ]) ) {
-	die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported!\n";
+	if( $force) {
+	    warn "$in_mnc : non-standard direction cosines : world coordinates will not be available!";
+	    $cfg .= "jiv.world_coords = false\n";
+	}
+	else {
+	    die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported! Use -force to override ... \n";
+	}
     }
 
     my $header= '';
