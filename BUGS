@@ -8,10 +8,6 @@
 
 ** minor:
 
-- on high-res data (step=0.1mm), changing to next/prev slice (with +/-
-  or mouse) actually moves 1mm (ie 10 slices) not 1 slice as it
-  should...
-
 - class ViewportDistanceDisplay: for the distance text, the 
   xor draw mode, with black as bg_color, doesn't work with MS IE
   version 6.0.2600.0000  

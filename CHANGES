@@ -1,4 +1,11 @@
 
+** ver_2_3  [07-jul-2002] :
+
+- bug fix: a 1mm slice thickness was assumed by the commands
+  changing the displayed slice (+/-, arrows, etc).
+- util/jiv.pl : added -force command line switch.
+
+
 ** [21-apr-2002] :
 
 - documentation update: config file can also be provided inline
