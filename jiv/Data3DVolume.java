@@ -1,5 +1,5 @@
 
-// $Id: Data3DVolume.java,v 1.8 2001-10-12 23:49:03 cc Exp $
+// $Id: Data3DVolume.java,v 1.9 2001-10-26 03:31:44 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -47,7 +47,7 @@ import java.util.zip.*;
  * Loads, stores, and provides access to a 3D image volume.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.8 2001-10-12 23:49:03 cc Exp $
+ * @version $Id: Data3DVolume.java,v 1.9 2001-10-26 03:31:44 cc Exp $
  */
 public final class Data3DVolume {
 
@@ -453,6 +453,8 @@ public final class Data3DVolume {
 		slab_start[ 0]= d_0;
 		_saveSlab( buff, slab_start, slab_size);
 		slice_downloaded[ dim_order[0] ][ d_0 ]= true;
+		/* this should help on a slow & non-preemptive jvm ... */
+		Thread.yield();
 	    }
 	    System.out.println( source_url + " loading done!");
 	}
