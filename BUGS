@@ -53,6 +53,10 @@ license, when bundled with Java applets and applications.
 
 ** inconveniences:
 
+- ? Currently, Slice2DViewport._newSlice(float) _does_not_ operates in
+  "grid-mode", unlike Slice2DViewport._newCursor() ; this is
+  inconsistent, and could be easily fixed...
+
 - on_demand mode doesn't use less memory than hybrid&upfront, as it
   should; this is because the internal storage is presently fully
   allocated in Data3DVolume constructor, regardless of download mode;
