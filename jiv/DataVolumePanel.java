@@ -1,5 +1,5 @@
 
-// $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $
+// $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -37,7 +37,7 @@ import java.util.*;
  * to the constructor.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
+ * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
  */
 abstract public class DataVolumePanel 
     extends PositionListenerAdapter implements PositionGenerator {
@@ -54,7 +54,7 @@ abstract public class DataVolumePanel
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateFields */
     interface CoordinateTypes {
@@ -328,7 +328,7 @@ abstract public class DataVolumePanel
      * boxes ("fields").
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.5 2001-10-04 19:26:31 cc Exp $ 
+     * @version $Id: DataVolumePanel.java,v 1.6 2001-12-20 19:11:17 crisco Exp $ 
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
@@ -422,6 +422,7 @@ abstract public class DataVolumePanel
 	    else 
 		value_field= null;	// probably unnecessary...
 
+	    this.addPositionListener( this); 
 	    x_field.addActionListener( this);
 	    y_field.addActionListener( this);
 	    z_field.addActionListener( this);
@@ -525,7 +526,6 @@ abstract public class DataVolumePanel
 			pos_event_mask= PositionEvent.Z;
 		    }
 		    CoordConv.voxel2world( world_cursor, voxel_cursor);
-		    source.setText( String.valueOf( new_value));
 		    /* Note: the PositionEvent constructor makes a _copy_
 		       of its last argument (the cursor) */
 		    _firePositionEvent( new PositionEvent( CoordinateFields.this, 
@@ -582,7 +582,6 @@ abstract public class DataVolumePanel
 		    throw new IllegalArgumentException( "unexpected source:" + ae);
 		}	
 		__actionPerformed_voxel.copyInto( voxel_cursor);
-		source.setText( String.valueOf( new_value));
 		/* Note: the PositionEvent constructor makes a _copy_
 		   of its last argument (the cursor) */
 		_firePositionEvent( new PositionEvent( CoordinateFields.this, 
