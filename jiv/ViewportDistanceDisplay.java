@@ -1,5 +1,5 @@
 
-// $Id: ViewportDistanceDisplay.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: ViewportDistanceDisplay.java,v 1.2 2001-09-30 17:19:22 cc Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -35,7 +35,7 @@ import java.awt.*;
  * drawing font won't change after the initialization.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: ViewportDistanceDisplay.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @version $Id: ViewportDistanceDisplay.java,v 1.2 2001-09-30 17:19:22 cc Exp $ 
  */
 public final class ViewportDistanceDisplay {
 
@@ -141,14 +141,18 @@ public final class ViewportDistanceDisplay {
            cannot think of any solution that avoids allocating a new
            String object every time the label is changed... :( */
 
+	/* FIXME: there's a formatting issue here -- what if the world
+	   coord steps are v small (unlikely for typical brain images,
+	   but...) ?  TODO: display with a precision of about 1/10 of
+	   the (common_sampling) step ... */
+
 	// only display the 2 most significant fractional digits...
 	this.label= String.valueOf( Util.chopFractionalPart( label, 2));
     }
 
     /**
      * @param x new X viewport coordinate of the measurement start point ("origin")
-     * @param y new Y viewport coordinate of the measurement start point ("origin")
-     */
+     * @param y new Y viewport coordinate of the measurement start point ("origin") */
     final public void setStartPosition( final int x, final int y) {
 	start.x= x; start.y= y;
     }
