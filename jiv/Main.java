@@ -1,5 +1,5 @@
 
-// $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
+// $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
 
 /* 
   This file is part of JIV.  
@@ -40,7 +40,7 @@ import java.util.*;
  * position sync" mode.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
+ * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
  */
 public final class Main extends java.applet.Applet {
 
@@ -171,10 +171,10 @@ public final class Main extends java.applet.Applet {
 	    /* NB: if config_file is not a full URL, then a non-null
 	       context value is expected by this constructor */
 	    URL config_url= new URL( document_base, config_file);
-	    _progressMessage( "reading config...");
+	    progressMessage( "reading config...");
 	    _parseConfig( _readConfigFile( config_url));
 
-	    _progressMessage( "loading data...");
+	    progressMessage( "loading data...");
 	    for( i= 0; i < panels.size(); ++i) {
 		PanelStruct ps= (PanelStruct)panels.elementAt( i);
 		if( null == ps || 
@@ -187,12 +187,12 @@ public final class Main extends java.applet.Applet {
 	// this will catch more than we should care about, but it saves us from
 	// writing several catch clauses...
 	catch( Exception e) {
-	    _progressMessage( "error! see console for details...");
+	    progressMessage( "error! see console for details...");
 	    System.err.println( "Error! " + e);
 	    destroy();
 	    return;
 	}
-	_progressMessage( "opening window...");
+	progressMessage( "opening window...");
 	jiv_frame = new Frame("JIV");
 
 	/* Note about setting the applet size: it doesn't work in NS,
@@ -277,7 +277,11 @@ public final class Main extends java.applet.Applet {
 	Menu hm= new Menu( "Help");
 	{
 	    MenuItem help= new MenuItem( "Help");
-	    help.setEnabled( false);
+	    help.addActionListener( new ActionListener() {
+		    public void actionPerformed( ActionEvent ev) {
+			Help.showHelp( Main.this);
+		    }
+		});
 	    hm.add( help); 
 	}
 	hm.addSeparator();
@@ -297,7 +301,7 @@ public final class Main extends java.applet.Applet {
 	   of its components -- Frame is a subclass of Window */
         jiv_frame.pack();
         jiv_frame.show();
-	_progressMessage( "init done.");
+	progressMessage( "init done.");
     }
 
     /** This is called (by the applet's environment) when the applet is about
@@ -346,7 +350,7 @@ public final class Main extends java.applet.Applet {
 	if( panels != null) {
 	    panels.removeAllElements(); panels= null;
 	}
-	_progressMessage( "exited.");
+	progressMessage( "exited.");
 	// TODO: anything else to dispose of ?
 
 	/* Note: If we run as a standalone application, this will
@@ -420,7 +424,8 @@ public final class Main extends java.applet.Applet {
     }
 
     /*private*/ Label msg;
-    /*private*/ void _progressMessage( String new_message) {
+
+    void progressMessage( String new_message) {
 
 	/* Note: we could also call Applet::showStatus(), but it's
 	   (arguably) more reliable to directly call
@@ -664,7 +669,7 @@ public final class Main extends java.applet.Applet {
      * volume.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
+     * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
      */
     /*private*/ final class VolumeStruct {
 	String 		file;
@@ -683,7 +688,7 @@ public final class Main extends java.applet.Applet {
      * </dl>
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: Main.java,v 1.3 2001-05-15 16:07:28 crisco Exp $
+     * @version $Id: Main.java,v 1.4 2001-05-15 19:21:55 crisco Exp $
      */
     /*private*/ final class PanelStruct {
 	String		alias0;

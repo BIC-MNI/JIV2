@@ -1,5 +1,5 @@
 
-// $Id: StandaloneAppletContext.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+// $Id: StandaloneAppletContext.java,v 1.2 2001-05-15 19:21:55 crisco Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -36,12 +36,16 @@ import java.awt.Image;
  * appletviewer/browser.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: StandaloneAppletContext.java,v 1.1 2001-04-08 00:04:28 cc Exp $
+ * @version $Id: StandaloneAppletContext.java,v 1.2 2001-05-15 19:21:55 crisco Exp $
  *
  * @see StandaloneAppletStub 
  */
 public final class StandaloneAppletContext implements AppletContext {
 
+    /** where to refer users for more information */
+    /*private*/ static final String HOME_PAGE= 
+	"http://www.bic.mni.mcgill.ca/~crisco/jiv/";
+    
     public Applet getApplet( String name) 
     { 
 	_notImplemented( "getApplet"); return null;
@@ -62,16 +66,19 @@ public final class StandaloneAppletContext implements AppletContext {
 	_notImplemented( "getImage"); return null;
     }
 
-    /** TODO: implement this for the future "help" feature ... */
     public void showDocument( URL url) 
     { 
-	_notImplemented( "showDocument"); 
+	showDocument( url, "_self");
     }
 
-    /** TODO: implement this for the future "help" feature ... */
+    /* TODO: write a better implementation (e.g. spawn Netscape?) 
+     */
     public void showDocument( URL url, String frame) 
     { 
-	_notImplemented( "showDocument"); 
+	System.err.println( "=============");
+	System.err.println( "Cannot display HTML documents in standalone mode.");
+	System.err.println( "Please see " + HOME_PAGE);
+	System.err.println( "=============");
     }
 
     public void showStatus( String message) 
