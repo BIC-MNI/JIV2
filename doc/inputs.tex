@@ -1,5 +1,5 @@
 %
-% $Id: inputs.tex,v 1.12 2003-07-19 16:58:14 crisco Exp $
+% $Id: inputs.tex,v 1.13 2003-09-02 20:17:37 crisco Exp $
 %
 % author: Chris Cocosco <crisco@bic.mni.mcgill.ca>
 %
@@ -16,11 +16,10 @@ Java application.
 
 Running it as an applet requires an HTML file to invoke it; however,
 this can be a very simple file, containing only the \verb+applet+ tag.
-This applet expects a run-time parameter (in the form of the
-\verb+cfg+ or \verb+config+ applet parameter): the URL of a config
-file, which contains information about which 3D data volumes to load,
-the layout of the user interface, initial settings of various
-controls, and so on.
+This applet expects a run-time parameter (in the form of an applet
+parameter): the URL of a config file, which contains information about
+which 3D data volumes to load, the layout of the user interface,
+initial settings of various controls, and so on.
 
 The applet can be launched by some HTML code like this:
 \begin{verbatim}
@@ -32,18 +31,24 @@ where \verb+jiv.jar+ should be the URL of the JAR file containing the
 JIV Java bytecode, and \verb+config_file+ should be the URL of the
 appropriate JIV config file (\verb+config+ can be used instead of
 \verb+cfg+ for the parameter name). The config file can also be
-supplied ``inline'': simply insert its content instead of its URL; for
+supplied ``inline'' within the HTML file using the \verb+inline_cfg+
+(or \verb+inline_config+) applet parameter; for
 example:
 \begin{verbatim}
 <applet height=50 width=400 archive="jiv.jar" code="jiv/Main.class">
-        <param name="cfg" value="#
-# config file's content here:
-data1 : data1.raw_byte.gz
-jiv.panel.0 : data1
-# ...
+        <param name="inline_cfg" value=" ;
+# config file's content here: ;
+data1 : data1.raw_byte.gz ;
+jiv.panel.0 : data1 ;
+# ... ;
 ">
 </applet>
 \end{verbatim}
+Note that, unlike the separate config file, the inline config needs to
+have each line terminated with the ';' character.  Both a separate
+config file and an inline config can be supplied at the same time: the
+inline config is read last, so its content takes precendence for keys
+defined in both places.
 
 The HTML file is not needed when JIV is not run as an applet but as a
 regular Java application. In this case, the config file's URL can be
@@ -58,6 +63,8 @@ The top-level class that needs to be run is the same
 
 The config file is expected to be in the following format:
 \begin{itemize}
+\item Lines are separated by ';' in the inline config, and by the
+  normal 'newline' in a config file.
 \item Lines that begin with \verb|#| or \verb|!| are comments and are
   ignored. 
 \item Blank lines are ignored.
@@ -98,10 +105,12 @@ individual slices are derived from the volume URL, as described in
 section~\ref{sec:data-files}). The value associated with key
 \verb+myalias.header+ is the URL of the header file associated with
 the image file(s). All relative URL-s are interpreted relative to the
-base URL of the config file.  If all volumes have the same header, it
-is acceptable to specify it only for one of the volumes; otherwise, a
-header should be specified for all volumes (see
-section~\ref{sec:header-files} for the header file format).
+base URL of the config file, or relative to the base URL of the HTML
+file launching the applet if a config file is not defined (by means of
+the \verb+cfg+ or \verb+config+ applet parameters).  If all volumes
+have the same header, it is acceptable to specify it only for one of
+the volumes; otherwise, a header should be specified for all volumes
+(see section~\ref{sec:header-files} for the header file format).
 
 The following JIV configuration options are supported:
 \begin{itemize}
