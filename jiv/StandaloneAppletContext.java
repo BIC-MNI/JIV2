@@ -1,5 +1,5 @@
 
-// $Id: StandaloneAppletContext.java,v 1.2 2001-05-15 19:21:55 crisco Exp $
+// $Id: StandaloneAppletContext.java,v 1.3 2005-08-03 20:04:03 jharlap Exp $
 /* 
   This file is part of JIV.  
   Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
@@ -25,6 +25,9 @@ package jiv;
 
 import java.applet.*;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.awt.Image;
 
@@ -36,7 +39,7 @@ import java.awt.Image;
  * appletviewer/browser.
  *
  * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: StandaloneAppletContext.java,v 1.2 2001-05-15 19:21:55 crisco Exp $
+ * @version $Id: StandaloneAppletContext.java,v 1.3 2005-08-03 20:04:03 jharlap Exp $
  *
  * @see StandaloneAppletStub 
  */
@@ -91,6 +94,21 @@ public final class StandaloneAppletContext implements AppletContext {
 	System.err.println( "StandaloneAppletContext." + method + 
 			    " : not implemented!");
     }
+
+	public void setStream(String key, InputStream stream) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public InputStream getStream(String key) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Iterator getStreamKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 } // end of class StandaloneAppletContext
 
