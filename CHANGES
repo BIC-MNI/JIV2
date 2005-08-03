@@ -1,4 +1,13 @@
 
+** [03-aug-2005] :
+
+- Ant buildfile, build.xml, created
+- util/*.pl updated for things like /path/to/perl to be filled by
+  build system
+- jiv/StandaloneAppletContext.java updated to include stub methods
+  for compatibility with javac 1.4+
+
+
 ** ver_2_4 [26-apr-2004] :
 
 - inline config feature was in fact buggy! now done properly with a
