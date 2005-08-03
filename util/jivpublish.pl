@@ -1,17 +1,18 @@
-#!/usr/bin/perl -w
+#!xPERLx -w
 #
 # Script to publish a MINC file for viewing with JIV.  Basically
 # a fancy wrapper around Chris Cocosco's minc2jiv.pl
 #
 # author: bert@bic.mni.mcgill.ca
 #
-# $Id: jivpublish.pl,v 1.1 2003-06-22 19:01:44 crisco Exp $
+# $Id: jivpublish.pl,v 1.2 2005-08-03 20:04:30 jharlap Exp $
 #
 
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;
-use MNI::FileUtilities;
-use MNI::PathUtilities;
+use File::Basename;
+use File::Copy;
+
 
 my $usage = <<USAGE;
 usage:  $ProgramName [options] mincfile1 [ mincfile2 ...]
@@ -23,6 +24,8 @@ necessary HTML and configuration files to allow remote viewing of the
 files.  All of the files given will be configured to be viewed in a
 single JIV panel.
 USAGE
+
+#' closes the quote above, solely for syntax highlighting purposes...
 
 Getopt::Tabular::SetHelp( undef, $usage );
 
@@ -51,7 +54,7 @@ GetOptions( \@options, \@ARGV )
   or exit 1;
 die "$usage\n" unless @ARGV > 0;
 
-$WebRootPath = "/data/web/prod/htdocs";
+$WebRootPath = "xWEBROOTPATHx";
 
 #
 # Get the user's login name, either from the environment or from getpwuid().
@@ -106,9 +109,8 @@ else {
 push @args, @ARGV;
 
 $firstfile = $ARGV[0];
-my ($dir, $basename, $ext) = MNI::PathUtilities::split_path( $firstfile, 
-							     'last', 
-							     [qw(gz z Z bz2)]);
+# strips off all trailing compression formats, and the last extension.
+my ($basename, $dir, undef) = fileparse($firstfile, "\.[^.]+(\.(gz|z|Z|bz2))?");
 
 #
 # If the user didn't explicitly select a title, use the base filename of
@@ -125,6 +127,9 @@ $result = system("minc2jiv", @args);
 
 die "Conversion process terminated abnormally." unless ($result == 0);
 
+# copy the jiv.jar into the users jiv dir
+copy("xJIVJARPATHx", "$jivdir/jiv.jar");
+
 $htmlfile = "$jivdir/$basename.html";
 
 open(HTMLFILE, ">$htmlfile");
@@ -132,7 +137,7 @@ print HTMLFILE "<html>\n<head>\n";
 print HTMLFILE "<title>JIV view of $title</title>\n";
 print HTMLFILE "<head>\n<body>\n";
 print HTMLFILE "<h1>JIV view of $title:</h1>\n";
-print HTMLFILE "<applet height=50 width=300 codebase=\"/~crisco/jiv/prod/\" archive=\"jiv.jar\" code=\"jiv/Main.class\" name=\"$title\">\n";
+print HTMLFILE "<applet height=50 width=300 codebase=\"$jivdir\" archive=\"jiv.jar\" code=\"jiv/Main.class\" name=\"$title\">\n";
 #
 # Convert the $cfgfile path from an absolute path to a path relative to
 # the web root directory.
@@ -144,15 +149,16 @@ print HTMLFILE "<p><strong>\n";
 print HTMLFILE "You must have enabled Java support in your browser to run this applet!\n";
 print HTMLFILE "</strong></p>\n</applet>\n";
 #
-# This file is intended to be a server-side include, but since not
-# everyone at the BIC has includes enabled on their web directory,
-# I just copy the entire file.
+# This is a big chunk of text that has a bit of help info and credits
+# Chris...  Kept separately for maintainability, but merged in by the
+# build system.
 #
-open(SSIFILE, "$WebRootPath/users/crisco/jiv/prod/ssi_insert.html");
-while (<SSIFILE>) {
-    print HTMLFILE;
-}
-close(SSIFILE);
+my $ssi_message = <<ENDSSIMESSAGE;
+xSSIMESSAGEx
+ENDSSIMESSAGE
+
+print HTMLFILE $ssi_message;
+
 print HTMLFILE "<!-- hhmts start -->\n";
 $now = localtime;
 print HTMLFILE "<br><i>Last modified: $now</i>";
@@ -163,7 +169,7 @@ close(HTMLFILE);
 print "\nThis MINC file is now available for viewing at:\n";
 $htmlrel = $htmlfile;
 $htmlrel =~ s/$WebRootPath(.*)/$1/;
-print "http://www.bic.mni.mcgill.ca$htmlrel\n";
+print "xWEBHOSTNAMEx$htmlrel\n";
 
 
 

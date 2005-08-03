@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl5 -w
+#!xPERLx -w
 
-# $Id: jiv.pl,v 1.6 2002-07-07 15:19:02 cc Exp $
+# $Id: jiv.pl,v 1.7 2005-08-03 20:04:30 jharlap Exp $
 #
 # Description: this is a wrapper script for invoking JIV on
 #              one or more MNI MINC image volumes.
@@ -36,7 +36,7 @@ use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
 
 # this _needs_ to be defined
-my $JIVCode = '/some/path/jiv.jar';
+my $JIVCode = 'xJIVJARPATHx';
 
 # optional (if not defined, a JVM named "java" will be searched for 
 # in the default path) 

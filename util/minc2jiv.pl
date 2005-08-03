@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl5 -w
+#!xPERLx -w
 
-# $Id: minc2jiv.pl,v 1.5 2002-04-06 14:37:52 cc Exp $ 
+# $Id: minc2jiv.pl,v 1.6 2005-08-03 20:04:30 jharlap Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
