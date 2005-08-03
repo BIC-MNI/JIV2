@@ -4,8 +4,8 @@
 
 Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
    prefix         The prefix into which everything gets installed
-   webRootPath    The path to the web root, such as /var/www/htdocs
-   webHostName    The hostname of the web host, such as http://www.bic.mni.mcgill.ca
+   webRootPath    The path to the web root (/data/web/prod/htdocs)
+   webHostName    The hostname of the web host (http://www.bic.mni.mcgill.ca)
     </description>
 	<!-- set global properties for this build -->
 	<property name="src" location="jiv"/>
