@@ -1,6 +1,11 @@
-<project name="jiv" default="dist" basedir=".">
+<project name="jiv" default="jar" basedir=".">
 	<description>
         Java Image Viewer by Chris Cocosco
+
+Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
+   prefix         The prefix into which everything gets installed
+   webRootPath    The path to the web root, such as /var/www/htdocs
+   webHostName    The hostname of the web host, such as http://www.bic.mni.mcgill.ca
     </description>
 	<!-- set global properties for this build -->
 	<property name="src" location="jiv"/>
@@ -18,15 +23,6 @@
 	<property name="installDocPath" value="${prefix}/share/doc/jiv" />
 	<property name="installBinPath" value="${prefix}/bin" />
 
-	<target name="help">
-	<echo>Variables that can be overridden are:
-   prefix         The prefix into which everything gets installed
-   webRootPath    The path to the web root, such as /var/www/htdocs
-   webHostName    The hostname of the web host, such as http://www.bic.mni.mcgill.ca
-	</echo>
-	<fail message="Help requested, not building"/>
-	</target>
-
 	<target name="init">
 		<!-- Create the time stamp -->
 		<tstamp/>
@@ -34,16 +30,16 @@
 		<mkdir dir="${build}"/>
 	</target>
 
-	<target name="testForUnix"
-        description="Checks to make sure the OS is a UN*X variant">
+	<target name="testForUnix">
+	   <!-- Checks to make sure the OS is a UN*X variant -->
+
 		<condition property="isUnix">
 			<os family="unix"/>
 		</condition>
 	</target>
 
-	<target name="testForPerl5" depends="testForUnix" if="isUnix"
-        description="Checks to make sure perl5 is available">
-		<!-- Check for perl5 -->
+	<target name="testForPerl5" depends="testForUnix" if="isUnix">
+      <!-- Checks to make sure perl5 is available -->
 
 		<exec executable="which" resultproperty="perl5Exists" outputProperty="perl5Path">
 			<arg value="perl5"/>
@@ -54,9 +50,8 @@
 		</condition>
 	</target>
 
-	<target name="testForPerl" depends="testForPerl5" if="isUnix"
-        description="Checks to make sure perl is available">
-		<!-- Check for perl -->
+	<target name="testForPerl" depends="testForPerl5" if="isUnix">
+      <!-- Checks to make sure perl is available -->
 		<exec executable="which" resultproperty="perlExists" outputProperty="perlXPath">
 			<arg value="perl"/>
 		</exec>
@@ -116,8 +111,8 @@
 
 	</target>
 
-	<target name="dist" depends="compile"
-        description="generate the distribution" >
+	<target name="jar" depends="compile"
+        description="generate the jarfile" >
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}"/>
 
@@ -135,8 +130,8 @@
 		<jar jarfile="${dist}/jiv-${jivVersion}.jar" basedir="${build}"/>
 	</target>
 
-	<target name="testForLatex" depends="testForUnix" if="isUnix"
-        description="Checks to make sure pdflatex is available">
+	<target name="testForLatex" depends="testForUnix" if="isUnix">
+      <!-- Checks to make sure pdflatex is available -->
 		<exec executable="which" resultproperty="latexExists">
 			<arg value="pdflatex"/>
 		</exec>
@@ -146,7 +141,7 @@
 		</condition>
 	</target>
 
-	<target name="pdfs" depends="testForLatex" if="isLatexAvailable"
+	<target name="doc" depends="testForLatex" if="isLatexAvailable"
         description="Runs pdflatex to produce documentation">
 		<exec dir="doc" executable="pdflatex">
 			<arg value="manual"/>
@@ -157,8 +152,8 @@
 		</exec>
 	</target>
 
-	<target name="installPerl" depends="compilePerl"
-        description="install perl scripts" >
+	<target name="installPerl" depends="compilePerl">
+      <!-- Installs only the perl scripts -->
 	   <!-- Create the install dirs -->
 		<mkdir dir="${installBinPath}"/>
 
@@ -173,7 +168,7 @@
 		<chmod perm="ugo+rx" dir="${installBinPath}" includes="jiv.pl jivpublish.pl minc2jiv.pl"/>
 	</target>
 
-	<target name="install" depends="dist,pdfs,installPerl"
+	<target name="install" depends="jar,doc,installPerl"
         description="install everything" >
 	   <!-- Create the install dirs -->
 		<mkdir dir="${installSharePath}"/>
