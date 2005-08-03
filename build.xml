@@ -14,8 +14,7 @@ Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
 	<property name="jivVersion" value="2.4"/>
 
 	<!-- location specific variables, which can be overridden with -Dname=value, such as -Dprefix=/usr/local -->
-	<property name="prefix" value="/export/data/jharlap/test"/>
-<!--	<property name="prefix" value="/usr/local/mni"/> -->
+	<property name="prefix" value="/usr/local/mni"/>
 	<property name="webRootPath" value="/data/web/prod/htdocs"/>
 	<property name="webHostName" value="http://www.bic.mni.mcgill.ca"/>
 
