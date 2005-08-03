@@ -124,6 +124,13 @@
 		<!-- Copy the COPYING file over -->
 		<copy file="COPYING" todir="${build}"/>
 
+		<!-- Create the epm-header -->
+		<copy file="epm-header.in" tofile="epm-header">
+			<filterset begintoken="x" endtoken="x">
+				<filter token="VERSION" value="${jivVersion}" />
+			</filterset>
+		</copy>
+
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/jiv-${jivVersion}.jar" basedir="${build}"/>
 	</target>
@@ -193,6 +200,7 @@
 		<delete>
 			<fileset dir="doc" includes="*.pdf *.aux *.log *.dvi"/>
 		</delete>
+		<delete file="epm-header"/>
 	</target>
 </project>
 

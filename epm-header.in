@@ -1,0 +1,9 @@
+%product jiv
+%copyright 2000-2004 Chris Cocosco
+%vendor McConnell Brain Imaging Centre
+%packager Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
+%license COPYING
+%description JIV is a Java software for visualization and side-by-side comparison of multiple 3D image datasets.
+%version xVERSIONx
+
+
