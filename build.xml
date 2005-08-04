@@ -196,11 +196,11 @@ Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
 			<fileset dir="." includesfile="MANIFEST"/>
 		</copy>
 
-		<tar destfile="${dist}/jiv-${jivVersion}.tar.gz" 
+		<tar destfile="jiv-${jivVersion}.tar.gz" 
 		     basedir="${dist}"
 			  compression="gzip"/>
 		
-		<delete dir="${dist}/jiv-${jivVersion}"/>
+		<delete dir="${dist}"/>
 	</target>
 
 
