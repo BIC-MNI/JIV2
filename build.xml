@@ -167,7 +167,7 @@ Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
 		<chmod perm="ugo+rx" dir="${installBinPath}" includes="jiv.pl jivpublish.pl minc2jiv.pl"/>
 	</target>
 
-	<target name="install" depends="jar,doc,installPerl"
+	<target name="install" depends="clean,jar,doc,installPerl"
         description="install everything" >
 	   <!-- Create the install dirs -->
 		<mkdir dir="${installSharePath}"/>
@@ -185,6 +185,24 @@ Variables that can be overridden (ant -D&lt;name&gt;=&lt;value&gt;) are:
 		</copy>
 
 	</target>
+
+	<target name="dist" depends="clean"
+	     description="Create a source tarball">
+		<!-- Create a temporary dir -->
+		<mkdir dir="${dist}/jiv-${jivVersion}"/>
+		
+		<!-- Copy everything into the temp dir -->
+		<copy todir="${dist}/jiv-${jivVersion}">
+			<fileset dir="." includesfile="MANIFEST"/>
+		</copy>
+
+		<tar destfile="${dist}/jiv-${jivVersion}.tar.gz" 
+		     basedir="${dist}"
+			  compression="gzip"/>
+		
+		<delete dir="${dist}/jiv-${jivVersion}"/>
+	</target>
+
 
 	<target name="clean"
         description="clean up" >
