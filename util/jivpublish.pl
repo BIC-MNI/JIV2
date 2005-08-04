@@ -1,12 +1,14 @@
-#!xPERLx -w
+#! xPERLx
 #
 # Script to publish a MINC file for viewing with JIV.  Basically
 # a fancy wrapper around Chris Cocosco's minc2jiv.pl
 #
 # author: bert@bic.mni.mcgill.ca
 #
-# $Id: jivpublish.pl,v 1.2 2005-08-03 20:04:30 jharlap Exp $
+# $Id: jivpublish.pl,v 1.3 2005-08-04 15:13:36 jharlap Exp $
 #
+
+use warnings "all";
 
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;

@@ -1,10 +1,10 @@
-#!xPERLx -w
+#! xPERLx
 
-# $Id: jiv.pl,v 1.7 2005-08-03 20:04:30 jharlap Exp $
+# $Id: jiv.pl,v 1.8 2005-08-04 15:13:36 jharlap Exp $
 #
 # Description: this is a wrapper script for invoking JIV on
 #              one or more MNI MINC image volumes.
-# Requires: mni-perllib (available from ftp.bic.mni.mcgill.ca)
+# Requires: mni-perllib (available from packages.bic.mni.mcgill.ca)
 #
 # Copyright (C) 2000, 2001 Steve Robbins and Chris Cocosco
 # ({stever,crisco}@bic.mni.mcgill.ca)
@@ -26,6 +26,8 @@
 
 
 use strict;
+
+use warnings "all";
 
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;

@@ -1,6 +1,6 @@
-#!xPERLx -w
+#! xPERLx
 
-# $Id: minc2jiv.pl,v 1.6 2005-08-03 20:04:30 jharlap Exp $ 
+# $Id: minc2jiv.pl,v 1.7 2005-08-04 15:13:36 jharlap Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -31,6 +31,8 @@
 
 
 use strict;
+
+use warnings "all";
 
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;
