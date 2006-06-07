@@ -1,6 +1,6 @@
 #! xPERLx
 
-# $Id: minc2jiv.pl,v 1.7 2005-08-04 15:13:36 jharlap Exp $ 
+# $Id: minc2jiv.pl,v 1.8 2006-06-07 15:37:36 jharlap Exp $ 
 #
 # Description: this is a preprocessing script for converting a
 # MNI-MINC volume to a format that JIV can read; it can also
@@ -34,6 +34,7 @@ use strict;
 
 use warnings "all";
 
+use Carp;
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;
 use MNI::FileUtilities;
@@ -41,7 +42,6 @@ use MNI::PathUtilities;
 use MNI::Spawn;
 use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
-
 
 MNI::Spawn::RegisterPrograms( [qw/ cp mincexpand mincextract gzip /] )
     or exit 1;
