@@ -1,9 +1,9 @@
-#! xPERLx
+#!/usr/bin/perl -w
 
-# $Id: minc2jiv.pl,v 1.8 2006-06-07 15:37:36 jharlap Exp $ 
+# $Id: minc2jiv2.pl,v 2.0 2010/02/14 14:37:52 cc Exp $ 
 #
 # Description: this is a preprocessing script for converting a
-# MNI-MINC volume to a format that JIV can read; it can also
+# MNI-MINC volume to a format that JIV2 can read; it can also
 # generate the individual slices (necessary for the 
 # 'download on demand' mode of JIV)
 #
@@ -12,7 +12,7 @@
 # Inspired by: trislice.pl by John Sled
 #
 #
-# Copyright (C) 2001 Chris Cocosco (crisco@bic.mni.mcgill.ca)
+# Copyright (C) 2001 Chris Cocosco; 2010 Lara Bailey (bailey@bic.mni.mcgill.ca)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,10 +31,8 @@
 
 
 use strict;
+use Carp qw( croak );
 
-use warnings "all";
-
-use Carp;
 use Getopt::Tabular;
 use MNI::Startup qw/ nocputimes/;
 use MNI::FileUtilities;
@@ -42,6 +40,7 @@ use MNI::PathUtilities;
 use MNI::Spawn;
 use MNI::MincUtilities qw( :geometry :range);
 use MNI::MiscUtilities qw(:all);
+
 
 MNI::Spawn::RegisterPrograms( [qw/ cp mincexpand mincextract gzip /] )
     or exit 1;
@@ -56,7 +55,7 @@ my $output_path= '.';
 my $cfg_file= undef;
 my $jiv_ext= '.raw_byte';
 my $gzip= 1;
-my $slices = 0;
+my $slices = 1;
 my $volume = 1;
 my $force = 0;
 my @options = 
@@ -69,29 +68,15 @@ my @options =
     ['-volume', 'boolean', 0, \$volume, "produce volume file [default: $volume]"],
     ['-force', 'boolean', 0, \$force, "accept non-standard direction cosines (rotated coordinate axes) [default: $force]"],
   );
+
 GetOptions( \@options, \@ARGV ) 
   or exit 1;
 die "$usage\n" unless @ARGV > 0;
 
-
-my $cfg= 'jiv.download : ';
-if( $volume && $slices) {
-    $cfg .= "hybrid\n\n";
-}
-elsif( $volume && !$slices) {
-    $cfg .= "upfront\n\n";
-}
-elsif( !$volume && $slices) {
-    $cfg .= "on_demand\n\n";
-}
-else {
-    print "nothing to do!\n";
-    exit 0;
-}
-
 my $panel= 0;
 
 my $norm_options= "-norm -range 0 255";
+
 my $compress= ($gzip ? "| gzip -c9 " : "") ;
 
 my %base_names_seen;
@@ -131,24 +116,17 @@ foreach my $in_mnc (@ARGV) {
     my( @dim_names)= qw/ x y z/;
     @dimorder= @dim_names[ @$order];
 
-    # TODO/FIXME: allow for some slop (+/- 5%) in the test ...
-    #
-    unless( nlist_equal( \@dir_cosines, [ 1,0,0, 0,1,0, 0,0,1 ]) ) {
-	if( $force) {
-	    warn "$in_mnc : non-standard direction cosines : world coordinates will not be available!";
-	    $cfg .= "jiv.world_coords = false\n";
-	}
-	else {
-	    die "$in_mnc : non-standard direction cosines (that is, rotated coordinate axes) are not supported! Use -force to override ... \n";
-	}
-    }
 
     my $header= '';
     $header .= "size   :  @length\n";
     $header .= "start  :  @start\n";
     $header .= "step   :  @step\n";
     $header .= "order  :  @dimorder\n\n";
-    $header .= "imagerange  :  @irange\n";
+    $header .= "imagerange  :  @irange\n\n";
+
+    $header .= "xspace_direction_cosines  :  $dir_cosines[0], $dir_cosines[1], $dir_cosines[2] ;\n";
+    $header .= "yspace_direction_cosines  :  $dir_cosines[3], $dir_cosines[4], $dir_cosines[5] ;\n";
+    $header .= "zspace_direction_cosines  :  $dir_cosines[6], $dir_cosines[7], $dir_cosines[8] ;\n";
 
     $dir= $output_path;
 
@@ -157,10 +135,6 @@ foreach my $in_mnc (@ARGV) {
     write_file( $out_header, $header );
     print "\nVolume header info written to $out_header\n\n"
 	if $Verbose;
-
-    $cfg .= "${base} = ${base}$ext\n";
-    $cfg .= "${base}.header = ${base}.header\n";
-    $cfg .= ("jiv.panel." . $panel++ . " = $base\n");
 
     ### VOLUME: ###
 
@@ -213,12 +187,6 @@ foreach my $in_mnc (@ARGV) {
 
 } # for $in_mnc (@ARGV)
 
-if( $cfg_file) {
-    MNI::FileUtilities::check_output_path( $cfg_file) or exit 1;
-    write_file( $cfg_file, $cfg );
-    print "\nConfig file written to $cfg_file\n\n"
-	if $Verbose;
-}
 
 # --- end of script ! ---
 
@@ -232,4 +200,3 @@ sub write_file {
     close( OUT )
       or die "error closing file `$name' ($!)\n";
 }
-
