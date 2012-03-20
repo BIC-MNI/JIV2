@@ -1,0 +1,214 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;\f1\fswiss\fcharset77 Helvetica-Oblique;\f2\fswiss\fcharset77 Helvetica-Bold;
+}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww15100\viewh15120\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 package jiv_monkey;\
+\
+import java.awt.*;\
+import java.awt.image.*;\
+import java.awt.event.*;\
+import java.util.*;\
+\
+/**\
+ * Provides the volume panel functionality specific to panels\
+ * displaying a single image volume.\
+ *\
+ */\
+public final class IndividualDataVolumePanel extends DataVolumePanel \{\
+\
+    static final boolean	DEBUG_POPUP_CMDS= false;\
+    static final short		DEFAULT_CMAP_START= 0;// "low" setting of the colormap controls slider\
+    static final short		DEFAULT_CMAP_END= 255;// "high" setting of the colormap controls slider\
+    static final int			DEFAULT_COLOR_CODING= ColorCoding.GRAY;\
+    static final Color		DEFAULT_CMAP_COLOR_UNDER= Color.black;//color below "low" setting of the colormap controls slider\
+    static final Color		DEFAULT_CMAP_COLOR_ABOVE= Color.white;//initial color above "high" setting of the colormap controls \
+    static final boolean	INITIAL_CMAP_TIED_MODE= false;\
+\
+    final ColorCoding	color_coder= 
+\f1\i \ul new ColorCoding()
+\f0\i0 \ulnone ;\
+\
+    Data3DVolume 		data_volume; \
+    ColormapControl		cmap_control;\
+    ColormapDisplay		cmap_display;\
+\
+\
+    public IndividualDataVolumePanel( Data3DVolume data_volume, \
+				      Container parent_container,\
+				      int grid_column,\
+				      Main applet_root ) \{\
+	this( data_volume, parent_container, grid_column, \
+	      new Point3Dfloat(), true, false,\
+	      DEFAULT_CMAP_START, DEFAULT_CMAP_END, DEFAULT_COLOR_CODING, \
+	      DEFAULT_CMAP_COLOR_UNDER, DEFAULT_CMAP_COLOR_ABOVE, false,\
+	      applet_root);\
+    \}\
+    \
+\
+    public IndividualDataVolumePanel( Data3DVolume data_volume, \
+				      Container parent_container,\
+				      int grid_column,\
+				      Point3Dfloat initial_world_cursor,\
+				      boolean enable_world_coords,\
+				      boolean byte_voxel_values,\
+				      short initial_cmap_start,\
+				      short initial_cmap_end,\
+				      int color_coding_type,\
+				      Color initial_cmap_color_under,\
+				      Color initial_cmap_color_above,\
+				      boolean isNative,\
+				      Main applet_root\
+				      ) \{\
+	// initialization done in DataVolumePanel superclass (part 1/2)\
+	super( parent_container, grid_column, initial_world_cursor,\
+	       enable_world_coords, byte_voxel_values, isNative,\
+	       applet_root);\
+\
+	
+\f2\b set: this.data_volume
+\f0\b0 \
+\
+	
+\f2\b create: cmap_control
+\f0\b0 = 
+\f1\i \ul new ColormapControl
+\f0\i0 \ulnone ( initial_cmap_start,\
+					   initial_cmap_end,\
+					   color_coding_type,\
+					   initial_cmap_color_under,\
+					   initial_cmap_color_above,\
+					   INITIAL_CMAP_TIED_MODE,\
+					   popup_menu );\
+	set: initial_slices\
+		using CoordConv.world2voxel( initial_world_cursor);\
+\
+	
+\f2\b fill: slice_producers
+\f0\b0  \{1,2,3\} with:\
+		
+\f1\i \ul new TransverseSliceImageProducer
+\f0\i0 \ulnone ( data_volume, initial_slices.z, \
+						  cmap_control.getColormap(), isNative),\
+		
+\f1\i \ul new SagittalSliceImageProducer
+\f0\i0 \ulnone ( data_volume, initial_slices.x, \
+						cmap_control.getColormap(), isNative),\
+		
+\f1\i \ul new CoronalSliceImageProducer
+\f0\i0 \ulnone ( data_volume, initial_slices.y, \
+					       cmap_control.getColormap(), isNative)\
+\
+	set: GridBagConstraints gbc\
+	add to popup menu: 
+\f2\b controls_panel
+\f0\b0 .add( 
+\f2\b cmap_control
+\f0\b0 , gbc);\
+	
+\f2\b set: cmap_display
+\f0\b0 \
+	add: 
+\f2\b controls_panel
+\f0\b0 .add( 
+\f2\b cmap_display
+\f0\b0 , gbc);\
+\
+	// hookup communication lines for colormap events:\
+	add slice_producers[1-3] to 
+\f2\b cmap_control
+\f0\b0 \
+\
+	// finish initialization in the superclass (part 2/2)\
+	
+\f1\i do: super._finish_initialization()
+\f0\i0 \
+    \}\
+\
+\
+\
+\
+\
+\
+// The rest is mostly uninteresting..\
+\
+\
+    public SliceImageProducer getATransverseSliceImageProducer( int initial_slice) \{\
+	\
+	SliceImageProducer ret= \
+	    
+\f1\i \ul new TransverseSliceImageProducer
+\f0\i0 \ulnone ( data_volume, \
+					      initial_slice, \
+					      cmap_control.getColormap(), isNative);\
+	
+\f2\b cmap_control
+\f0\b0 .addColormapListener( ret);\
+	return ret;\
+    \}\
+\
+    public SliceImageProducer getASagittalSliceImageProducer( int initial_slice) \{    \}\
+\
+    public SliceImageProducer getACoronalSliceImageProducer( int initial_slice) \{    \}\
+\
+    final public int getXSize() \{ return data_volume.getXSize(); \}\
+    final public int getYSize() \{ return data_volume.getYSize(); \}\
+    final public int getZSize() \{ return data_volume.getZSize(); \}\
+    final public int getXnatSize() \{\
+	if (null != applet_root.native_volume)\
+		return applet_root.native_volume.getXSize();\
+	else\
+		return Integer.MAX_VALUE;\
+    \}\
+    final public int getYnatSize() \{    \}\
+    final public int getZnatSize() \{    \}\
+    final public int getFigSize() \{    \}\
+    final public int getSupSize() \{    \}\
+    final public int getLatSize() \{    \}\
+    final public String getTitle() \{ return data_volume.getNickName(); \}\
+\
+    protected final int _getVoxelValue( Point3Dint voxel_pos) \{\
+	return data_volume.getVoxelAsInt( voxel_pos);\
+    \}\
+    protected final String _getLabelValue( Point3Dint voxel_pos) \{    \}\
+    protected final float _image_byte2real( short voxel_value) \{\
+	return data_volume.voxel2image( voxel_value);\
+    \}\
+    protected final short _image_real2byte( float image_value) \{\
+	return data_volume.image2voxel( image_value);\
+    \}\
+\
+\
+    /** \
+     * Support interface for the inner class\
+     * <code>IndividualDataVolumePanel.ColormapControl</code>. \
+     *\
+     */\
+    interface ColormapControlMenus \{\
+	Object[][]	color_codings= \{ \{ "grey", new Integer( ColorCoding.GREY) \}, ... \};//label-value pairs for "color coding" menu\
+	Object[][]	basic_colors= \{ \{ "black", Color.black \}, ... \};//label-value pairs to be used in the "under/over color" menues\
+    \} \
+\
+    /** \
+     * Support interface for the inner class\
+     * <code>IndividualDataVolumePanel.ColormapDisplay</code>.\
+     *\
+     */\
+    interface ColormapDisplayConstants \{\
+\
+	boolean 		DEBUG= false;\
+	boolean		DOUBLE_BUFFER= false;\
+	int 			BAR_HEIGHT= 10;\
+	int 			TICKS_HEIGHT= 8;\
+	int 			HALF_TICKS_HEIGHT= TICKS_HEIGHT >> 1;\
+	Dimension 	MINIMUM_SIZE= new Dimension( 15, BAR_HEIGHT+TICKS_HEIGHT+2);// used by ColormapDisplay::getMinimumSize()\
+\
+    \}\
+\
+    \
+\} // end of class IndividualDataVolumePanel\
+\
+\
+}

@@ -1,0 +1,171 @@
+package jiv_monkey;
+
+import java.net.*;
+import java.io.*;
+import java.awt.*;
+import java.awt.image.*;
+import java.awt.event.*;
+import java.util.*;
+
+/**
+ * The entry-point class, both when running as an applet and when
+ * running as a standalone application. It reads/parses all the input
+ * parameters (including the config file), initializes all the
+ * necessary objects, and generally handles all the system
+ * interaction. It also sets or unsets (at user's request) the "global
+ * position sync" mode.
+ *
+ */
+public final class Main extends java.applet.Applet {
+
+    /*private*/ static final boolean 	DEBUG= false;
+
+    /*private*/ Thread 		initialization_thread;
+    /*private*/ Frame 		jiv_frame;
+    /*private*/ boolean 	position_sync;/** keeps the current state of the postion sync */
+
+    /* these fields initialized by _parseConfig():
+     */
+    /*private*/ boolean	 	initial_position_sync;	// Java default is false
+    /*private*/ boolean	 	byte_voxel_values;	// Java default is false
+    /*private*/ boolean	 	enable_world_coords= true;
+    /*private*/ int		download_method= Data3DVolume.DOWNLOAD_UPFRONT;
+    /*private*/ String		xfm_file; //filename of nat2mni txfm, should end in ".xfm"
+    /*private*/ Hashtable	volumes= new Hashtable();  /** holds VolumeStruct, indexed by alias */
+    /*private*/ Hashtable	headers= new Hashtable();  /** holds VolumeHeader, indexed by alias */
+    /*private*/ Vector 		panels= new Vector(); /** holds PanelStruct (and may contain gaps) */
+    /*private*/ int		no_of_panels;
+
+    /*private*/ Data3DVolume	native_volume;  /** Holds a pointer to the native volume (so other volumes can call getXSize on it) */
+    /*private*/ String		native_alias;  
+
+    /*private*/ CheckboxMenuItem sync_menu;
+
+    /** entry point when running as a standalone application */
+    public static void main( String argv[]) {    }
+
+    /** entry point when running as an applet */
+    public void init()  {    }
+
+    public String getAppletInfo() {    }
+
+    public String[][] getParameterInfo() {    }
+
+    /*private*/ void _doInitialization() {    }
+
+    /** This is called (by the applet's environment) when the applet is about
+	to be permanently stopped. It should free up any resources that the
+	applet is holding (e.g. frames, etc) 
+
+	We also call it in response to the 'Quit' command from 
+	DataVolumePanel-s and in response to "window closing" events received
+	by jiv_frame...
+    */
+    public void destroy() {    }
+
+    /* see Java Programmer's FAQ (http://www.best.com/~pvdl/javafaq.html)
+       sect12, Q2 for some useful info on which browsers call 
+       {init,start,stop,destroy} and when.
+    */
+    /** TODO? ... */
+    public void start() { }
+
+    /** TODO? ... */
+    public void stop() { }
+
+    /** if true, the cursor position is sync-ed for all the panels */
+    public synchronized void setPositionSync( boolean new_setting) {    }
+
+    public boolean getPositionSync() {    }
+
+    public int getNumberOfPanels() {    }
+
+    /*private*/ Label msg;
+
+    void progressMessage( String new_message) {    }
+
+    /** used by _parseConfig() 
+	in converting from the string representation (in the config file) to 
+	the internal int representation */    
+    /*private*/ static final Object[][] color_codings_array= {
+	{ "grey", new Integer( ColorCoding.GREY) },
+	{ "gray", new Integer( ColorCoding.GREY) },
+	{ "hotmetal", new Integer( ColorCoding.HOTMETAL) },
+	{ "spectral", new Integer( ColorCoding.SPECTRAL) },
+	{ "red", new Integer( ColorCoding.RED) },
+	{ "green", new Integer( ColorCoding.GREEN) },
+	{ "blue", new Integer( ColorCoding.BLUE) },
+	{ "mni_labels", new Integer( ColorCoding.MNI_LABELS) },
+	{ "mni-labels", new Integer( ColorCoding.MNI_LABELS) }
+	};
+    /*private*/ static Hashtable color_coding;
+
+    /** used by _parseConfig() 
+	in converting from the string representation (in the config file) to 
+	the internal int representation */    
+    /*private*/ static final Object[][] dnld_method_array= {
+	{ "upfront", new Integer( Data3DVolume.DOWNLOAD_UPFRONT) },
+	{ "on_demand", new Integer( Data3DVolume.DOWNLOAD_ON_DEMAND) },
+	{ "hybrid", new Integer( Data3DVolume.DOWNLOAD_HYBRID) },
+	};
+    /*private*/ static Hashtable dnld_method_convert;
+
+    /** fills-in the following fields of Main: volumes, headers, panels, 
+	position_sync;
+	throws an Exception if any errors were encountered 
+    */
+    /*private*/ void _parseConfig( Properties config, URL url_context) 
+	throws IOException, NumberFormatException {    }
+    
+    /** returns the first _individual_ panel index displaying the argument 
+	or -1 if none found
+     */
+    /*private*/ int _panelIndexOf( String volume_alias) {    }
+
+
+    final private Color convertToColor( String color_text) {    }
+
+
+
+    /* ***** helper (member) classes ***** */
+
+    /**
+     * Helper data structure: represents an individual 3D image
+     * volume.
+     *
+     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
+     * @version $Id: Main.java,v 1.19 2003/12/21 22:34:43 crisco Exp $
+     */
+    /*private*/ final class VolumeStruct {
+	String 		file;
+	Data3DVolume	data;
+    }
+
+    /**
+     * Helper data structure: represents a GUI panel. There are 2
+     * types of panels: individual and combined. Not all fields
+     * are valid for all panel types: 
+     * <dl>
+     * <dt>individual: 
+     * <dd>alias0 (alias1 should be null!), color_coding, range_* 
+     * <dt>combined: 
+     * <dd>alias0, alias1
+     * </dl>
+     *
+     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
+     * @version $Id: Main.java,v 1.19 2003/12/21 22:34:43 crisco Exp $
+     */
+    /*private*/ final class PanelStruct {
+	String		alias0;
+	String		alias1;
+	/** should be one of the static constants declared by ColorCoding */
+	int		color_coding= ColorCoding.GREY;
+	short		range_start= 0;
+	short		range_end= 255;
+	Color		color_under= Color.black;
+	Color		color_above= Color.white;
+	boolean		isNative = false;
+	DataVolumePanel	gui;
+    }
+
+} // end of class Main

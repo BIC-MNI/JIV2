@@ -1,0 +1,439 @@
+package jiv_monkey;
+
+import java.awt.*;
+import java.awt.image.*;
+import java.awt.event.*;
+import java.util.*;
+
+/**
+ * takes care of 3D to 2D conversions?? mouse actions, and directs cursor display
+ * 
+ * Uses (for converting to view-dependent coordinates) the subclasses:
+ * <code>TransverseSlice2DViewport</code>,
+ * <code>CoronalSlice2DViewport</code>, and
+ * <code>SagittalSlice2DViewport</code>.
+ * with the abstract methods: 
+ * <code>positionChanged</code>,
+ * <code>_firePositionEvent</code>,
+ * <code>_world2voxel</code> and
+ * <code>_voxel2world</code>
+ * which are implemented differently by the 3 different subclasses.
+ *
+ */
+abstract public class Slice2DViewport extends Panel 
+    implements PositionListener, PositionGenerator {
+
+    protected static final boolean DEBUG= false;
+    /*private*/ static final boolean DEBUG_INPUT_EVENTS= false;
+
+    /*private*/ static final boolean ALWAYS_DOUBLE_BUFFER= true;
+    /*private*/ static final boolean USE_SEPARATE_SCALE_FILTER= false;
+    /*private*/ static final boolean USE_NEW_DRAW_IMAGE= true;
+    /*private*/ static final boolean CONSUME_INPUT_EVENTS= true;
+    public static final int OTHER_BUTTON_MASK= MouseEvent.BUTTON2_MASK | MouseEvent.BUTTON3_MASK;
+    public static final int BUTTON_MODIFIER_MASK= MouseEvent.SHIFT_MASK | MouseEvent.CTRL_MASK;
+    /*private*/ static int MAX_SCALE_FACTOR;
+
+    /* ************ ************
+       these are initialized in the constructor and never changed after that: 
+    */
+    /*private*/ ImageProducer	 image_source;
+    /*private*/ int 		 max_slice_number;
+    /*private*/ float 		 ortho_step; // the original (not common) step
+    /*private*/ Image		 original_image; 
+    /*private*/ int		 original_image_width;
+    /*private*/ int 	 	 original_image_height;
+    public boolean 	 	 isNative;
+    /* ************ ************ */
+
+    /*private*/ Vector 		 event_listeners; //list of externals who want to be notified
+    /*private*/ Dimension	 preferred_size; /** @see #getPreferredSize */
+    /*private*/ Dimension	 vport_dims; // Current viewport dimensions.
+    /*private*/ Point     image_origin= new Point( 0, 0);// location of the viewport on the parent VolumePanel, and has no effect on what view of the volume is displayed
+    /*private*/ int	  scaled_image_width; // = original_image_width x scale_factor
+    /*private*/ int	  scaled_image_height; // = original_image_height x scale_factor
+    /*private*/ int    	  min_scaled_image_width; // for range checking when zooming out
+    /*private*/ int    	  max_scaled_image_width; // for range checking when zooming in
+    /*private*/ double    scale_factor; // how much should the original image be scaled for display
+    /*private*/ Image     scaled_image; // the pre-scaled slice image
+    /*private*/ Image 	 offscreen_buffer= null; // for double-buffering the screen updates
+    /*private*/ Graphics offscreen_gc; // see offscreen_buffer
+    
+    protected Point3Dfloat cursor; // current cursor in world coordinates (3D)
+    protected Point3Dfloat cursor_nat; // current cursor in native coordinates (3D)
+
+    /*private*/ ViewportCursor vport_cursor= new ViewportCursor( -100, -100);// cross-hair position cursor. 
+    /*private*/ Point last_position= new Point();// for "mouse drags"
+    /*private*/ Point3Dfloat 		distance_origin= null;// origin for interactive distance measurements
+    /*private*/ ViewportDistanceDisplay distance_display= null;// for the distance measurement
+
+
+
+    protected Slice2DViewport( ImageProducer ip, 
+			       PositionListener pos_listener_for_ip,
+			       Point3Dfloat cursor,
+			       boolean isNative ) {
+    }
+
+    /** 
+     * Helper method: validates a suggested value for
+     * <code>scaled_image_width</code>; if the value is too low or too
+     * high, it "caps" it accordingly.  
+     *
+     * @param value The suggested value.
+     * @return valid (possibly "capped") value.
+     */
+    final /*private*/ int _cappedScaledImageWidth( int value) {    }
+
+    /** 
+     * Note: this needs to return 'true' if you want requestFocus() to
+     * have any effect (this was not enforced in Java 1.1...)
+     *
+     * @see java.awt.Component#isFocusTraversable 
+     */
+    final public boolean isFocusTraversable() { return true; }
+
+    /** 
+     * Overrides <code>Component#getPreferredSize</code>. Necessary,
+     * otherwise <code>Window#pack()</code> will squish us to a tiny
+     * size.  
+     *
+     * @see java.awt.Component#getPreferredSize
+     */
+    final public Dimension getPreferredSize() { return preferred_size;}
+
+    /** 
+     * @return the vertical dimension of the original (source) image.
+     */
+    final public int getOriginalImageHeight() { return original_image_height; }
+
+    /**
+     * Called by the AWT input event delivery thread.
+     * 
+     * @param e The (user-produced) mouse event to process.
+     *
+     * @see #processMouseMotionEvent
+     */
+    final protected void processMouseEvent( MouseEvent e) {    }
+
+    /**
+     * Called by the AWT input event delivery thread.
+     * 
+     * @param e The (user-produced) mouse motion event to process.
+     *
+     * @see #processMouseEvent
+     */
+    final protected void processMouseMotionEvent( MouseEvent e) {    }
+
+    /**
+     * Called by the AWT input event delivery thread.
+     * 
+     * @param e The (user-produced) key event to process.
+     */
+    final protected void processKeyEvent( KeyEvent e) {    }
+
+    /**
+     * Changes the image magnification (scale) factor, by recomputing
+     * the image position and dimension in the viewport such that the
+     * field of view's center, in the original image space, remains at
+     * the same viewport position. It respects the min/max scale
+     * factors given by 'min_scaled_image_width' and
+     * 'max_scaled_image_width'.
+     *
+     * @param delta The number of pixels the mouse was dragged in the
+     * vertical direction; can be positive or negative.  
+     */
+    final /*private*/ void _doZoom( final int delta) {    }
+
+    /** for the private internal use of _newCursor( int, int) */
+    /*private*/ Point3Dfloat __newCursor_new_world_cursor= new Point3Dfloat();
+
+    /**
+     * Gets called in response to this class' own mouse events (so it
+     * <i>does</i> perform a range check on the new position); if the
+     * new cursor position is within volume's boundaries, it updates
+     * the current cursor position and notifies other modules of the
+     * change.
+     *
+     * NOTE: Currently, the cursor is in "grid mode": it automatically
+     * "snaps" to voxel centers (i.e. it cannot have arbitrary
+     * positions).  This also means that, with the current
+     * implementation (19/3/2000) the world position coordinates
+     * generated by this class will always be integral values...
+     *
+     * @param vport_point_x The new viewport X coordinate of the cursor.
+     * @param vport_point_y The new viewport Y coordinate of the cursor.
+     *
+     * @see #_newCursor( float, float, boolean) 
+     */
+//THIS IS FOR INTERNAL - FOR INITIATING cursor change in response to mouse,
+// rather than in response to synchronization
+    final synchronized /*private*/ void _newCursor( final int vport_point_x,
+						    final int vport_point_y  ) {    }
+    
+    /** for the private internal use of _newCursor( float, float, bool) */
+    /*private*/ Point __newCursor_old_vport_cursor= new Point();
+    /** for the private internal use of _newCursor( float, float, bool) */
+    /*private*/ Point __newCursor_new_vport_cursor= new Point();
+    /** for the private internal use of _newCursor( float, float, bool) */
+    /*private*/ Rectangle2 __newCursor_bounds1= new Rectangle2();
+    /** for the private internal use of _newCursor( float, float, bool) */
+    /*private*/ Rectangle2 __newCursor_bounds2= new Rectangle2();
+
+    /**
+     * Gets called by <code>_newCursor( int, int)</code> or by
+     * <code>positionChanged</code>. Updates the graphical cursor
+     * representation and the distance measurement graphics (if
+     * distance mode is active). Optionally, notifies other
+     * modules (which registered their interest by means of
+     * <code>addPositionListener</code>) of the cursor position
+     * change.
+     *
+     * @param new_world_x The new world "X" coordinate of the
+     * cursor. Not checked if it's withins image volume's boundaries!
+     * @param new_world_x The new world "Y" coordinate of the
+     * cursor. Not checked if it's withins image volume's boundaries!
+     * @param notify_others Indicates if it should notify other modules.
+     */
+//THIS IS THE EXTERNAL SIDE (SEE ABOVE FOR MOUSE-GENERATED)
+//THIS IS CALLED WHEN ANOTHER object causes this cursor to move
+    final synchronized protected void _newCursor( final float new_world_x,
+						  final float new_world_y,
+						  final boolean notify_others) {    }
+
+    /** for the private internal use of _newSlice() */
+    /*private*/ Point3Dint __newSlice_new_voxel= new Point3Dint();
+
+    /**
+     * Changes the "Z" cursor position, provided the new position is
+     * not outside volume's boundaries.  This is done by sending a new
+     * position event to the other modules (which registered their
+     * interest by means of <code>addPositionListener</code>); one of
+     * these PositionListener-s is the slice image producer for this
+     * viewport, hence the displayed image gets changed if we cross
+     * into a different slice.
+     *
+     * NOTE: Currently, this method _does_not_ operates in
+     * "grid-mode", unlike <code>_newCursor()</code> !  This is
+     * required in order for sub-unit multiplication factors to work
+     * -- otherwise, we'll be at the same voxel even after 100 "steps"
+     * (mouse events) of 0.5 each ...
+     *
+     * @param increment Change in the "Z" world coordinate (cursor
+     * movement in a direction orthogonal to this viewport). Can be
+     * positive or negative.  
+     */
+    final synchronized /*private*/ void _newSlice( final float increment) {    }
+
+    /** for the private internal use of _{startNew,clear}DistanceMeasurement() */
+    /*private*/ Rectangle __DistanceMeasurement_old_bounds= new Rectangle();
+    /** for the private internal use of _{startNew,clear}DistanceMeasurement() */
+    /*private*/ Rectangle2 __DistanceMeasurement_new_bounds= new Rectangle2();
+
+    /**
+     * Marks the current cursor position as the origin (first point)
+     * for the in-slice distance measurement. Also, it enables the
+     * distance measurement mode, if not already on. 
+     */
+    final synchronized /*private*/ void _startNewDistanceMeasurement() {    }
+
+    /**
+     * Disables the distance measurement mode.
+     */
+    final synchronized /*private*/ void _clearDistanceMeasurement() {    }
+
+    /** for the private internal use of _updateVportCursorPosition() */
+    /*private*/ Point __updateVportCursorPosition_vport_cursor= new Point( -1, -1);
+
+    /* currently, this is thread unsafe */
+    /**
+     * Updates the viewport positions of <code>vport_cursor</code> and
+     * <code>distance_display</code>. They are a function of the
+     * following instance fields: 'image_origin', 'scale_factor', and
+     * 'cursor' hence this method should be called <i>everytime</i> any
+     * of them changes!!
+     *
+     * @see #_world2viewport 
+     */
+    final /*private*/ void _updateVportCursorPosition() {     }
+
+    /** for the private internal use of _world2viewport() */
+    /*private*/ Point3Dint __world2viewport_voxel= new Point3Dint();
+
+    /** 
+     * Converts a world (X,Y) in-slice position to viewport (X,Y)
+     * coordinates, rounded to the nearest voxel center. The world
+     * coordinates are assumed to be within volume's boundaries!
+     *
+     * @param vport_point Output: reference to Point object where to
+     * store the result.
+     * @param world_x Input: world "X" coordinate.
+     * @param world_y Input: world "Y" coordinate.  
+     */
+    final /*private*/ void _world2viewport( Point vport_point,
+					    final float world_x, final float world_y) {    }
+					    
+    /** for the private internal use of paint() */
+    /*private*/ int __paint_old_scaled_image_width= -1;
+
+    /**
+     * Called by AWT when screen (re)drawing is required; it should be
+     * able to redraw everything (e.g. for situations when the window
+     * got partially covered or corrupted).
+     *
+     * @param gr The graphics context to draw on.  
+     */
+    final public void paint( Graphics gr) {     }
+
+    /**
+     * Wrapper around <code>paint(Graphics)</code>; implements the
+     * double-buffering. Assumes that 'offscreen_buffer' and
+     * 'offscreen_gc' are properly initialized (right size, etc).
+     *
+     * @param gr The screen graphics context to draw on.  
+     */
+    /*private*/ final void _doubleBufferedPaint( Graphics gr) {      }
+
+    /**
+     * Called by AWT when screen redrawing/updating is required (and
+     * in response to <code>repaint()</code> requests by the
+     * application). It can safely assume that whatever it draw before
+     * it's still there (i.e. didn't somehow get erased).
+     *
+     * @param gr The screen graphics context to draw on.  
+     */
+    final public void update( Graphics gr) {     }
+
+    /**
+     * Called by AWT (e.g. when the viewport/window size changed).
+     * Recomputes the image position and dimension (scale factor) in
+     * the viewport such that the old field of view (FOV), in the
+     * original image space, is preserved and centered.  
+     */
+    final synchronized public void doLayout() {    }
+
+    /**
+     * "Callback" used, by an outside event source, to deliver a
+     * <code>PositionEvent</code>. Required by the PositionListener
+     * interface.
+     *
+     * @param e The new (imposed from the outside) world cursor position.
+     *
+     * @see PositionListener 
+     */
+    abstract public void positionChanged( PositionEvent e );
+
+    /**
+     * Required by the PositionListener interface.
+     *
+     * @return -1 (that is, a clearly invalid value) to indicate that
+     * this class is not an <code>ImageProducer</code>.
+     * 
+     * @see PositionListener 
+     */
+    final public int getMaxSliceNumber() { return -1; }
+
+    /**
+     * Required by the PositionListener interface.
+     *
+     * @return Float.NaN (that is, a clearly invalid value) since
+     * this class is not an <code>ImageProducer</code>.
+     * 
+     * @see PositionListener 
+     */
+    final public float getOrthoStep() { return Float.NaN; }
+
+    /**
+     * Registers another module who is interested in being notified of
+     * cursor position changes originating from this viewport.
+     *
+     * @param pl Module interested in receiving position events. If
+     * the argument is 'null', or if it is already present in the list
+     * of event listeners, this method does nothing.  
+     */
+    final synchronized public void addPositionListener( PositionListener pl) {    }
+
+    /**
+     * Undoes what <code>addPositionListener</code> did.
+     *
+     * @param pl Module (position event listener) to remove from the
+     * list of modules to notify.
+     * 
+     * @see #addPositionListener 
+     */
+    final synchronized public void removePositionListener( PositionListener pl) {    }
+
+    /**
+     * Notifies the other (registered) modules about a cursor position
+     * change. Converts from xyz_crt to xyz_world (orientation independent) first.
+     *
+     * @param crt_changed_coords_mask Indicates which of (x,y,z) changed
+     * (see <code>PositionEvent</code> for legal values).  
+     * 
+     * @see #__aid_to_firePositionEvent 
+     */
+    abstract protected void _firePositionEvent( int crt_changed_coords_mask);
+
+    /**
+     * Helper method: The orientation-independent functionality of
+     * <code>_firePositionEvent</code> (who calls this).
+     *
+     * @param e The <code>PositionEvent</code> to send out.  
+     *
+     * @see #_firePositionEvent 
+     */
+    final protected void __aid_to_firePositionEvent( final PositionEvent e) {    }
+
+    /** 
+     * @return world coordinate-space distance, in this slice's plane,
+     * between the points specified by <code>world_a</code> and
+     * <code>world_b</code>; the Z coordinates are ignored (ie the two
+     * points are assumed to be in this slice's plane); also, the
+     * world coordinate axes are assumed orthogonal.  
+     */
+    /*private*/ final float _distanceInSlice( final Point3Dfloat world_a, 
+					      final Point3Dfloat world_b) {    }
+
+    /**
+     * Converts from voxel to world coordinates, transparently
+     * handling the reordering/reshuffling of the "virtual" (versus
+     * "real") coordinates.
+     *
+     * Note: the original reason for using the voxel2world version
+     * that reads voxel coords as floats was to be able to handle
+     * arbitrary positions in voxel space. However, currently only the
+     * "grid-mode" is supported, so using this voxel2world is kind of
+     * a waste...
+     *
+     * @param world Output: reference to Point3Dfloat object where to
+     * store the result ("virtual" world coordinates).
+     * @param vx Input: voxel "virtual X" coordinate.
+     * @param vy Input: voxel "virtual Y" coordinate.  
+     * @param vz Input: voxel "virtual Z" coordinate.  
+     */
+    abstract protected void _voxel2world( Point3Dfloat world, 
+					  float vx, float vy, float vz);
+
+    /**
+     * Converts from world to voxel coordinates, transparently
+     * handling the reordering/reshuffling of the "virtual" (versus
+     * "real") coordinates.
+     *
+     * Note: for supporting arbitrary cursor positions, you'll need an
+     * overridden version of this method that returns (outputs) a
+     * Point3Dfloat!
+     * 
+     * @param voxel Output: reference to Point3Dint object where to
+     * store the result ("virtual" voxel coordinates).
+     * @param wx Input: world "virtual X" coordinate.
+     * @param wy Input: world "virtual Y" coordinate.  
+     * @param wz Input: world "virtual Z" coordinate.  
+     */
+    abstract protected void _world2voxel( Point3Dint voxel,
+					  float wx, float wy, float wz);
+
+    public String toString(){    }
+
+
+} // end of class Slice2DViewport
+

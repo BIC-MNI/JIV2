@@ -1,0 +1,35 @@
+package jiv_monkey;
+
+import java.awt.image.*;
+
+/**
+ * A <code>SliceImageProducer</code> customized for "coronal"
+ * (Y=constant) 2D slices.
+ *
+ */
+public final class CoronalSliceImageProducer extends SliceImageProducer {
+
+    public CoronalSliceImageProducer( Data3DVolume data_volume, 
+				      int default_slice, 
+				      IndexColorModel default_colormap,
+				      boolean isNative ) {
+
+	super( default_slice, 
+	       new byte[ data_volume.getXSize() * data_volume.getZSize()],
+	       data_volume.getXSize(), 
+	       data_volume.getZSize(),
+	       default_colormap,
+	       data_volume,
+	       isNative);
+    }
+
+    public final int getMaxSliceNumber() { return data_volume.getYSize()-1; }
+
+    public final float getOrthoStep() { return data_volume.getYStep(); }
+
+    synchronized public final void positionChanged( PositionEvent new_position) {    }
+
+    /*private*/ final void _getNewSliceData( boolean future_notification) {
+    }
+
+}

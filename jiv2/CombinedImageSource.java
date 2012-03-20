@@ -1,27 +1,26 @@
-
-// $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.awt.image.*;
 import java.awt.*;
@@ -35,8 +34,8 @@ import java.util.*;
  * an <code>IndexColorModel</code>; the output image will always have
  * a <code>DirectColorModel</code>.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: CombinedImageSource.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 abstract public class CombinedImageSource implements ImageProducer, PositionListener {
 
@@ -196,7 +195,7 @@ abstract public class CombinedImageSource implements ImageProducer, PositionList
     // PositionListener interface methods: 
     
     // simply forward the event
-    public final void positionChanged( PositionEvent e ) {
+    public final void positionChangeDetected( PositionEvent e ) {
 
 	/* Note: no real need to 'synchronize' this method, because
            boolean assignments are atomic in Java... */
@@ -205,9 +204,9 @@ abstract public class CombinedImageSource implements ImageProducer, PositionList
 	   the callbacks from the src_ip-s), when we could just call
 	   it once after both src_data-s are updated! */
 	suspend_combine= true;
-	src_pl[ 0].positionChanged( e);
+	src_pl[ 0].positionChangeDetected( e);
 	suspend_combine= false;
-	src_pl[ 1].positionChanged( e);
+	src_pl[ 1].positionChangeDetected( e);
     }
 
     // NB: this _assumes_ that the two producers 
@@ -226,7 +225,7 @@ abstract public class CombinedImageSource implements ImageProducer, PositionList
      * <code>ImageProducer</code>-s.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedImageSource.java,v 1.2 2002-04-24 14:31:56 cc Exp $ 
+     * @version $Id: CombinedImageSource.java,v 1.2 2002/04/24 14:31:56 cc Exp $ 
      */
     /*private*/ final class InputReader implements ImageConsumer {
 

@@ -1,35 +1,33 @@
-
-// $Id: StandaloneAppletContext.java,v 1.3 2005-08-03 20:04:03 jharlap Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.applet.*;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.awt.Image;
+import java.io.InputStream;
+import java.util.Iterator;
 
 /**
  * Provides a (very basic) <code>AppletContext</code>, allowing an
@@ -38,8 +36,8 @@ import java.awt.Image;
  * <code>StandaloneAppletStub</code>) replaces the
  * appletviewer/browser.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: StandaloneAppletContext.java,v 1.3 2005-08-03 20:04:03 jharlap Exp $
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: StandaloneAppletContext.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  *
  * @see StandaloneAppletStub 
  */
@@ -48,6 +46,15 @@ public final class StandaloneAppletContext implements AppletContext {
     /** where to refer users for more information */
     /*private*/ static final String HOME_PAGE= 
 	"http://www.bic.mni.mcgill.ca/~crisco/jiv/";
+
+    public InputStream getStream(String key) {
+        _notImplemented( "getStream"); return null; }
+
+    public Iterator getStreamKeys() {
+        _notImplemented( "getStreamKeys"); return null; }
+
+    public void setStream(String key, InputStream stream) {
+        _notImplemented( "setStream"); }
     
     public Applet getApplet( String name) 
     { 
@@ -94,21 +101,6 @@ public final class StandaloneAppletContext implements AppletContext {
 	System.err.println( "StandaloneAppletContext." + method + 
 			    " : not implemented!");
     }
-
-	public void setStream(String key, InputStream stream) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public InputStream getStream(String key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public Iterator getStreamKeys() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 } // end of class StandaloneAppletContext
 

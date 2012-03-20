@@ -1,27 +1,26 @@
-
-// $Id: Slice2DViewport.java,v 1.7 2003-12-21 17:32:17 crisco Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -40,13 +39,13 @@ import java.util.*;
  * x,y,z but to "virtual" (private) ones: x is horizontal, y is
  * vertical, z is orthogonal to the slice plane.  The "translation"
  * between our private x,y,z and the true ones in the outside world is
- * done by the abstract methods: <code>positionChanged</code>,
+ * done by the abstract methods: <code>positionChangeDetected</code>,
  * <code>_firePositionEvent</code>, <code>_world2voxel</code> and
  * <code>_voxel2world</code> which are implemented differently by the
  * 3 different subclasses.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Slice2DViewport.java,v 1.7 2003-12-21 17:32:17 crisco Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: Slice2DViewport.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 abstract public class Slice2DViewport extends Panel 
     implements PositionListener, PositionGenerator {
@@ -54,6 +53,12 @@ abstract public class Slice2DViewport extends Panel
     /** For development/testing only. Should be set to false in
         production code. */
     protected static final boolean DEBUG= false;
+    protected static final boolean DEBUG_TRACE= false;
+    protected static final boolean DEBUG_VW= false;
+    protected static final boolean DEBUG_HIGH= false;
+
+    protected static final boolean DEBUG_A= false;
+
 
     /** If true, all <code>update()</code> operations will be
 	double-buffered.  If false, only double-buffer the operations
@@ -91,7 +96,7 @@ abstract public class Slice2DViewport extends Panel
 	image to the screen. Otherwise, use the "older" (Java 1.0) 
 	Image#drawImage().
     */
-    /*private*/ static final boolean USE_NEW_DRAW_IMAGE= false;
+    /*private*/ static final boolean USE_NEW_DRAW_IMAGE= true;
 
     /** Compile-time option to control whether we should call
         consume() on the InputEvent-s that we dealt with; peers ignore
@@ -138,6 +143,9 @@ abstract public class Slice2DViewport extends Panel
     */
     /** the ImageProducer for <code>original_image</code> */
     /*private*/ ImageProducer	 image_source;
+    /*private*/ VolumeHeader	 local_sampling;
+    /** the title of the volume */
+    /*private*/ String	 title;
     /** the dimension orthogonal to this viewport (- 1) */
     /*private*/ int 		 max_slice_number; 
     /** the original (not common) step orthogonal to this viewport, in world coords */
@@ -146,6 +154,7 @@ abstract public class Slice2DViewport extends Panel
     /*private*/ Image		 original_image; 
     /*private*/ int		 original_image_width;
     /*private*/ int 	 	 original_image_height;
+    public boolean 	 	 isNative;
     /* ************ ************ */
 
     /** list of external PositionListener-s who want to be notified of
@@ -164,7 +173,9 @@ abstract public class Slice2DViewport extends Panel
 	most of the time we'll need viewport coords; the only
 	situation when we need image space is when the viewport is
 	resized (see <code>doLayout</code>), and that's a very
-	infrequent event.  */
+	infrequent event.  This origin defines the location of the viewport on
+       the parent VolumePanel, and has no effect on what view of the
+       volume is displayed*/
     /*private*/ Point     image_origin= new Point( 0, 0);
 
     /** Equal to: original_image_width x scale_factor. Used for saving
@@ -195,8 +206,12 @@ abstract public class Slice2DViewport extends Panel
     /** @see #offscreen_buffer */
     /*private*/ Graphics offscreen_gc;
     
-    /** current cursor in world coordinates (3D) */
-    protected Point3Dfloat cursor;
+    /** current cursor in LOCAL (i.e. rearranged for Coronal and Sagittal)
+	world coordinates (3D) */
+    protected Point3Dfloat local_cursor_mni;
+    /** current cursor in LOCAL (i.e. rearranged for Coronal and Sagittal)
+	native coordinates (3D) */
+    protected Point3Dfloat local_cursor_nat;
     /** The (smart) cross-hair position cursor. Initialized to some
         position clearly outside the viewport, such that it'll be
         obvious if it's not further updated to the proper initial
@@ -225,23 +240,29 @@ abstract public class Slice2DViewport extends Panel
      * @param pos_listener_for_ip <code>PositionListener</code> that
      * will be used for requesting another slice (2D image) from
      * <code>ip</code>.  
-     * @param cursor object that will be used to store the current
-     * cursor position (in world coordinates); should be initialized
+     * @param local_cursor_mni object that will be used to store the current
+     * cursor position (in LOCAL mni coordinates); should be initialized
      * to the desired starting position.
+     * @param local_cursor_nat same as above except LOCAL native space
      */
-    protected Slice2DViewport( ImageProducer ip, 
+    protected Slice2DViewport( ImageProducer ip,
+			       VolumeHeader local_sampling,
+			       String title,
 			       PositionListener pos_listener_for_ip,
-			       Point3Dfloat cursor ) {
-
-	this.cursor= cursor;
+			       Point3Dfloat local_cursor_mni,
+			       Point3Dfloat local_cursor_nat,
+			       boolean isNative ) {
+	this.local_sampling= local_sampling;
+	this.title= title;
+	this.local_cursor_mni= local_cursor_mni;
+	this.local_cursor_nat= local_cursor_nat;
+	this.isNative= isNative;
 	addPositionListener( pos_listener_for_ip); 
-	// need to do this if we want to make sure we start with the 
-	// slice at the initial 'cursor' value specified above...
-	//   (we OR all the masks in order to cover all 3 possible 
-	//    subclasses who will call this; this is ok because at this
-	//    point we only have 1 listener, which will only look at the
-	//    one coordinate it cares about...)
-	_firePositionEvent( PositionEvent.X | PositionEvent.Y | PositionEvent.Z);
+	// make sure we start with the slice at the initial 'local_cursor_mni/nat'
+	// value specified above.. (we use ALL for mask because at this point
+	// we only have 1 listener, which will only look at the one
+	// coordinate it cares about...)
+	_firePositionEvent( PositionEvent.ALL);
 
 	original_image= createImage( image_source= ip);
 	max_slice_number= pos_listener_for_ip.getMaxSliceNumber();
@@ -254,7 +275,8 @@ abstract public class Slice2DViewport extends Panel
 	min_scaled_image_width= 1 * 
 	    ( (original_image_width < original_image_height) ?
 	      ( 1) :
-	      (int)Math.ceil( original_image_width/(double)original_image_height) );
+	      (int)Math.ceil( original_image_width/(double)original_image_height) 
+);
 	if( DEBUG) 
 	    System.out.println( this + 
 				" min_scaled_image_width:" + min_scaled_image_width);
@@ -329,12 +351,12 @@ abstract public class Slice2DViewport extends Panel
      *
      * @see #processMouseMotionEvent
      */
-    final protected void processMouseEvent( MouseEvent e) {
+    final protected void processMouseEvent( MouseEvent me) {
 
 	if( DEBUG || DEBUG_INPUT_EVENTS)
-	    System.out.println( "processMouseEvent: " + e);
+	    System.out.println( "processMouseEvent: " + me);
 
-	switch( e.getID()) {
+	switch( me.getID()) {
 
 	case MouseEvent.MOUSE_ENTERED:
 	    /* this is VERY IMPORTANT! otherwise you won't get any KeyEvent-s! */
@@ -342,7 +364,7 @@ abstract public class Slice2DViewport extends Panel
 	    requestFocus();
 	    break;
 	case MouseEvent.MOUSE_PRESSED:
-	    if( 0 != (e.getModifiers() & 
+	    if( 0 != (me.getModifiers() & 
 		      (OTHER_BUTTON_MASK | BUTTON_MODIFIER_MASK)) 
 		) {
 		/* Note: better to use here getPoint() instead of getX() + getY()
@@ -352,23 +374,23 @@ abstract public class Slice2DViewport extends Panel
 		*/
 		/* thread unsafe: */
 		// this is needed by the 'drag' features!
-		last_position.x= e.getX(); last_position.y= e.getY();
+		last_position.x= me.getX(); last_position.y= me.getY();
 
-		if( e.getClickCount() > 1)
+		if( me.getClickCount() > 1)
 		    _clearDistanceMeasurement();
 	    }
 	    else {
 		// == SET NEW CURSOR POSITION ==
-		_newCursor( e.getX(), e.getY());
+		_newCursor( me.getX(), me.getY());
 
-		if( e.getClickCount() > 1)
+		if( me.getClickCount() > 1)
 		    _startNewDistanceMeasurement();
 		// see the comment at top of file (regarding CONSUME_INPUT_EVENTS)
-		if( CONSUME_INPUT_EVENTS) e.consume(); 
+		if( CONSUME_INPUT_EVENTS) me.consume(); 
 	    }
 	    break;
 	}
-	super.processMouseEvent( e);
+	super.processMouseEvent( me);
     }
 
     /**
@@ -378,40 +400,41 @@ abstract public class Slice2DViewport extends Panel
      *
      * @see #processMouseEvent
      */
-    final protected void processMouseMotionEvent( MouseEvent e) {
+    final protected void processMouseMotionEvent( MouseEvent me) {
 
-	if( MouseEvent.MOUSE_DRAGGED == e.getID() ) {
+	if( MouseEvent.MOUSE_DRAGGED == me.getID() ) {
 
 	    if( DEBUG || DEBUG_INPUT_EVENTS) 
-		System.out.println( "processMouseMotionEvent: " + e);
+		System.out.println( "processMouseMotionEvent: " + me);
 
-	    if( 0 != (e.getModifiers() & OTHER_BUTTON_MASK) ) {
+	    if( 0 != (me.getModifiers() & OTHER_BUTTON_MASK) ) {
 		
 		/* thread unsafe: */
-		final int delta= last_position.y - e.getY();
-		last_position.y= e.getY();
+		final int delta= last_position.y - me.getY();
+		last_position.y= me.getY();
 
-		if( 0 != (e.getModifiers() & BUTTON_MODIFIER_MASK) ) {
+		if( 0 != (me.getModifiers() & BUTTON_MODIFIER_MASK) ) {
 		    // == ZOOM ==
 		    _doZoom( delta);
 		}
 		else {
 		    // == CHANGE SLICE ==
 		    final float multiplication= 0.5f;
-		    _newSlice( delta * multiplication * ortho_step);
+		    _newSlice( (int)myRound(delta * multiplication * ortho_step));
 		}
 	    }
 	    else
-		if( 0 != (e.getModifiers() & BUTTON_MODIFIER_MASK) ) {
+		if( 0 != (me.getModifiers() & BUTTON_MODIFIER_MASK) ) {
 		    // == PAN ==
-		    final int crt_position_x= e.getX();
-		    final int crt_position_y= e.getY();
+		    final int crt_position_x= me.getX();
+		    final int crt_position_y= me.getY();
 		    /* optimization: this instance field is accessed many times
 		       in here, so use a local ("stack") variable for speed */
 		    final Point last_position= this.last_position;
 		    image_origin.translate( crt_position_x - last_position.x,
 					    crt_position_y - last_position.y);
 		    // changed image_origin, so need to call this:
+System.out.println("*****\n**processMouseMotionEvent");
 		    _updateVportCursorPosition();
 		    /* thread unsafe: */
 		    last_position.x= crt_position_x; last_position.y= crt_position_y;
@@ -419,12 +442,12 @@ abstract public class Slice2DViewport extends Panel
 		}
 		else {
 		    // == SET NEW CURSOR POSITION (cursor dragged) ==
-		    _newCursor( e.getX(), e.getY());
+		    _newCursor( me.getX(), me.getY());
 		}
 	    // see the comment at top of file (regarding CONSUME_INPUT_EVENTS)
-	    if( CONSUME_INPUT_EVENTS) e.consume();
+	    if( CONSUME_INPUT_EVENTS) me.consume();
 	}
-	super.processMouseMotionEvent( e);
+	super.processMouseMotionEvent( me);
     }
 
     /**
@@ -432,22 +455,22 @@ abstract public class Slice2DViewport extends Panel
      * 
      * @param e The (user-produced) key event to process.
      */
-    final protected void processKeyEvent( KeyEvent e) {
+    final protected void processKeyEvent( KeyEvent ke) {
 
 	if( DEBUG || DEBUG_INPUT_EVENTS)
-	    System.out.println( "processKeyEvent: " + e);
+	    System.out.println( "processKeyEvent: " + ke);
 
 	/* Note: under win32, holding down Shift or Ctrl generates a
 	   stream of auto-repeating KET_PRESSED events...  TODO: is
 	   there a way to avoid the performance hit this causes?  */
 
-	if( KeyEvent.KEY_PRESSED == e.getID()) {
-	    switch( e.getKeyChar() ) {
+	if( KeyEvent.KEY_PRESSED == ke.getID()) {
+	    switch( ke.getKeyChar() ) {
 
 	    case '+': 
-		_newSlice( ortho_step); break;
+		_newSlice( (int)myRound(ortho_step)); break;
 	    case '-': 
-		_newSlice( -ortho_step); break;
+		_newSlice( (int)myRound(-ortho_step)); break;
 	    case 'd': 
 	    case 'D': 
 		_startNewDistanceMeasurement(); break;
@@ -455,20 +478,20 @@ abstract public class Slice2DViewport extends Panel
 	    case 'C':
 		_clearDistanceMeasurement(); break;
 	    default: 
-		switch( e.getKeyCode() ) {
+		switch( ke.getKeyCode() ) {
 
 		case KeyEvent.VK_RIGHT:
 		case KeyEvent.VK_UP: 
-		    _newSlice( ortho_step); break;
+		    _newSlice( (int)myRound(ortho_step)); break;
 		case KeyEvent.VK_LEFT: 
 		case KeyEvent.VK_DOWN: 
-		    _newSlice( -ortho_step); break;
+		    _newSlice( (int)myRound(-ortho_step)); break;
 		}
 	    }
 	    // see the comment at top of file (regarding CONSUME_INPUT_EVENTS)
-	    if( CONSUME_INPUT_EVENTS) e.consume();
+	    if( CONSUME_INPUT_EVENTS) ke.consume();
 	}
-	super.processKeyEvent( e);
+	super.processKeyEvent( ke);
     }
 
     /**
@@ -537,6 +560,7 @@ abstract public class Slice2DViewport extends Panel
 	    Math.round( (float)( center_old_fov_y - center_fov_y * new_scale_factor));
 
 	// changed image_origin & scale_factor, so need to call this:
+System.out.println("*****\n**doZoom");
 	_updateVportCursorPosition();
 	// done with scaled_image_width; since we changed it, need to write it back!
 	this.scaled_image_width= scaled_image_width;
@@ -550,7 +574,8 @@ abstract public class Slice2DViewport extends Panel
     }
 
     /** for the private internal use of _newCursor( int, int) */
-    /*private*/ Point3Dfloat __newCursor_new_world_cursor= new Point3Dfloat();
+    //is either mni OR native space, depending if this.isNative
+    /*private*/ Point3Dfloat __newCursor_new_local_cursor= new Point3Dfloat();
 
     /**
      * Gets called in response to this class' own mouse events (so it
@@ -570,8 +595,12 @@ abstract public class Slice2DViewport extends Panel
      *
      * @see #_newCursor( float, float, boolean) 
      */
+//THIS IS FOR INTERNAL - FOR INITIATING cursor change in response to mouse,
+// rather than in response to synchronization
     final synchronized /*private*/ void _newCursor( final int vport_point_x,
 						    final int vport_point_y  ) {
+
+	if(DEBUG_TRACE) System.out.println("$_newCursor");
 
 	/* TODO (optional): allow arbitrary cursor positions; for
 	   this, make the two variables below floats instead of ints,
@@ -580,29 +609,43 @@ abstract public class Slice2DViewport extends Panel
 	   will become a voxel_x of 181, which is out of range!)  
 	*/
 	// NB: in java, the int->float conversion is a 'trunc'
-	final int new_cursor_vox_x= (int)
+	final int new_local_cursor_vox_x= (int)
 	    ((vport_point_x - image_origin.x)/scale_factor);
-	final int new_cursor_vox_y= (int)
+	final int new_local_cursor_vox_y= (int)
 	    (original_image_height - (vport_point_y - image_origin.y)/scale_factor);
 	if( DEBUG) {
-	    System.out.println( "new_cursor_vox_x:" + new_cursor_vox_x + ", " +
-				"new_cursor_vox_y:" + new_cursor_vox_y);
+	    System.out.println( "new_local_cursor_vox_x:" + new_local_cursor_vox_x + ", " +
+				"new_local_cursor_vox_y:" + new_local_cursor_vox_y);
 	}
-	if( !( new_cursor_vox_x >= 0 && new_cursor_vox_x < original_image_width &&
-	       new_cursor_vox_y >= 0 && new_cursor_vox_y < original_image_height  )
+	//Since this is the generator, the range must be checked here:
+	if( !( new_local_cursor_vox_x >= 0 && 
+	       new_local_cursor_vox_x < original_image_width &&
+	       new_local_cursor_vox_y >= 0 && 
+	       new_local_cursor_vox_y < original_image_height  )
 	    ) 
 	    // cursor outside volume range... ignore the request.
 	    return;
 
-	_voxel2world( __newCursor_new_world_cursor, 
-		      new_cursor_vox_x, new_cursor_vox_y, 0f);
-	_newCursor(  __newCursor_new_world_cursor.x,  __newCursor_new_world_cursor.y,
-		     true);
+	Point3Dfloat __newCursor_old_local_cursor= _local_cursor_get();
+	Point3Dint __newCursor_old_local_cursor_vox= new Point3Dint();
+	if (DEBUG_A) System.out.println("1 _world2voxel to get current local voxel z");
+	if(DEBUG_TRACE) System.out.println("$$_newCursor -> _world2voxel()");
+	_world2voxel( __newCursor_old_local_cursor_vox, __newCursor_old_local_cursor);
+
+	if (DEBUG) System.out.println("Slice2DViewport._newCursor -> _voxel2world()");
+	if (DEBUG_A) System.out.println("2 _voxel2world with new voxel coords (from crt) to get world for _newCursor");
+	if(DEBUG_TRACE) System.out.println("$$_newCursor -> _voxel2world()");
+	_voxel2world( __newCursor_new_local_cursor, 
+		      new_local_cursor_vox_x, new_local_cursor_vox_y, __newCursor_old_local_cursor_vox.z);
+	if(DEBUG_TRACE) System.out.println("$$_newCursor -> %_newCursor()");
+	_newCursor(  __newCursor_new_local_cursor.x,  __newCursor_new_local_cursor.y,
+		     __newCursor_new_local_cursor.z, true);
+	if(DEBUG_TRACE) System.out.println("$_newCursor DONE!\n");
     }
     
-    /** for the private internal use of _newCursor( float, float, bool) */
+    /** 2D (x,y) point for the private internal use of _newCursor( float, float, bool) */
     /*private*/ Point __newCursor_old_vport_cursor= new Point();
-    /** for the private internal use of _newCursor( float, float, bool) */
+    /** 2D (x,y) for the private internal use of _newCursor( float, float, bool) */
     /*private*/ Point __newCursor_new_vport_cursor= new Point();
     /** for the private internal use of _newCursor( float, float, bool) */
     /*private*/ Rectangle2 __newCursor_bounds1= new Rectangle2();
@@ -611,37 +654,52 @@ abstract public class Slice2DViewport extends Panel
 
     /**
      * Gets called by <code>_newCursor( int, int)</code> or by
-     * <code>positionChanged</code>. Updates the graphical cursor
+     * <code>positionChangeDetected</code>. Updates the graphical cursor
      * representation and the distance measurement graphics (if
      * distance mode is active). Optionally, notifies other
      * modules (which registered their interest by means of
      * <code>addPositionListener</code>) of the cursor position
      * change.
      *
-     * @param new_world_x The new world "X" coordinate of the
+     * @param new_local_x The new rotated(local) world MNI OR NATIVE "X" coordinate of the
      * cursor. Not checked if it's withins image volume's boundaries!
-     * @param new_world_x The new world "Y" coordinate of the
+     * @param new_local_y The new rotated(local) world MNI OR NATIVE "Y" coordinate of the
      * cursor. Not checked if it's withins image volume's boundaries!
      * @param notify_others Indicates if it should notify other modules.
      */
-    final synchronized protected void _newCursor( final float new_world_x,
-						  final float new_world_y,
+//THIS IS THE EXTERNAL SIDE (SEE ABOVE FOR MOUSE-GENERATED)
+//THIS IS CALLED WHEN ANOTHER object causes this cursor to move
+//IT IS ALSO CALLED TO FINISH the above Mouse-Generated cursor movements
+    final synchronized protected void _newCursor( final float new_local_x,
+						  final float new_local_y,
+						  final float new_local_z,
 						  final boolean notify_others) {
+	if (DEBUG_TRACE) System.out.println("\t%_newCursor");
 
 	Rectangle2 old_bounds; 
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> vport_cursor.getPosition()");
 	vport_cursor.getPosition( __newCursor_old_vport_cursor);
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> vport_cursor.getBounds()");
 	vport_cursor.getBounds( old_bounds= __newCursor_bounds1);
-	cursor.x= new_world_x;
-	cursor.y= new_world_y;
+
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> _local_cursor_setXY()");
+	_local_cursor_setXY(new_local_x,new_local_y);
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> _local_cursor_setZ()");
+	_local_cursor_setZ(new_local_z);
+
 	if( null != distance_origin) {
 	    Rectangle  distance_bounds= __newCursor_bounds2;
 	    distance_display.getBounds( distance_bounds);
 	    old_bounds.expandToInclude( distance_bounds);
-	    distance_display.setLabel( _distanceInSlice( distance_origin, cursor));
+	    distance_display.setLabel( _distanceInSlice( distance_origin, _local_cursor_get()));
 	}
+
 	/* this updates 'vport_cursor' (and possibly 'distance_display') 
-	   using the new 'cursor' */
-	_updateVportCursorPosition(); 	
+	   using the new 'local_cursor_mni' or 'local_cursor_nat' */
+	if (DEBUG_A) System.out.println("****\n** _newCursor EXTERNAL with ("+new_local_x+","+new_local_y+","+new_local_z+")");
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> #_updateVportCursorPosition()");
+	_updateVportCursorPosition();
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> vport_cursor.getPosition()");
 	vport_cursor.getPosition( __newCursor_new_vport_cursor);
 
 	/* if we are currently displaying the interactive distance
@@ -663,12 +721,22 @@ abstract public class Slice2DViewport extends Panel
 	    }
 	    repaint( new_bounds.x, new_bounds.y, new_bounds.width, new_bounds.height);
 	}
-	if( notify_others) 
-	    _firePositionEvent( PositionEvent.X | PositionEvent.Y);
-    }
+	if (DEBUG_TRACE) System.out.println("\t%%_newCursor -> $_firePositionEvent()");
+	if( notify_others) {
+	    if (!isNative) {
+		if (DEBUG) System.out.println("newCursor relaying positionEvent with.. "+( PositionEvent.ALL_MNI));
+		_firePositionEvent( PositionEvent.ALL_MNI); }
+	    else {
+		if (DEBUG) System.out.println("newCursor relaying positionEvent with.. "+( PositionEvent.ALL_NAT));
+		_firePositionEvent( PositionEvent.ALL_NAT); }
+	}
+	if (DEBUG_TRACE) System.out.println("\t%_newCursor DONE!!\n");
+    }// end _newCursor(float,float,boolean)
 
     /** for the private internal use of _newSlice() */
     /*private*/ Point3Dint __newSlice_new_voxel= new Point3Dint();
+    /*private*/ Point3Dint __newSlice_old_voxel= new Point3Dint();
+    /*private*/ Point3Dfloat __newSlice_new_world= new Point3Dfloat();
 
     /**
      * Changes the "Z" cursor position, provided the new position is
@@ -685,19 +753,38 @@ abstract public class Slice2DViewport extends Panel
      * -- otherwise, we'll be at the same voxel even after 100 "steps"
      * (mouse events) of 0.5 each ...
      *
-     * @param increment Change in the "Z" world coordinate (cursor
+//     * @param increment Change in the "Z" world coordinate (cursor
+     * @param increment Change in the "Z" voxel coordinate (cursor
      * movement in a direction orthogonal to this viewport). Can be
      * positive or negative.  
      */
-    final synchronized /*private*/ void _newSlice( final float increment) {
+    final synchronized /*private*/ void _newSlice( final int increment) {
 
-	final float new_cursor_z= cursor.z + increment;
+	if (DEBUG) System.out.println("Slice2DViewport._newSlice, with voxel increment: "+increment);
+	if (DEBUG) System.out.println("\tlocal_cursor before: ("+_local_cursor_getX()+","+_local_cursor_getY()+","+_local_cursor_getZ()+")");
+	final float old_local_world_cursor_x= _local_cursor_getX();
+	final float old_local_world_cursor_y= _local_cursor_getY();
+	final float old_local_world_cursor_z= _local_cursor_getZ();
+	_world2voxel( __newSlice_old_voxel, _local_cursor_getX(), _local_cursor_getY(), _local_cursor_getZ());
+	__newSlice_new_voxel= __newSlice_old_voxel;
+	__newSlice_new_voxel.z= (__newSlice_old_voxel.z + increment);
+
+	//Since this is a position generator, check range before sending
+	//to check, must convert to voxel coordinates..
 	// NB: this uses 'round' !
-	_world2voxel( __newSlice_new_voxel, 0, 0, new_cursor_z);
-	if( __newSlice_new_voxel.z >= 0 && __newSlice_new_voxel.z <= max_slice_number
-	    ) {
-	    cursor.z= new_cursor_z;
-	    _firePositionEvent( PositionEvent.Z);
+	if (DEBUG) System.out.println("Checking new voxel range, must be less than max: "+max_slice_number);
+	if( __newSlice_new_voxel.z >= 0 && __newSlice_new_voxel.z <= max_slice_number)
+	{
+	    _voxel2world(__newSlice_new_world,__newSlice_new_voxel.x,__newSlice_new_voxel.y,__newSlice_new_voxel.z);
+	    _local_cursor_setXY( __newSlice_new_world.x, __newSlice_new_world.y);
+	    _local_cursor_setZ( __newSlice_new_world.z);
+	    if (DEBUG) System.out.println("\t1local_cursor new: ("+_local_cursor_getX()+","+_local_cursor_getY()+","+_local_cursor_getZ()+")");
+
+	    //assume all xyz have changed, since increment is in voxel space
+	    if (!isNative)
+		_firePositionEvent( PositionEvent.ALL_MNI);
+	    else
+		_firePositionEvent( PositionEvent.ALL_NAT);
 	}
     }
 
@@ -723,9 +810,10 @@ abstract public class Slice2DViewport extends Panel
 	    // distance measurement mode is already on
 	    distance_display.getBounds( old_bounds= __DistanceMeasurement_old_bounds);
 
-	distance_origin= new Point3Dfloat( cursor); 
+	distance_origin= new Point3Dfloat( _local_cursor_get()); 
 	distance_display.setLabel( 0f);
 	// this will update the start&end in distance_display
+	if (DEBUG) System.out.println("****\n**_startNewDistanceMeasurement");
 	_updateVportCursorPosition();	
 	
 	Rectangle2 new_bounds; 
@@ -760,23 +848,29 @@ abstract public class Slice2DViewport extends Panel
      * Updates the viewport positions of <code>vport_cursor</code> and
      * <code>distance_display</code>. They are a function of the
      * following instance fields: 'image_origin', 'scale_factor', and
-     * 'cursor' hence this method should be called <i>everytime</i> any
+     * 'local_cursor_mni/nat' hence this method should be called <i>everytime</i> any
      * of them changes!!
      *
      * @see #_world2viewport 
      */
     final /*private*/ void _updateVportCursorPosition() { 
 
+	if (DEBUG_TRACE) System.out.println("\t\t#_updateVportCursorPosition");
+	if (DEBUG) System.out.println("Adjusting cursor: ("+_local_cursor_getX()+","+_local_cursor_getY()+")");
+
+	if (DEBUG_TRACE) System.out.println("\t\t##_updateVportCursorPosition -> &_world2viewport()");
 	_world2viewport( __updateVportCursorPosition_vport_cursor, 
-			 cursor.x, cursor.y);
+			 _local_cursor_getX(), _local_cursor_getY(), _local_cursor_getZ());
+	if (DEBUG_TRACE) System.out.println("\t\t##_updateVportCursorPosition -> vport_cursor.setPosition()");
 	vport_cursor.setPosition( __updateVportCursorPosition_vport_cursor);
 
 	if( null != distance_origin) {
 	    distance_display.setEndPosition( __updateVportCursorPosition_vport_cursor);
 	    _world2viewport( __updateVportCursorPosition_vport_cursor, 
-			     distance_origin.x, distance_origin.y);
+			     distance_origin.x, distance_origin.y, distance_origin.z);
 	    distance_display.setStartPosition( __updateVportCursorPosition_vport_cursor);
 	}
+	if (DEBUG_TRACE) System.out.println("\t\t#_updateVportCursorPosition DONE!\n");
     }
 
     /** for the private internal use of _world2viewport() */
@@ -793,10 +887,14 @@ abstract public class Slice2DViewport extends Panel
      * @param world_y Input: world "Y" coordinate.  
      */
     final /*private*/ void _world2viewport( Point vport_point,
-					    final float world_x, final float world_y) {
-
+					    final float local_world_x,
+					    final float local_world_y,
+					    final float local_world_z ) {
+	if (DEBUG_TRACE) System.out.println("\t\t\t&_world2viewport");
 	// NB: this uses 'round' !
-	_world2voxel( __world2viewport_voxel, world_x, world_y, 0);
+	if (DEBUG_A) System.out.println("3 _world2voxel for new viewport coords, with local world ("+local_world_x+","+local_world_y+","+local_world_z+")");
+	if (DEBUG_TRACE) System.out.println("\t\t\t&&_world2viewport -> _world2voxel()");
+	_world2voxel( __world2viewport_voxel, local_world_x, local_world_y, local_world_z); //Implemented in child
 
 	int offset= (scaled_image_width / original_image_width) >> 1;
 	if( DEBUG)
@@ -807,6 +905,7 @@ abstract public class Slice2DViewport extends Panel
 	    (int)( __world2viewport_voxel.x * scale_factor);
 	vport_point.y= -offset + image_origin.y +
 	    (int)( (original_image_height - __world2viewport_voxel.y) * scale_factor);
+	if (DEBUG_TRACE) System.out.println("\t\t\t&_world2viewport DONE!\n");
     }
 					    
     /** for the private internal use of paint() */
@@ -993,10 +1092,12 @@ abstract public class Slice2DViewport extends Panel
 	    return;
 
 	if( DEBUG) {
-	    System.out.println( this + " vport_dims: " + vport_dims);
+	    System.out.println( this);
+	    System.out.println( "vport_dims: " + vport_dims);
 	    System.out.println( "\timage_origin: " + image_origin);
 	    System.out.println( "\tscaled_image_width: " + scaled_image_width);
 	}
+
 	// TODO: optimization: maybe do nothing if vport_dims didn't change?
 	// (but careful to make sure you _do_ the computations the first time!)
 
@@ -1084,11 +1185,11 @@ abstract public class Slice2DViewport extends Panel
      * <code>PositionEvent</code>. Required by the PositionListener
      * interface.
      *
-     * @param e The new (imposed from the outside) world cursor position.
+     * @param e The new (imposed from the outside) GLOBAL mni&native cursor positions.
      *
      * @see PositionListener 
      */
-    abstract public void positionChanged( PositionEvent e );
+    abstract public void positionChangeDetected( PositionEvent e );
 
     /**
      * Required by the PositionListener interface.
@@ -1112,7 +1213,7 @@ abstract public class Slice2DViewport extends Panel
 
     /**
      * Registers another module who is interested in being notified of
-     * cursor position changes originating from this viewport.
+     * local_cursor_mni/nat position changes originating from this viewport.
      *
      * @param pl Module interested in receiving position events. If
      * the argument is 'null', or if it is already present in the list
@@ -1143,14 +1244,14 @@ abstract public class Slice2DViewport extends Panel
 
     /**
      * Notifies the other (registered) modules about a cursor position
-     * change.
+     * change. Converts from xyz_crt to xyz_world (orientation independent) first.
      *
-     * @param changed_coords_mask Indicates which of (x,y,z) changed
+     * @param crt_changed_coords_mask Indicates which of (x,y,z) changed
      * (see <code>PositionEvent</code> for legal values).  
      * 
      * @see #__aid_to_firePositionEvent 
      */
-    abstract protected void _firePositionEvent( int changed_coords_mask);
+    abstract protected void _firePositionEvent( int crt_changed_coords_mask);
 
     /**
      * Helper method: The orientation-independent functionality of
@@ -1162,14 +1263,37 @@ abstract public class Slice2DViewport extends Panel
      */
     final protected void __aid_to_firePositionEvent( final PositionEvent e) {
 
-	if( DEBUG) System.out.println( e);
+	if (DEBUG_TRACE) System.out.println("\t\t\t@__aid_to_firePositionEvent");
+
+	if( DEBUG) {
+		System.out.print("** Slice2DViewport.__aid_to_firePositionEvent");
+		if ( DEBUG_HIGH) System.out.println(" for e: "+e+"\n");
+		else System.out.println();
+	}
+
+	//Since any change in a native coord means all the mni coords change
+	//and any change in an mni coord means all the native coords change
+	//This is a good place to adjust the mask so they will detect the changes.
+	int old_mask= e.getFieldsMask();
+	int new_mask;
+	if (e.isMNISource())
+		new_mask= old_mask | PositionEvent.ALL_NAT | PositionEvent.ALL_LABELS;
+	else if (e.isNativeSource())
+		new_mask= old_mask | PositionEvent.ALL_MNI | PositionEvent.ALL_LABELS;
+	else //should not be necessary - viewports are never atlas or anything else
+		new_mask= PositionEvent.ALL;
+	e.setFieldsMask(new_mask);
 
 	// deliver the event to each of the listeners
 	if( null == event_listeners) 
 	    // nobody listening...
 	    return;
-	for( int i= 0; i < event_listeners.size(); ++i)
-	    ((PositionListener)event_listeners.elementAt( i)).positionChanged( e);
+	for( int i= 0; i < event_listeners.size(); ++i) {
+	    if (DEBUG_TRACE) System.out.println("\n\t\t\t@@__aid_to_firePositionEvent -> *"+(PositionListener)event_listeners.elementAt( i)+".positionChangeDetected");
+	    ((PositionListener)event_listeners.elementAt( i)).positionChangeDetected( e);
+	}
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t@__aid_to_firePositionEvent DONE!\n");
     }
 
     /** 
@@ -1226,7 +1350,68 @@ abstract public class Slice2DViewport extends Panel
      */
     abstract protected void _world2voxel( Point3Dint voxel,
 					  float wx, float wy, float wz);
+    abstract protected void _world2voxel( Point3Dint voxel, Point3Dfloat world);
+
+    public void _local_cursor_setXY(float new_local_x, float new_local_y) {
+	if (!isNative) {
+		local_cursor_mni.x= new_local_x;
+		local_cursor_mni.y= new_local_y;
+	}
+	else {
+		local_cursor_nat.x= new_local_x;
+		local_cursor_nat.y= new_local_y;
+	}
+    }
+    public void _local_cursor_setZ(float new_local_z) {
+	if (!isNative)
+		local_cursor_mni.z= new_local_z;
+	else
+		local_cursor_nat.z= new_local_z;
+    }
+
+    public Point3Dfloat _local_cursor_get() {
+	if (!isNative)
+		return local_cursor_mni;
+	else
+		return local_cursor_nat;
+    }
+
+    public float _local_cursor_getX() {
+	if (!isNative)
+		return local_cursor_mni.x;
+	else
+		return local_cursor_nat.x;
+    }
+    public float _local_cursor_getY() {
+	if (!isNative)
+		return local_cursor_mni.y;
+	else
+		return local_cursor_nat.y;
+    }
+    public float _local_cursor_getZ() {
+	if (!isNative)
+		return local_cursor_mni.z;
+	else
+		return local_cursor_nat.z;
+    }
+
+public int myRound(float num){
+	if (num > 0)
+		return (int)Math.ceil(num);
+	else
+		return (int)(-Math.ceil(Math.abs(num)));
+}
+
+    public String toString(){
+	if (DEBUG)
+		return title+" - Slice2DViewport [isNative:"+isNative+
+			",localcursor_mni:"+local_cursor_mni+
+			",localcursor_nat:"+local_cursor_nat+
+			",vport_cursor:"+vport_cursor+"]";
+	else
+		return title+" - Slice2DViewport";
+    }
+
 
 } // end of class Slice2DViewport
-
 

@@ -1,0 +1,65 @@
+package jiv_monkey;
+
+import java.awt.*;
+import java.awt.image.*;
+
+/**
+ * displays the correct brain slices only (for cursor manipulation, see Slice2DViewport.java)
+ * Uses (for converting to/from view-dependent coordinates) the subclasses:
+ * <code>TransverseSliceImageProducer</code>, 
+ * <code>CoronalSliceImageProducer</code>, and 
+ * <code>SagittalSliceImageProducer</code>. 
+ *
+ */
+public abstract class SliceImageProducer extends MemoryImageSource 
+    implements PositionListener, ColormapListener {
+
+    protected static final boolean DEBUG= false;
+    protected static final boolean DEBUG_HIGH= false;
+
+    //NONE OF THE FOLLOWING ARE CHANGED IN THIS CLASS:
+    public boolean isNative;
+    protected Data3DVolume data_volume;
+    protected int crt_slice;
+    protected int slice_width;
+    protected int slice_height;
+    protected byte[] slice_data;
+
+    //THIS IS CHANGED HERE
+    protected IndexColorModel colormap;
+
+    protected SliceImageProducer( int default_slice, 
+				  byte[] default_slice_data,
+				  int slice_width,
+				  int slice_height,
+				  IndexColorModel default_colormap,
+				  Data3DVolume data_volume,
+				  boolean isNative
+				  ) {
+	// start MemoryImageSource's constructor.
+	super( slice_width, slice_height, default_colormap, 
+	       default_slice_data, 0, slice_width);
+    }
+
+    public final void requestTopDownLeftRightResend( ImageConsumer ic) {}
+
+    abstract public int getMaxSliceNumber();
+
+    abstract public float getOrthoStep();
+
+    /** for the private use of positionChanged() in the 3 subclasses (using 
+	the same Point3Dint object everytime is easier on the heap...) */
+    protected Point3Dint new_voxel_pos= new Point3Dint(); 
+
+    abstract public void positionChanged( PositionEvent new_position);
+    
+    synchronized public void colormapChanged( ColormapEvent e ) {}
+
+    synchronized void sliceDataUpdated( int which_slice ) {}
+
+    abstract /*private*/ void _getNewSliceData( boolean future_notification);
+
+    public String toString(){
+    }
+
+}

@@ -1,0 +1,321 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;\f1\fswiss\fcharset77 Helvetica-Oblique;\f2\fswiss\fcharset77 Helvetica-Bold;
+}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww13680\viewh13340\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 package jiv_monkey;\
+\
+import java.net.*;\
+import java.io.*;\
+import java.awt.*;\
+import java.awt.image.*;\
+import java.awt.event.*;\
+import java.util.*;\
+\
+/**\
+ * The entry-point class, both when running as an applet and when\
+ * running as a standalone application. It reads/parses all the input\
+ * parameters (including the config file), initializes all the\
+ * necessary objects, and generally handles all the system\
+ * interaction. It also sets or unsets (at user's request) the "global\
+ * position sync" mode.\
+ *\
+ */\
+public final class Main extends java.applet.Applet \{\
+\
+    static final boolean 	DEBUG= false;\
+\
+    Thread 		initialization_thread;\
+    Frame 		jiv_frame;\
+    boolean 	position_sync;\
+\
+    /**** these fields initialized by _parseConfig(): ****/\
+    boolean	 	initial_position_sync;	// Java default is false\
+    boolean	 	byte_voxel_values;	// Java default is false\
+    boolean	 	enable_world_coords= true;\
+    int				download_method= Data3DVolume.DOWNLOAD_UPFRONT;\
+    String			xfm_file; //filename of nat2mni txfm, should end in ".xfm"\
+\
+    Hashtable			volumes= new Hashtable();  /** holds VolumeStruct, indexed by alias */\
+    Hashtable			headers= new Hashtable();  /** holds VolumeHeader, indexed by alias */\
+    Vector 				panels= new Vector(); /** holds PanelStruct (and may contain gaps) */\
+    int					no_of_panels;\
+    CheckboxMenuItem 	sync_menu;\
+\
+    Data3DVolume	native_volume;  /** Holds a pointer to the native volume (so other volumes can call getXSize on it) */\
+    String			native_alias;  \
+\
+\
+    public String getAppletInfo() \{    \}\
+    public String[][] getParameterInfo() \{    \}\
+    public boolean getPositionSync() \{    \}\
+    public synchronized void setPositionSync( boolean new_setting) \{    \}\
+    public int getNumberOfPanels() \{    \}\
+    public void destroy() \{    \}\
+\
+    /** TODO? ... */\
+    public void start() \{ \}\
+    public void stop() \{ \}\
+\
+\
+    static final Object[][] color_codings_array= \{\{ "grey", new Integer( ColorCoding.GREY) \}, ..\};\
+    static Hashtable color_coding= new Hashtable();\
+	-> color_coding.put( color_codings_array[i][0], color_codings_array[i][1]);\
+    static final Object[][] dnld_method_array= \{\
+	\{ "upfront", new Integer( Data3DVolume.DOWNLOAD_UPFRONT) \},\
+	\{ "on_demand", new Integer( Data3DVolume.DOWNLOAD_ON_DEMAND) \},\
+	\{ "hybrid", new Integer( Data3DVolume.DOWNLOAD_HYBRID) \},\
+	\};\
+    static Hashtable dnld_method_convert= new Hashtable();\
+	-> dnld_method_convert.put( dnld_method_array[i][0], dnld_method_array[i][1]);\
+\
+    Label msg;\
+    void progressMessage( String new_message) \{    \}\
+\
+\
+\
+\
+\
+\
+\
+    /** entry point when running as a standalone application */\
+    public static void main( String argv[])\
+    \{\
+	set: config_file, and pass to stub\
+	create: Main applet= 
+\f1\i \ul new Main()
+\f0\i0 \ulnone \
+	set: applet.setStub( stub)\
+	do: applet.init()\
+    \}\
+\
+    /** entry point when running as an applet */\
+    public void init() \
+    \{\
+	
+\f1\i do: _doInitialization()
+\f0\i0 \
+	
+\f2\b set: initialization_thread
+\f0\b0 \
+	
+\f1\i do: initialization_thread.start()
+\f0\i0 \
+    \}\
+\
+    /** sets everything up */\
+    void _doInitialization() \{\
+\
+	set: document_base AND code_base\
+	set: config_file OR inline_config\
+\
+	try \{\
+	    
+\f1\i do: _parseConfig
+\f0\i0 ( config, document_base)\
+	    fill: Vector displayed_aliases= new Vector()\
+	    fill: Vector displayed_headers= new Vector()\
+	    get: common_sampling= 
+\f1\i VolumeHeader.getCommonSampling
+\f0\i0 ( displayed_headers.elements())\
+	    
+\f1\i do: CoordConv.setSampling
+\f0\i0 ( common_sampling)\
+	    create: (VolumeStruct)vs .data= 
+\f1\i \ul new Data3DVolume
+\f0\i0 \ulnone ( common_sampling, \
+					   document_base & filename, \
+					   volumeheader,\
+					   alias,\
+					   download_method )\
+	    
+\f2\b set: native_volume
+\f0\b0 \
+	\}\
+\
+	
+\f2\b set: jiv_frame
+\f0\b0  (layout)\
+	
+\f2\b set: no_of_panels
+\f0\b0 \
+	set: ps.gui= 
+\f1\i \ul new IndividualDataVolumePanel
+\f0\i0 \ulnone ( data, jiv_frame, column++,\
+						   common_sampling.getFOVCenter(),\
+						   enable_world_coords,\
+						   byte_voxel_values,\
+						   ps.range_start, ps.range_end,\
+						   ps.color_coding, \
+						   ps.color_under, ps.color_above,\
+						   ps.isNative, this);\
+	set: ps.gui= 
+\f1\i \ul new CombinedDataVolumePanel
+\f0\i0 \ulnone ( (IndividualDataVolumePanel)p0, \
+						 (IndividualDataVolumePanel)p1,\
+						 jiv_frame, column++, \
+						 common_sampling.getFOVCenter(),\
+						 enable_world_coords, \
+						 this);\
+	
+\f2\b setPositionSync
+\f0\b0 ( initial_position_sync);\
+    \}\
+\
+\
+\
+\
+    /***** \
+    *	reads config file/embedded and fills-in: volumes, headers, panels, position_sync\
+    */\
+    /*private*/ void _parseConfig( Properties config, URL url_context) \
+	throws IOException, NumberFormatException \{\
+\
+	/* ** first pass: extract the "volume aliases" and headers\
+	 */\
+	for each line in config: \{\
+	    skip: all starting with "jiv."\
+	    if( endsWith ".header")\
+		create: vh= 
+\f1\i \ul new VolumeHeader
+\f0\i0 \ulnone ( new URL( document_base, header_filename))\
+		
+\f2\b fill: headers
+\f0\b0  (with VolumeHeader[s], indexed by alias)\
+		set: default_header\
+	    else\
+		create: vs= 
+\f1\i \ul new VolumeStruct
+\f0\i0 \ulnone ()\
+		set: vs.file\
+		//vs.data is filled later, back in do_initialization\
+		
+\f2\b fill: volumes
+\f0\b0  (with VolumeStruct[s], indexed by alias)\
+	\}\
+\
+	/* set any headers that were not explicitly specified */\
+	fill: headers with default (indexed by remaining aliases)\
+\
+\
+	/* ** second pass: look for individual panels **\
+	 */\
+	create: combined_panels= new Hashtable();\
+	for each line in config:\
+		get: panel_number (from config)\
+		create: panel_struct= 
+\f2\b \shad\shadx60\shady-60\shadr0\shado85 \shadc0 new PanelStruct()
+\f0\b0 \shad0 \
+		
+\f2\b fill: panels 
+\f0\b0 (with PanelStruct[s], indexed by panel_number)\
+		skip: lines in config with two parameters (i.e combined panels with two aliases)\
+		set: panel_struct.alias0 = ..\
+		set: panel_struct.alias1 = null\
+		
+\f2\b set: native_alias
+\f0\b0 = alias0 (if native)\
+	\
+		if( last_token.equals( "coding"))\
+			set: panel_struct.color_coding\
+		if( last_token.equals( "range"))\
+			set: panel_struct.range_start\
+			set: panel_struct.range_end\
+		if( last_token.equals( "border_color"))\
+			using convertToColor(),\
+			set: panel_struct.color_under\
+			set: panel_struct.color_above\
+		if( last_token.equals( "applyTransform"))\
+			set: panel_struct.isNative\
+		if( last_token.equals( "combine"))\
+			fill: combined_panels (with panel_struct, indexed by alias)\
+\
+	/* ** third pass: parse for combined panels ** \
+	 */\
+	for each element of combined_panels:\
+		set: panel_struct.alias0\
+		set: panel_struct.alias1\
+\
+\
+	/* ** global settings ** \
+	 */\
+	
+\f2\b set: initial_position_sync
+\f0\b0  (from "jiv.sync" in config)\
+	
+\f2\b set: byte_voxel_values
+\f0\b0  (from "jiv.byte_values" in config)\
+	
+\f2\b set: enable_world_coords
+\f0\b0  (from "jiv.world_coords" in config)\
+	
+\f2\b set: download_method
+\f0\b0  (from "jiv.download" in config)\
+	
+\f2\b set: xfm_file
+\f0\b0  (from "jiv.txfm_mni2nat" in config)\
+	
+\f1\i do: CoordConv.setXFM()
+\f0\i0 \
+\
+    \} // end of _parseConfig()\
+    \
+\
+\
+    /** returns the first _individual_ panel index displaying the argument \
+	or -1 if none found\
+     */\
+    /*private*/ int _panelIndexOf( String volume_alias) \{\
+	search: panels\
+	return: first index where panel_struct.alias0 == volume_alias\
+    \}\
+\
+\
+    final private Color convertToColor( String color_text) \{\
+        if (color_text.equals("black")) return Color.black\
+	..\
+    \}\
+\
+\
+\
+    /* ***** helper (member) classes ***** */\
+\
+    /**\
+     * Helper data structure: represents an individual 3D image\
+     * volume.\
+     *\
+     */\
+    /*private*/ final class VolumeStruct \{\
+	String 		file;\
+	Data3DVolume	data;\
+    \}\
+\
+    /**\
+     * Helper data structure: represents a GUI panel. There are 2\
+     * types of panels: individual and combined. Not all fields\
+     * are valid for all panel types: \
+     * <dl>\
+     * <dt>individual: \
+     * <dd>alias0 (alias1 should be null!), color_coding, range_* \
+     * <dt>combined: \
+     * <dd>alias0, alias1\
+     * </dl>\
+     *\
+     */\
+    /*private*/ final class PanelStruct \{\
+	String		alias0;\
+	String		alias1;\
+	/** should be one of the static constants declared by ColorCoding */\
+	int		color_coding= ColorCoding.GREY;\
+	short		range_start= 0;\
+	short		range_end= 255;\
+	Color		color_under= Color.black;\
+	Color		color_above= Color.white;\
+	boolean		isNative = false;\
+	DataVolumePanel	gui;\
+    \}\
+\
+\} // end of class Main\
+}

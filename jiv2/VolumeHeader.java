@@ -1,27 +1,26 @@
-
-// $Id: VolumeHeader.java,v 1.5 2003-08-17 16:02:14 crisco Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.net.*;
 import java.io.*;
@@ -31,12 +30,20 @@ import java.util.*;
  * Loads, stores, and provides access to the header info of a 
  * 3D image volume.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: VolumeHeader.java,v 1.5 2003-08-17 16:02:14 crisco Exp $
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: VolumeHeader.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 public final class VolumeHeader {
 
     /*private*/ static final boolean 	DEBUG= false;
+    /*private*/ static final boolean 	DEBUG_INVERSE= false;
+    /*private*/ static final boolean 	DEBUG_WV= false;
+
+static final boolean RETURN_0=true;
+static final boolean RETURN_MID=false;
+static final boolean RETURN_MID_OFFSET=false;
+
+    /*private*/ static final boolean 	USE_MAX= false;
 
     /*private*/ float start_x;
     /*private*/ float start_y;
@@ -56,6 +63,11 @@ public final class VolumeHeader {
     /*private*/ float image_low;
     /*private*/ float image_high;
 
+    /*private*/ float[] dir_cosines;
+
+    /*private*/ float[][] VOX2WORLD;
+    /*private*/ float[][] WORLD2VOX;
+
 
     /** The default is the standard "MNI-ICBM-Talairach" (181x217x181)
 	   sampling. */
@@ -74,6 +86,10 @@ public final class VolumeHeader {
 
 	image_low=  0.0f;
 	image_high= 1.0f;
+
+	dir_cosines= new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+	VOX2WORLD= new float[][] { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0} };
+	WORLD2VOX= new float[][] { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0} };
     }
 
     /** copy constuctor */
@@ -91,6 +107,9 @@ public final class VolumeHeader {
 	System.arraycopy( src.dim_order, 0, (dim_order= new int[3]), 0, 3);
 	image_low=  src.image_low;
 	image_high= src.image_high;
+	System.arraycopy( src.dir_cosines, 0, (dir_cosines= new float[9]), 0, 9);
+	System.arraycopy( src.VOX2WORLD, 0, (VOX2WORLD= new float[3][4]), 0, 3);
+	System.arraycopy( src.WORLD2VOX, 0, (WORLD2VOX= new float[3][4]), 0, 3);
     }
 
     public VolumeHeader( URL source_url) 
@@ -100,6 +119,9 @@ public final class VolumeHeader {
 	if( source_url == null ) 
 	    // stick with the defaults...
 	    return;
+
+	//Initialize dir_cosines in case its not specified in the header
+	dir_cosines= new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 
 	Properties header= Util.readProperties( source_url, null);
 
@@ -178,12 +200,64 @@ public final class VolumeHeader {
 		    Float.isInfinite( image_high)   ) 
 		    throw new IOException( "invalid imagerange: infinite value (for the 32bit IEEE 754 floating point format)");
 	    }
+	    else if( key.equals( "xspace_direction_cosines")) {
+		s1= values.nextToken();
+		s2= values.nextToken();
+		s3= values.nextToken();
+		if (DEBUG) System.out.println("xspace_direction_cosines: "+s1+" "+s2+" "+s3);
+		dir_cosines[ 0]= Float.valueOf( s1).floatValue();
+		dir_cosines[ 1]= Float.valueOf( s2).floatValue();
+		dir_cosines[ 2]= Float.valueOf( s3).floatValue();
+	    }
+	    else if( key.equals( "yspace_direction_cosines")) {
+		s1= values.nextToken();
+		s2= values.nextToken();
+		s3= values.nextToken();
+		if (DEBUG) System.out.println("yspace_direction_cosines: "+s1+" "+s2+" "+s3);
+		dir_cosines[ 3]= Float.valueOf( s1).floatValue();
+		dir_cosines[ 4]= Float.valueOf( s2).floatValue();
+		dir_cosines[ 5]= Float.valueOf( s3).floatValue();
+	    }
+	    else if( key.equals( "zspace_direction_cosines")) {
+		s1= values.nextToken();
+		s2= values.nextToken();
+		s3= values.nextToken();
+		if (DEBUG) System.out.println("zspace_direction_cosines: "+s1+" "+s2+" "+s3);
+		dir_cosines[ 6]= Float.valueOf( s1).floatValue();
+		dir_cosines[ 7]= Float.valueOf( s2).floatValue();
+		dir_cosines[ 8]= Float.valueOf( s3).floatValue();
+	    }
 	    else
 		throw new IOException( "invalid key: " + key);
 	}
 
 	if( DEBUG) System.out.println( toString());
+
+	VOX2WORLD= computeVoxeltoWorld();
+	WORLD2VOX= Util.invertMatrix(VOX2WORLD);
+
     }
+
+    private final float[][] computeVoxeltoWorld(){
+	float[][] result= new float[3][4];
+	result[0][0]= dir_cosines[0]*step_x;
+	result[0][1]= dir_cosines[3]*step_y;
+	result[0][2]= dir_cosines[6]*step_z;
+	result[0][3]= dir_cosines[0]*start_x + dir_cosines[3]*start_y + dir_cosines[6]*start_z;
+	result[1][0]= dir_cosines[1]*step_x;
+	result[1][1]= dir_cosines[4]*step_y;
+	result[1][2]= dir_cosines[7]*step_z;
+	result[1][3]= dir_cosines[1]*start_x + dir_cosines[4]*start_y + dir_cosines[7]*start_z;
+	result[2][0]= dir_cosines[2]*step_x;
+	result[2][1]= dir_cosines[5]*step_y;
+	result[2][2]= dir_cosines[8]*step_z;
+	result[2][3]= dir_cosines[2]*start_x + dir_cosines[5]*start_y + dir_cosines[8]*start_z;
+
+	return result;
+    }
+
+
+
 
     /** canonical (true) X ... */
     public final float getStartX() { return start_x; }
@@ -256,6 +330,9 @@ public final class VolumeHeader {
 	buf.append_line( "\t size: " + size_x +" "+ size_y +" "+ size_z); 
 	buf.append_line( "\t dim_order: " + Util.arrayToString( dim_order));
 	buf.append_line( "\t imagerange: " + image_low +" "+ image_high);
+	buf.append_line( "\t dir_cosines: " + Util.arrayToString( dir_cosines));
+	buf.append_line( "\t VOX2WORLD: " + Util.arrayToString( VOX2WORLD));
+	buf.append_line( "\t WORLD2VOX: " + Util.arrayToString( WORLD2VOX));
 
 	return buf.toString();
     }
@@ -267,6 +344,9 @@ public final class VolumeHeader {
      * cover the extent of all volumes 
      */
     static public final VolumeHeader getCommonSampling( Enumeration samplings) {
+
+//### This is where the common step, start_x and x_size (according to global FOV) are set..
+//### Need to do this separately for mni and native? Or would this screw EVERYTHING up?
 
 	VolumeHeader ret= new VolumeHeader();
 
@@ -341,6 +421,10 @@ public final class VolumeHeader {
 	// these are volume-specific ...
 	ret.image_low= ret.image_high= Float.NaN;
 
+	ret.VOX2WORLD= ret.computeVoxeltoWorld();
+        ret.WORLD2VOX= Util.invertMatrix(ret.VOX2WORLD);
+
+
 	if( DEBUG) System.out.println( ret.toString());
 
 	return ret;
@@ -395,61 +479,181 @@ public final class VolumeHeader {
      */
     public final ResampleTable getResampleTable( VolumeHeader common_sampling) {
 
-	Point3Dint voxel= new Point3Dint();
-	Point3Dfloat world= new Point3Dfloat();
 	int[] cs_sizes= common_sampling.getSizes();
-	int[] this_sizes= this.getSizes();
+	int[] local_sizes= this.getSizes();
 
-	ResampleTable rt= new ResampleTable( this_sizes);
-	int this_vox, last_vox;
+	if (DEBUG) System.out.println("cs_sizes: "+Util.arrayToString(cs_sizes));
+	if (DEBUG) System.out.println("local_sizes: "+Util.arrayToString(local_sizes));
+
+	int cs_max_dim0= cs_sizes[0];
+	int cs_max_dim1= cs_sizes[1];
+	int cs_max_dim2= cs_sizes[2];
+
+	ResampleTable rt= new ResampleTable( local_sizes);
+	int local_vox, last_vox;
 
 	for( int dim= 0; dim < 3; ++dim) {
-	    this_vox= last_vox= -1;
+	    local_vox= last_vox= -1;
 	    for( int cs_vox= 0; cs_vox < cs_sizes[ dim]; ++cs_vox) {
 
 		switch( dim) {
 		case 0 :
-		    common_sampling.voxel2world( world, cs_vox, 0, 0);
-		    this.world2voxel( voxel, world);
-		    this_vox= voxel.x;
+		    local_vox= getThisXFromCommonX( cs_vox, cs_max_dim1, cs_max_dim2, common_sampling);
 		    break;
 		case 1 :
-		    common_sampling.voxel2world( world, 0, cs_vox, 0);
-		    this.world2voxel( voxel, world);
-		    this_vox= voxel.y;
+		    local_vox= getThisYFromCommonY( cs_vox, cs_max_dim0, cs_max_dim2, common_sampling);
 		    break;
 		case 2 :
-		    common_sampling.voxel2world( world, 0, 0, cs_vox);
-		    this.world2voxel( voxel, world);
-		    this_vox= voxel.z;
+		    local_vox= getThisZFromCommonZ( cs_vox, cs_max_dim0, cs_max_dim1, common_sampling);
 		    break;
 		}
-		if( this_vox < 0 || this_vox >= this_sizes[ dim] )
+		if( local_vox < 0 || local_vox >= local_sizes[ dim] )
 		    continue;
 
-		if( this_vox != last_vox) {
+		//Whenever cs_vox maps to a higher local_vox, set rt.start and rt.end ...
+		// when cs_vox is increased but still maps to the same local_vox, just set rt.end
+		if( local_vox != last_vox) {
 		    // new voxel
-		    rt.start[ dim][ this_vox]= cs_vox;
-		    rt.end[ dim][ this_vox]= cs_vox;
-		    last_vox= this_vox;
+
+		    rt.start[ dim][ local_vox]= cs_vox;
+		    rt.end[ dim][ local_vox]= cs_vox;
+		    last_vox= local_vox;
 		}
 		else {
 		    // start stays the same, end gets updated
 		    rt.end[ dim][ last_vox]= cs_vox;
 		}
-	    }
-	}
+	    }// end for cs_vox++
+
+	}// end for dim++
 
 	float css= common_sampling.step_x;
 	int[] d_o= this.getDimOrder();
+
+	//To allow a fast resample, each of the step sizes must be the same as the isotropic common step size
+	//and, the dimension order must be z y x (fastest changing is x)
 	rt.fast_resample= 
 	    // fixme: comparing 2 float with == is asking for trouble...
-	    this.getStepX() == css && this.getStepY() == css && this.getStepZ() == css
+	    Util.floatEquals(this.getStepX(), css) && Util.floatEquals(this.getStepY(), css) && Util.floatEquals(this.getStepZ(), css)
 	    &&
 	    // 'z y x' dimension ordering:
 	    d_o[ 0] == 2 && d_o[ 1] == 1 && d_o[ 2] == 0 ;
 	    
 	return rt;
+    }
+
+    private final int getThisXFromCommonX( int cs_vox, int cs_max_dim1, int cs_max_dim2, VolumeHeader common_sampling) {
+//System.out.println("converting common x ("+cs_vox+") into local x..");
+	Point3Dfloat world1= new Point3Dfloat();
+	Point3Dfloat world2= new Point3Dfloat();
+	Point3Dfloat world3= new Point3Dfloat();
+	Point3Dfloat world4= new Point3Dfloat();
+	Point3Dint voxel1= new Point3Dint();
+	Point3Dint voxel2= new Point3Dint();
+	Point3Dint voxel3= new Point3Dint();
+	Point3Dint voxel4= new Point3Dint();
+	common_sampling.voxel2world( world1, cs_vox, cs_max_dim1, cs_max_dim2);
+	common_sampling.voxel2world( world2, cs_vox, cs_max_dim1, 0);
+	common_sampling.voxel2world( world3, cs_vox, 0, cs_max_dim2);
+	common_sampling.voxel2world( world4, cs_vox, 0, 0);
+//System.out.println("\tworld1: "+world1+" world2: "+world2);
+//System.out.println("\tworld3: "+world3+" world4: "+world4);
+	this.world2voxel( voxel1, world1);
+	this.world2voxel( voxel2, world2);
+	this.world2voxel( voxel3, world3);
+	this.world2voxel( voxel4, world4);
+//System.out.println("\tvoxel1.x: "+voxel1.x+" voxel2.x: "+voxel2.x+" voxel3.x: "+voxel3.x+" voxel4.x: "+voxel4.x);
+	int min_x= Math.max( voxel1.x, voxel2.x);
+	min_x= Math.min( min_x, voxel3.x);
+	min_x= Math.min( min_x, voxel4.x);
+	int max_x= Math.max( voxel1.x, voxel2.x);
+	max_x= Math.max( max_x, voxel3.x);
+	max_x= Math.max( max_x, voxel4.x);
+//System.out.println("\tmin_x: "+min_x+" max_x:"+max_x+" return: "+((max_x-min_x)/2 + min_x));
+//	common_sampling.voxel2world( world1, cs_vox, 166, 108);
+//	this.world2voxel( voxel1, world1);
+if (RETURN_0)
+	return voxel4.x;
+else if (RETURN_MID)
+	return ((max_x-min_x)/2 + min_x);
+else if (RETURN_MID_OFFSET)
+	return ((max_x-min_x)/2 + min_x - 2);
+else
+	return voxel4.x;
+    }
+
+    private final int getThisYFromCommonY( int cs_vox, int cs_max_dim0, int cs_max_dim2, VolumeHeader common_sampling) {
+//System.out.println("converting common y ("+cs_vox+") into local y..");
+	Point3Dfloat world1= new Point3Dfloat();
+	Point3Dfloat world2= new Point3Dfloat();
+	Point3Dfloat world3= new Point3Dfloat();
+	Point3Dfloat world4= new Point3Dfloat();
+	Point3Dint voxel1= new Point3Dint();
+	Point3Dint voxel2= new Point3Dint();
+	Point3Dint voxel3= new Point3Dint();
+	Point3Dint voxel4= new Point3Dint();
+	common_sampling.voxel2world( world1, cs_max_dim0, cs_vox, cs_max_dim2);
+	common_sampling.voxel2world( world2, cs_max_dim0, cs_vox, 0);
+	common_sampling.voxel2world( world3, 0, cs_vox, cs_max_dim2);
+	common_sampling.voxel2world( world4, 0, cs_vox, 0);
+//System.out.println("\tworld1: "+world1+" world3: "+world3);
+//System.out.println("\tworld2: "+world2+" world4: "+world4);
+	this.world2voxel( voxel1, world1);
+	this.world2voxel( voxel2, world2);
+	this.world2voxel( voxel3, world3);
+	this.world2voxel( voxel4, world4);
+//System.out.println("\tvoxel1.y: "+voxel1.y+" voxel3.y: "+voxel3.y+";; voxel2.y: "+voxel2.y+" voxel4.y: "+voxel4.y);
+	int min_y= Math.min( voxel1.y, voxel2.y);
+	min_y= Math.min( min_y, voxel3.y);
+	min_y= Math.min( min_y, voxel4.y);
+	int max_y= Math.max( voxel1.y, voxel2.y);
+	max_y= Math.max( max_y, voxel3.y);
+	max_y= Math.max( max_y, voxel4.y);
+//System.out.println("\tmin_y: "+min_y+" max_y:"+max_y+" return: "+((max_y-min_y)/2 + min_y));
+//	common_sampling.voxel2world( world1, 121, cs_vox, 108);
+//	this.world2voxel( voxel1, world1);
+if (RETURN_0)
+	return voxel4.y;
+else if (RETURN_MID)
+	return ((max_y-min_y)/2 + min_y);
+else if (RETURN_MID_OFFSET)
+	return ((max_y-min_y)/2 + min_y - 5);
+else
+	return voxel4.y;
+    }
+    private final int getThisZFromCommonZ( int cs_vox, int cs_max_dim0, int cs_max_dim1, VolumeHeader common_sampling) {
+	Point3Dfloat world1= new Point3Dfloat();
+	Point3Dfloat world2= new Point3Dfloat();
+	Point3Dfloat world3= new Point3Dfloat();
+	Point3Dfloat world4= new Point3Dfloat();
+	Point3Dint voxel1= new Point3Dint();
+	Point3Dint voxel2= new Point3Dint();
+	Point3Dint voxel3= new Point3Dint();
+	Point3Dint voxel4= new Point3Dint();
+	common_sampling.voxel2world( world1, cs_max_dim0, cs_max_dim1, cs_vox);
+	common_sampling.voxel2world( world2, cs_max_dim0, 0, cs_vox);
+	common_sampling.voxel2world( world3, 0, cs_max_dim1, cs_vox);
+	common_sampling.voxel2world( world4, 0, 0, cs_vox);
+	this.world2voxel( voxel1, world1);
+	this.world2voxel( voxel2, world2);
+	this.world2voxel( voxel3, world3);
+	this.world2voxel( voxel4, world4);
+	int min_z= Math.min( voxel1.z, voxel2.z);
+	min_z= Math.min( min_z, voxel3.z);
+	min_z= Math.min( min_z, voxel4.z);
+	int max_z= Math.max( voxel1.z, voxel2.z);
+	max_z= Math.max( max_z, voxel3.z);
+	max_z= Math.max( max_z, voxel4.z);
+//	common_sampling.voxel2world( world4, 121, 166, cs_vox);
+//	this.world2voxel( voxel1, world1);
+if (RETURN_0)
+	return voxel4.z;
+else if (RETURN_MID)
+	return ((max_z-min_z)/2 + min_z);
+else if(RETURN_MID_OFFSET)
+	return ((max_z-min_z)/2 + min_z - 16);
+else
+	return voxel4.z;
     }
 
 
@@ -492,9 +696,16 @@ public final class VolumeHeader {
 
     final public void world2voxel( Point3Dint voxel, 
 				   float wx, float wy, float wz) {
-	voxel.x= Math.round( (wx - start_x) / step_x );
-	voxel.y= Math.round( (wy - start_y) / step_y );
-	voxel.z= Math.round( (wz - start_z) / step_z );
+//voxel.x= Math.round( (wx - start_x) / step_x );
+//voxel.y= Math.round( (wy - start_y) / step_y );
+//voxel.z= Math.round( (wz - start_z) / step_z );
+
+//System.out.println("world2voxel.."+Util.arrayToString(WORLD2VOX));
+	voxel.x= Math.round(WORLD2VOX[0][0]*wx + WORLD2VOX[0][1]*wy + WORLD2VOX[0][2]*wz + WORLD2VOX[0][3]);
+	voxel.y= Math.round(WORLD2VOX[1][0]*wx + WORLD2VOX[1][1]*wy + WORLD2VOX[1][2]*wz + WORLD2VOX[1][3]);
+	voxel.z= Math.round(WORLD2VOX[2][0]*wx + WORLD2VOX[2][1]*wy + WORLD2VOX[2][2]*wz + WORLD2VOX[2][3]);
+
+	if (DEBUG_WV) System.out.println("world2voxel - world: ("+wx+","+wy+","+wz+") voxel:"+voxel);
 	// Math.round() returns its float argument rounded to the nearest
 	// integral value. If the argument is equidistant from two integers,
 	// the method returns the greater of the two integers. 
@@ -521,9 +732,15 @@ public final class VolumeHeader {
 
     final public void voxel2world( Point3Dfloat world, 
 				   int vx, int vy, int vz) {
-	world.x= start_x + step_x * vx;
-	world.y= start_y + step_y * vy;
-	world.z= start_z + step_z * vz;
+//world.x= start_x + step_x * vx;
+//world.y= start_y + step_y * vy;
+//world.z= start_z + step_z * vz;
+
+	world.x= VOX2WORLD[0][0]*vx + VOX2WORLD[0][1]*vy + VOX2WORLD[0][2]*vz + VOX2WORLD[0][3];
+	world.y= VOX2WORLD[1][0]*vx + VOX2WORLD[1][1]*vy + VOX2WORLD[1][2]*vz + VOX2WORLD[1][3];
+	world.z= VOX2WORLD[2][0]*vx + VOX2WORLD[2][1]*vy + VOX2WORLD[2][2]*vz + VOX2WORLD[2][3];
+
+	if (DEBUG_WV) System.out.println("voxel2world - voxel: ("+vx+","+vy+","+vz+") world:"+world);
     }
 
     /** this version can be used to prevent loss of precision (roundup errors),
@@ -540,9 +757,15 @@ public final class VolumeHeader {
     */
     final public void voxel2world( Point3Dfloat world, 
 				   float vx, float vy, float vz) {
-	world.x= start_x + step_x * vx;
-	world.y= start_y + step_y * vy;
-	world.z= start_z + step_z * vz;
+//world.x= start_x + step_x * vx;
+//world.y= start_y + step_y * vy;
+//world.z= start_z + step_z * vz;
+
+	world.x= VOX2WORLD[0][0]*vx + VOX2WORLD[0][1]*vy + VOX2WORLD[0][2]*vz + VOX2WORLD[0][3];
+	world.y= VOX2WORLD[1][0]*vx + VOX2WORLD[1][1]*vy + VOX2WORLD[1][2]*vz + VOX2WORLD[1][3];
+	world.z= VOX2WORLD[2][0]*vx + VOX2WORLD[2][1]*vy + VOX2WORLD[2][2]*vz + VOX2WORLD[2][3];
+
+	if (DEBUG_WV) System.out.println("voxel2world - voxel: ("+vx+","+vy+","+vz+") world:"+world);
     }
 
     final public Point3Dfloat voxel2world( Point3Dint voxel) {
@@ -558,6 +781,8 @@ public final class VolumeHeader {
 				   final int[] voxel) {
 	voxel2world( world, voxel[0], voxel[1], voxel[2]);
     }
+
+
 
 }
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE abiword PUBLIC "-//ABISOURCE//DTD AWML 1.0 Strict//EN" "http://www.abisource.com/awml.dtd">
+<abiword template="false" styles="unlocked" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:math="http://www.w3.org/1998/Math/MathML" xid-max="52" xmlns:dc="http://purl.org/dc/elements/1.1/" fileformat="1.0" xmlns:svg="http://www.w3.org/2000/svg" xmlns:awml="http://www.abisource.com/awml.dtd" xmlns="http://www.abisource.com/awml.dtd" xmlns:xlink="http://www.w3.org/1999/xlink" version="0.99.2" xml:space="preserve" props="dom-dir:ltr; document-footnote-restart-section:0; document-endnote-type:numeric; document-endnote-place-enddoc:1; document-endnote-initial:1; lang:en-US; document-endnote-restart-section:0; document-footnote-restart-page:0; document-footnote-type:numeric; document-footnote-initial:1; document-endnote-place-endsection:0">
+<!-- ======================================================================== -->
+<!-- This file is an AbiWord document.                                        -->
+<!-- AbiWord is a free, Open Source word processor.                           -->
+<!-- More information about AbiWord is available at http://www.abisource.com/ -->
+<!-- You should not edit this file by hand.                                   -->
+<!-- ======================================================================== -->
+
+<metadata>
+<m key="dc.format">application/x-abiword</m>
+<m key="abiword.generator">AbiWord</m>
+</metadata>
+<history version="19" edit-time="82198" last-saved="1263590561" uid="bb1c4644-015c-11df-8505-ef1f369a5c54">
+<version id="19" started="1263508662" uid="1d2ef970-021c-11df-8505-ef1f369a5c54" auto="0" top-xid="9"/>
+</history>
+<styles>
+<s type="P" name="Normal" followedby="Current Settings" props="font-family:Times New Roman; margin-top:0pt; color:000000; margin-left:0pt; text-position:normal; widows:2; font-style:normal; text-indent:0in; font-variant:normal; margin-right:0pt; lang:en-US; line-height:1.0; font-size:12pt; text-decoration:none; margin-bottom:0pt; font-weight:normal; bgcolor:transparent; text-align:left; font-stretch:normal"/>
+<s type="C" name="Reference" props="font-size:10pt"/>
+</styles>
+<pagesize pagetype="Letter" orientation="portrait" width="8.500000" height="11.000000" units="in" page-scale="1.000000"/>
+<section xid="8" props="page-margin-footer:0.5in; page-margin-header:0.5in">
+<p style="Normal" xid="9"><c props="text-decoration:underline">Slice2DViewport</c></p>
+<p style="Normal" xid="2">void processMouseMotionEvent(MouseEvent me) {</p>
+<p style="Normal" xid="1">	if (mouse is dragged alone)</p>
+<p style="Normal" xid="3">		delta=vertical change in mouse position</p>
+<p style="Normal" xid="4">		if ('Ctrl')//ZOOM</p>
+<p style="Normal" xid="5">			_doZoom(delta)</p>
+<p style="Normal" xid="6">		else //CHANGE SLICE</p>
+<p style="Normal" xid="7" props="text-align:left; dom-dir:ltr">			<c props="font-weight:bold">_newSlice</c>(delta<c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">/2</c> * ortho_step)</p>
+<p style="Normal" xid="10" props="text-align:left; dom-dir:ltr">	elseif(mouse is dragged with 'Ctrl') //PAN</p>
+<p style="Normal" xid="11" props="text-align:left; dom-dir:ltr">		image_origin.translate(change_x,change_y)</p>
+<p style="Normal" xid="12" props="text-align:left; dom-dir:ltr">		updateVportCursorPosition()</p>
+<p style="Normal" xid="13" props="text-align:left; dom-dir:ltr">		repaint()</p>
+<p style="Normal" xid="14" props="text-align:left; dom-dir:ltr">	else//CLICK</p>
+<p style="Normal" xid="15" props="text-align:left; dom-dir:ltr">		_newCursor(x,y)</p>
+<p style="Normal" xid="16" props="text-align:left; dom-dir:ltr">}</p>
+<p style="Normal" xid="17" props="text-align:left; dom-dir:ltr">void processKeyEvent(KeyEvent ke) {</p>
+<p style="Normal" xid="19" props="text-align:left; dom-dir:ltr">	if (key= +,&lt;,^)</p>
+<p style="Normal" xid="20" props="text-align:left; dom-dir:ltr">		<c props="font-weight:bold">_newSlice</c>(ortho_step)</p>
+<p style="Normal" xid="21" props="text-align:left; dom-dir:ltr"><c props="font-family:Times New Roman; font-size:12pt; lang:en-US; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	if (key= -,&gt;,v)</c></p>
+<p style="Normal" xid="22" props="margin-top:0.0000in; margin-left:0.0000in; text-indent:0.0000in; dom-dir:ltr; margin-bottom:0.0000in; line-height:1.000000; text-align:left; margin-right:0.0000in"><c props="font-family:Times New Roman; font-size:12pt; lang:en-US; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		</c><c props="font-family:Times New Roman; text-decoration:none; lang:en-US; text-position:normal; font-weight:bold; font-style:normal; font-size:12pt">_newSlice</c><c props="font-family:Times New Roman; font-size:12pt; lang:en-US; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">(-ortho_step)</c></p>
+<p style="Normal" xid="18" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">}</p>
+<p style="Normal" xid="23" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"></p>
+<p style="Normal" xid="37" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">//Increase slice by adding 'increment' to the voxel (in common space)</c></p>
+<p style="Normal" xid="24" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">void _newSlice(int increment) {</p>
+<p style="Normal" xid="25" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	_world2voxel(_oldVoxel, local_cursor)</p>
+<p style="Normal" xid="27" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	_newVoxel= _oldVoxel</p>
+<p style="Normal" xid="28" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	_newVoxel.z= _oldVoxel.z + increment</p>
+<p style="Normal" xid="29" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	if (_newVoxel.z is within bounds)</p>
+<p style="Normal" xid="30" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		_voxel2world(_newWorld, _newVoxel)</p>
+<p style="Normal" xid="31" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		local_cursor= _newWorld</p>
+<p style="Normal" xid="36" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		//assume all xyz have changed, since increment is in voxel space</p>
+<p style="Normal" xid="32" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		if (!isNative)</p>
+<p style="Normal" xid="33" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">			_firePositionEvent(PositionEvent.ALL_MNI)</p>
+<p style="Normal" xid="34" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">		else</p>
+<p style="Normal" xid="35" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">			_firePositionEvent(PositionEvent.ALL_NAT)</c></p>
+<p style="Normal" xid="26" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">}</p>
+<p style="Normal" xid="38" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">void __aid_to_firePositionEvent(PositionEvent e) {</c></p>
+<p style="Normal" xid="51" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">	//viewport events firing are always either native or mni..</c></p>
+<p style="Normal" xid="47" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">	if (e.isNative)</c></p>
+<p style="Normal" xid="48" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">		e.mask= e.mask+ALL_MNI+ALL_ATLAS</c></p>
+<p style="Normal" xid="49" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">	else if (e.isMNI)</c></p>
+<p style="Normal" xid="46" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; color:000000; text-decoration:none; text-align:left; text-position:normal; font-weight:normal; font-style:normal; lang:en-US"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">		e.mask= e.mask+ALL_NAT+ALL_ATLAS</c></p>
+<p style="Normal" xid="52" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; color:000000; text-decoration:none; text-align:left; text-position:normal; font-weight:normal; font-style:normal; lang:en-US"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">	eventListeners.positionChangeDetected(e)</c></p>
+<p style="Normal" xid="50" props="font-family:Times New Roman; dom-dir:ltr; font-style:normal; margin-left:0.0000in; lang:en-US; margin-bottom:0.0000in; text-indent:0.0000in; text-position:normal; margin-top:0.0000in; font-weight:normal; margin-right:0.0000in; text-decoration:none; text-align:left; line-height:1.000000; font-size:12pt"><c props="font-family:Times New Roman; font-size:12pt; color:000000; text-decoration:none; text-position:normal; font-weight:normal; font-style:normal; lang:en-US">}</c></p>
+<p style="Normal" xid="45" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"></p>
+<p style="Normal" xid="39" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none"><c props="text-decoration:underline">XXXSlice2DViewport</c></p>
+<p style="Normal" xid="40" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">_firePositionEvent(int local_change_mask) {</p>
+<p style="Normal" xid="41" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	int world_change_mask= unscrambled(local_change_mask)</p>
+<p style="Normal" xid="43" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	global_cursor_mni/nat= _local_cursor_getXYZ</p>
+<p style="Normal" xid="44" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">	__aid_to_firePositionEvent(new PositionEvent(..))</p>
+<p style="Normal" xid="42" props="font-family:Times New Roman; font-size:12pt; dom-dir:ltr; lang:en-US; text-align:left; text-position:normal; font-weight:normal; font-style:normal; text-decoration:none">}</p>
+</section>
+</abiword>

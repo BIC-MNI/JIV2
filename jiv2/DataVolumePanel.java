@@ -1,27 +1,26 @@
-
-// $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -36,25 +35,34 @@ import java.util.*;
  * an outside <code>Container</code>, which is supplied as an argument
  * to the constructor.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: DataVolumePanel.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 abstract public class DataVolumePanel 
-    extends PositionListenerAdapter implements PositionGenerator {
+//    extends PositionListenerAdapter implements PositionGenerator {
+    extends PositionListenerAdapter {
 
     protected static final boolean	DEBUG= false;
+    protected static final boolean	DEBUG_TRACE= false;
+    protected static final boolean	DEBUG_POSITIONCHANGED= false;
+    protected static final boolean	DEBUG_HIGH= false;
+    protected static final boolean	DEBUG_VW= false;
 
     /** as per the spec of Double.toString() (in jdk1.1), this should
     be set to 11 in order to accomodate all posible outputs... but
     this would waste a lot of space in the gui... */
-    protected static final int 		IMAGE_VALUE_TEXTFIELD_WIDTH= 8;
+    protected static final int 		IMAGE_VALUE_TEXTFIELD_WIDTH= 6;
+
+    /** The width of the anatomic label display textfield */
+    protected static final int          ANAT_LABEL_TEXTFIELD_WIDTH=18;
+
 
     /** 
      * Support interface for the inner class
      * <code>DataVolumePanel.CoordinateFields</code>.
      *
-     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
+     * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+     * @version $Id: DataVolumePanel.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
      *
      * @see DataVolumePanel.CoordinateFields */
     interface CoordinateTypes {
@@ -72,16 +80,24 @@ abstract public class DataVolumePanel
 	};
     }
 
+    /** The grid containing each of the data panels, title "JIV2" */
     /*private*/ Container 		parent_container;
+    /** The window holding the above Container and the About.popFullVersion */
     /*private*/ Frame			parent_frame;
     /** our column in parent_container's grid */
+    /*private*/ String 			post_field_label;
+    /*private*/ String 			sup_field_label;
+    /*private*/ String 			lat_field_label;
     /*private*/ int 			grid_column;
     protected boolean 			enable_world_coords;
     protected boolean 			byte_voxel_values;
+    /*private*/  boolean 		isNative;
+    /*private*/ VolumeHeader            local_sampling;
+
     /*private*/ Main			applet_root;
     /** initialized by the subclasses; 
 	NB: they are expected to implement PositionListener too! */
-    protected ImageProducer[]		slice_producers;
+    protected ImageProducer[]		slice_producers; // built-in java class
     /*private*/ Slice2DViewport[] 	slice_vports;
     /*private*/ Component		title;
     protected Container			controls_panel; 
@@ -89,15 +105,21 @@ abstract public class DataVolumePanel
     protected PopupMenu			popup_menu;
     /*private*/ PositionGateway		pos_event_gateway; 
     /*private*/ CheckboxMenuItem	sync_menu_item;
-    /*private*/ Point3Dfloat		initial_world_cursor;
+    /*private*/ Point3Dfloat		global_cursor_mni;
+    /*private*/ Point3Dfloat		global_cursor_nat;
+
 
     public DataVolumePanel( /** it's expected to have a GridBagLayout-manager! */
+				/** this is the jiv_frame created in Main.java */
 			    Container parent_container,
 			    /** to be used for GridBagConstraints.gridx */
+			    String post_label, String sup_label, String lat_label,
 			    int grid_column,
-			    Point3Dfloat initial_world_cursor,
+			    Point3Dfloat initial_cursor,
 			    boolean enable_world_coords,
 			    boolean byte_voxel_values,
+			    boolean isNative,
+			    VolumeHeader local_sampling,
 			    Main applet_root
 			    ) {
 
@@ -111,14 +133,30 @@ abstract public class DataVolumePanel
 	if( null == parent_frame)
 	    System.err.println( this + ": cannot determine my parent frame!");
 
+	this.post_field_label= post_label;
+	this.sup_field_label= sup_label;
+	this.lat_field_label= lat_label;
+
 	this.grid_column= grid_column;
-	this.initial_world_cursor= initial_world_cursor;
+	if(!isNative) {
+		this.global_cursor_mni= initial_cursor;
+		this.global_cursor_nat= CoordConv.mni2native(initial_cursor); }
+	else {
+		this.global_cursor_nat= initial_cursor;
+		this.global_cursor_mni= CoordConv.native2mni(initial_cursor); }
+
 	this.enable_world_coords= enable_world_coords;
-	this.byte_voxel_values= byte_voxel_values; 
+	this.byte_voxel_values= byte_voxel_values;
+	this.isNative= isNative;
+	this.local_sampling= local_sampling;
 	this.applet_root= applet_root;
 	controls_panel= new LightweightPanel( new GridBagLayout());
 	popup_menu= new PopupMenu();
 	pos_event_gateway= new PositionGateway();
+	if (DEBUG){
+		if (isNative) System.out.println ("Creating native panel at col "+grid_column+".");
+		else System.out.println ("Creating mni panel at col "+grid_column+".");
+	}
     }
 
     /** completes the initalization process started by constructor(s) */
@@ -128,24 +166,24 @@ abstract public class DataVolumePanel
 	    // NB: need to override all 3 methods because on different 
 	    // platforms the PopupTrigger could be delivered on different
 	    // event types (e.g. mousePressed on Unix, mouseReleased on Win32)
-	    public final void mousePressed( MouseEvent e) {
-		if( e.isPopupTrigger()) _process_mouse_event( e);
+	    public final void mousePressed( MouseEvent me) {
+		if( me.isPopupTrigger()) _process_mouse_event( me);
 	    }
-	    public final void mouseReleased( MouseEvent e) {
-		if( e.isPopupTrigger()) _process_mouse_event( e);
+	    public final void mouseReleased( MouseEvent me) {
+		if( me.isPopupTrigger()) _process_mouse_event( me);
 	    }
-	    public final void mouseClicked( MouseEvent e) {
-		if( e.isPopupTrigger()) _process_mouse_event( e);
+	    public final void mouseClicked( MouseEvent me) {
+		if( me.isPopupTrigger()) _process_mouse_event( me);
 	    }
-	    /*private*/ final void _process_mouse_event( MouseEvent e) {
+	    /*private*/ final void _process_mouse_event( MouseEvent me) {
 		if( DEBUG) {
-		    System.out.println( e);
-		    System.out.println( e.getSource() + " " + e.getComponent());
+		    System.out.println( me);
+		    System.out.println( me.getSource() + " " + me.getComponent());
 		}
 		// in this context, 
-		// 'e.getComponent()' is same as '(Component)e.getSource()'
-		popup_menu.show( e.getComponent(), e.getX(), e.getY());
-		e.consume();
+		// 'e.getComponent()' is same as '(Component)me.getSource()'
+		popup_menu.show( me.getComponent(), me.getX(), me.getY());
+		me.consume();
 	    }
 	};
 	/* NOTE: something poorly documented: a popup menu can only be
@@ -157,24 +195,39 @@ abstract public class DataVolumePanel
 	gbc.weightx= 1.0;
 	gbc.gridx= 0; 
 	gbc.gridy= 0;
-	// Note: the CoordinateFields constructor adds to popup_menu 
+	// Note: the CoordinateFields constructor adds to popup_menu
+	if (DEBUG) System.out.println("Constructing CoordFields..");
 	controls_panel.add( coord_fields= 
-			    new CoordinateFields( initial_world_cursor, popup_menu,
+			    new CoordinateFields( global_cursor_mni,
+						  global_cursor_nat,
+						  popup_menu,
 						  enable_world_coords),
 			    gbc);
 	controls_panel.addMouseListener( popup_adapter);
 
+	if (DEBUG) System.out.println("Constructing Viewports..");
 	slice_vports= new Slice2DViewport[] { 
-	    new TransverseSlice2DViewport( slice_producers[ 0], 
+	    new TransverseSlice2DViewport( slice_producers[ 0], local_sampling,
+					   getTitle(),
 					   (PositionListener)slice_producers[ 0],
-					   initial_world_cursor),
-	    new SagittalSlice2DViewport( slice_producers[ 1], 
+					   global_cursor_mni, 
+					   global_cursor_nat, 
+					   isNative),
+	    new SagittalSlice2DViewport( slice_producers[ 1], local_sampling,
+					 getTitle(),
 					 (PositionListener)slice_producers[ 1],
-					 initial_world_cursor),
-	    new CoronalSlice2DViewport( slice_producers[ 2], 
+					   global_cursor_mni, 
+					   global_cursor_nat, 
+					   isNative),
+	    new CoronalSlice2DViewport( slice_producers[ 2], local_sampling,
+					getTitle(),
 					(PositionListener)slice_producers[ 2],
-					initial_world_cursor)
+					   global_cursor_mni, 
+					   global_cursor_nat, 
+					   isNative),
 	};
+
+
 	for( int i= 0; i < 3; ++i) 
 	    slice_vports[ i].addMouseListener( popup_adapter);
 
@@ -211,17 +264,25 @@ abstract public class DataVolumePanel
 	generators.addElement( coord_fields);
 	generators.addElement( pos_event_gateway);
 
-	for( int g= 0; g < generators.size(); ++g) 
+	for( int g= 0; g < generators.size(); ++g) { 
+	    Object peg= generators.elementAt( g);
+	    if (DEBUG)
+		System.out.println("\ngen: " + peg + "\ncan be heard by:");
 	    for( int l= 0; l < listeners.size(); ++l) {
-		Object peg= generators.elementAt( g);
 		Object pl= listeners.elementAt( l);
-		if( peg != pl) {	// don't want to listen to my own babble
-		    if( DEBUG) System.out.println( peg + "  " + pl);
+		if( peg != pl) {
+		    // don't want to listen to my own babble
+		    if( DEBUG) {
+			String class_name=pl.getClass().getName();
+//			if (class_name.contains(".DataVolumePanel")){
+				System.out.println( "listener: " + pl);
+//			}// end if class_name
+		    }// end if DEBUG
 		    // this method is smart enough not to add duplicates
 		    ((PositionGenerator)peg).addPositionListener( (PositionListener)pl);
 		}
 	    }
-
+	}
 	// any general (shared) popup menu commands should be added here:
 	sync_menu_item= new PositionSyncMenuItem( applet_root);
 	popup_menu.add( sync_menu_item);
@@ -235,7 +296,7 @@ abstract public class DataVolumePanel
 		    }
 		});
 	    hm.add( help); 
-	    MenuItem about= new MenuItem( "About JIV");
+	    MenuItem about= new MenuItem( "About JIV2");
 	    about.addActionListener( new ActionListener() {
 		    public void actionPerformed( ActionEvent e) {
 			if( parent_frame != null)
@@ -252,26 +313,38 @@ abstract public class DataVolumePanel
 
     } // end of _finish_initialization()
 
-    public final void positionChanged( PositionEvent e) {
-	pos_event_gateway.positionChanged_External( e);
-    }
-	
-    public void addPositionListener( PositionListener pl) {
-	addPositionListener( pl, false);
+    //This is only used when sync mode is on to recieve events from other panels.
+    public final void positionChangeDetected( PositionEvent e) {
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t*DVP.positionChangeDetected");
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP.positionChangeDetected -> pos_event_gateway.positionChangeDetectedExternal()");
+	pos_event_gateway.positionChangeDetected_External( e);
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t*DVP.positionChangeDetected DONE!\n");
     }
 
+    // This is never used!!
+    // It was just here so the class could implement PositionGenerator,
+    // which is not necessary!
+//    public void addPositionListener( PositionListener pl) {
+//	addPositionListener( pl, false);
+//    }
+
+    // This is for inter_panel listening, and is called by: Main.java (setPositionSync)
     public void addPositionListener( PositionListener pl, boolean send_event) {
 	pos_event_gateway.addPositionListener_External( pl);
 	if( send_event) {
 	    PositionEvent event= 
 		/* Note: the PositionEvent constructor makes a _copy_ of
 		   its last argument (the cursor) */
-		new PositionEvent( this,
-				   PositionEvent.X|PositionEvent.Y|PositionEvent.Z,
-				   coord_fields.getCursorPosition() );
-	    pl.positionChanged( event);
+		new PositionEvent( this, 
+				   isNative ? PositionEvent.NAT_EVENT : PositionEvent.MNI_EVENT,
+				   PositionEvent.ALL,
+				   coord_fields.getMNICursorPosition(),
+				   coord_fields.getNativeCursorPosition(),
+				   coord_fields.getLabelCoords() );
+	    pl.positionChangeDetected( event);
 	}
     }
+
 
     public void removePositionListener( PositionListener pl) {
 	pos_event_gateway.removePositionListener_External( pl);
@@ -306,9 +379,19 @@ abstract public class DataVolumePanel
 	return String.valueOf( Util.chopToNSignificantDigits( real_value, 3));
     }
 
-    abstract public int getXSize();
-    abstract public int getYSize();
-    abstract public int getZSize();
+ //Only used to check textfield coord requests
+    abstract public int getXmniSize();
+    abstract public int getYmniSize();
+    abstract public int getZmniSize();
+    abstract public int getXnatSize();
+    abstract public int getYnatSize();
+    abstract public int getZnatSize();
+    abstract public int getPostMax();
+    abstract public int getSupMax();
+    abstract public int getLatMax();
+    abstract public int getPostMin();
+    abstract public int getSupMin();
+    abstract public int getLatMin();
 
     abstract public String getTitle();
 
@@ -317,6 +400,8 @@ abstract public class DataVolumePanel
 	the "value field" won't be displayed
     */
     abstract protected int _getVoxelValue( Point3Dint voxel_pos);
+
+    abstract protected String _getLabelValue( Point3Dfloat world_mni);
 
     abstract protected float _image_byte2real( short voxel_value);
 
@@ -327,8 +412,8 @@ abstract public class DataVolumePanel
      * Member (inner) class: the textual coordinate display/input
      * boxes ("fields").
      *
-     * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: DataVolumePanel.java,v 1.7 2002-04-24 14:31:56 cc Exp $ 
+     * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+     * @version $Id: DataVolumePanel.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
      *
      * @see DataVolumePanel.CoordinateTypes 
      */
@@ -336,33 +421,53 @@ abstract public class DataVolumePanel
 	implements CoordinateTypes, ActionListener, PositionListener, PositionGenerator {
 
 	// FIXME: it doesn't handle well an allocated width which is 
-	// too small to fit everything (horizontally) -> left/right
+	// too small to fit everything (horizontally) - left/right
 	// ends are not visible/accesible...
 
-	/* Note: these two should be kept in sync (we use a separare
+	/* Note: these two should be kept in sync (we use a separate
            int field simply for execution speed (its value is tested
            inside changePosition(), which is typically called very
            often... */
 	/*private*/ int			coordinates_type= WORLD_COORDINATES;
 	/*private*/ ChoiceMenu		coords_type_menu;
 
-	/*private*/ TextField 		x_field;
-	/*private*/ TextField 		y_field;
-	/*private*/ TextField 		z_field;
-	/*private*/ TextField 		value_field;
-	/*private*/ Vector 		event_listeners;
-	/* Beware! these two should always be in sync! */
-	/*private*/ Point3Dfloat 	world_cursor;	/** world coordinates! */
-	/*private*/ Point3Dint 		voxel_cursor;	/** voxel coordinates */
+	/*private*/ TextField 		x_field_mni;
+	/*private*/ TextField 		y_field_mni;
+	/*private*/ TextField 		z_field_mni;
 
-	protected CoordinateFields( Point3Dfloat initial_world_cursor,
+        /*private*/ TextField           x_field_native;
+        /*private*/ TextField           y_field_native;
+        /*private*/ TextField           z_field_native;
+
+        /*private*/ TextField           post_field;
+        /*private*/ TextField           lat_field;
+        /*private*/ TextField           sup_field;
+
+        /*private*/ TextField           anatomy_label_field;
+	/*private*/ TextField 		intensity_value_field;
+
+	/*private*/ Vector 		event_listeners;
+	/* Beware! these six should always be in sync! */
+	/*private*/ Point3Dfloat 	world_cursor_mni;	/** world coordinates in mni space */
+	/*private*/ Point3Dint 		voxel_cursor_mni;	/** voxel coordinates in mni space */
+	/*private*/ Point3Dfloat 	world_cursor_nat;	/** world coordinates in native space */
+	/*private*/ Point3Dint 		voxel_cursor_nat;	/** voxel coordinates in native space */
+	/*private*/ LabelCoords		label_coords;		/** label coordinates in mni space */
+	/*private*/ String 		anatomy_label;		/** anatomy label in panel space */
+
+	protected CoordinateFields( Point3Dfloat world_cursor_mni,
+				    Point3Dfloat world_cursor_nat,
 				    PopupMenu popup_menu,
 				    boolean enable_world_coords
 				    ) {
 
-	    this.world_cursor= initial_world_cursor;
-	    // initialization for voxel_cursor
-	    voxel_cursor= CoordConv.world2voxel( this.world_cursor);
+	    this.world_cursor_mni= world_cursor_mni;
+	    this.world_cursor_nat= world_cursor_nat;
+	    // initialization for voxel_cursor_mni
+	    this.voxel_cursor_mni= _world2voxel_mni( world_cursor_mni);
+	    this.voxel_cursor_nat= _world2voxel_nat( world_cursor_nat);
+	    this.label_coords= CoordConv.mni2labels( world_cursor_mni);
+	    this.anatomy_label= _getLabelValue( world_cursor_mni);
 
 	    /** label-value(-flag) tuples to be used in the "coords type" menu */
 	    final Object[][] menu_definition= {
@@ -399,41 +504,83 @@ abstract public class DataVolumePanel
 	    gbc.gridy= 0;
 	    gbc.fill= GridBagConstraints.NONE;
 	    final int tf_width= TEXTFIELD_WIDTH[ coordinates_type];
-	    x_field= _add_field_with_label( "X", "", tf_width, gbc);
-	    y_field= _add_field_with_label( "Y", "", tf_width, gbc);
-	    z_field= _add_field_with_label( "Z", "", tf_width, gbc);
-	    /* send myself an event, such that positionChanged() will
-               fill-in the correct type of coordinates... */
-	    positionChanged( new PositionEvent( CoordinateFields.this, 
-						PositionEvent.X |
-						PositionEvent.Y |
-						PositionEvent.Z,
-						world_cursor)
-			     );
-	    int voxel_value= _getVoxelValue( voxel_cursor);
-	    if( voxel_value >= 0) {
-		value_field= _add_field_with_label( "", _voxel2string( voxel_value), 
-						    byte_voxel_values ? 
-						    3 : 
-						    IMAGE_VALUE_TEXTFIELD_WIDTH,
-						    gbc);
-		value_field.setEditable( false);
-	    }
-	    else 
-		value_field= null;	// probably unnecessary...
+	    final int tf_span= 1;
+	    x_field_mni= _add_field_with_label( "X", "", tf_width, tf_span, gbc);
+	    y_field_mni= _add_field_with_label( "Y", "", tf_width, tf_span, gbc);
+	    z_field_mni= _add_field_with_label( "Z", "", tf_width, tf_span, gbc);
+	    gbc.gridy= 1;
+	    x_field_native= _add_field_with_label( "Xnat", "", tf_width, tf_span, gbc);
+	    y_field_native= _add_field_with_label( "Ynat", "", tf_width, tf_span, gbc);
+	    z_field_native= _add_field_with_label( "Znat", "", tf_width, tf_span, gbc);
+	    gbc.gridy = 2;
+	    post_field= _add_field_with_label( post_field_label, "", tf_width, tf_span, gbc);
+	    lat_field= _add_field_with_label( lat_field_label, "", tf_width, tf_span, gbc);
+	    sup_field= _add_field_with_label( sup_field_label, "", tf_width, tf_span, gbc);
+	    gbc.gridy = 3;
 
+	    // The non-editable anatomy label display field:
+	    anatomy_label_field= _add_field_with_label( "Anatomy",
+						anatomy_label,
+						ANAT_LABEL_TEXTFIELD_WIDTH,
+						3,
+						gbc);
+	    anatomy_label_field.setEditable( false);
+
+
+	    /* send myself an event, such that positionChangeDetected() will
+               fill-in the correct type of coordinates... */
+	    positionChangeDetected( new PositionEvent( CoordinateFields.this,
+					isNative ? PositionEvent.NAT_EVENT : PositionEvent.MNI_EVENT,
+					PositionEvent.ALL,
+					world_cursor_mni,
+					world_cursor_nat,
+					label_coords ) );
+
+	    // The non-editable voxel intensity label display field:
+	    int voxel_value;
+	    Point3Dint voxel_cursor_common;
+	    if (!isNative)
+	    	voxel_value= _getVoxelValue( _world2voxel_common( world_cursor_mni));
+	    else
+		voxel_value= _getVoxelValue( _world2voxel_nat( world_cursor_nat));
+
+
+	    // If this is a CombinedDataVolumePanel, don't display intensity
+	    if( voxel_value >= 0) {
+		intensity_value_field= _add_field_with_label( "I",
+						_voxel2string( voxel_value), 
+						//byte_voxel_values ? 3 : 
+						//IMAGE_VALUE_TEXTFIELD_WIDTH,
+						tf_width,
+						tf_span,
+						gbc);
+		intensity_value_field.setEditable( false);
+	    }
+	    else {    // probably unnecessary...
+		intensity_value_field= null;
+	    }
+
+	    // Activate textfields as generators so this class listens to them
 	    this.addPositionListener( this); 
-	    x_field.addActionListener( this);
-	    y_field.addActionListener( this);
-	    z_field.addActionListener( this);
-	}
+	    x_field_mni.addActionListener( this);
+	    y_field_mni.addActionListener( this);
+	    z_field_mni.addActionListener( this);
+	    x_field_native.addActionListener( this);
+	    y_field_native.addActionListener( this);
+	    z_field_native.addActionListener( this);
+	    post_field.addActionListener( this);
+	    lat_field.addActionListener( this);
+	    sup_field.addActionListener( this);
+	} // end $CoordinateFields Constructor
 	
 	/** convenience method */
 	/*private*/ TextField _add_field_with_label( String text_label,
 						     String initial_content,
 						     int width,
+						     int span_columns,
 						     GridBagConstraints gbc) {
-
+	    gbc.insets.left= 0;
+	    gbc.gridwidth = 1;
 	    gbc.weightx= 1.0;
 	    gbc.anchor= GridBagConstraints.EAST;
 	    add( new Label( text_label + ":"), gbc);
@@ -441,6 +588,8 @@ abstract public class DataVolumePanel
 	    gbc.weightx= 0;
 	    gbc.anchor= GridBagConstraints.WEST;
 	    gbc.insets.left= 0;
+	    gbc.insets.right= 0;
+	    gbc.gridwidth = span_columns;
 	    TextField text_field= new TextField( initial_content, width);
 	    add( text_field, gbc);
 
@@ -449,196 +598,653 @@ abstract public class DataVolumePanel
 	    return text_field;
 	}
 
+
+	// This is only performed when textfield position events are changed - not when mouse cursor is moved!
+	// This is called by "actionPerformed( ActionEvent ae)"
 	final /*private*/ void _firePositionEvent( final PositionEvent e) {
 
-	    if( DEBUG) System.out.println( e);
+	    if (DEBUG_POSITIONCHANGED) System.out.println( "DataVolumePanel$CoordFields -> _firePositionEvent with");
+	    if (DEBUG_POSITIONCHANGED) System.out.println("\t"+e);
+
+	    //Since any change in a native coord means all the mni coords change
+	    //and any change in an mni coord means all the native coords change
+	    //This is a good place to adjust the mask so they will detect the changes.
+	    int old_mask= e.getFieldsMask();
+	    int new_mask;
+	    if (e.isMNISource())  
+		new_mask= old_mask | PositionEvent.ALL_NAT | PositionEvent.ALL_LABELS;
+	    else if (e.isLabelSource())
+		new_mask= old_mask | PositionEvent.ALL_MNI | PositionEvent.ALL_NAT;
+	    else
+		new_mask= old_mask | PositionEvent.ALL_MNI | PositionEvent.ALL_LABELS;
+	    e.setFieldsMask(new_mask);
 
 	    // deliver the event to each of the listeners
 	    if( null == event_listeners) 
 		// nobody listening...
 		return;
 	    for( int i= 0; i < event_listeners.size(); ++i)
-		((PositionListener)event_listeners.elementAt( i)).positionChanged( e);
-	}
+		((PositionListener)event_listeners.elementAt( i)).positionChangeDetected( e);
+
+	}// end _firePositionEvent(e)
 
 	synchronized /*private*/ final void changeCoordinatesType() { 
 
 	    coordinates_type= ((Integer)coords_type_menu.getSelection()).intValue();
 
 	    int new_width= TEXTFIELD_WIDTH[ coordinates_type];
-	    x_field.setColumns( new_width);
-	    y_field.setColumns( new_width);
-	    z_field.setColumns( new_width);
+	    x_field_mni.setColumns( new_width);
+	    y_field_mni.setColumns( new_width);
+	    z_field_mni.setColumns( new_width);
+
+	    x_field_native.setColumns( new_width);
+	    y_field_native.setColumns( new_width);
+	    z_field_native.setColumns( new_width);
+
+	    post_field.setColumns( new_width);
+	    lat_field.setColumns( new_width);
+	    sup_field.setColumns( new_width);
+
 	    // FIXME: these setColumns() currently don't have any effect... ??
 
-	    /* send myself an event, such that positionChanged() will
+	    /* send myself an event, such that positionChangeDetected() will
 	       update the coordinate fields with the new format... */
 	    PositionEvent pe= 
-		new PositionEvent( CoordinateFields.this, 
-				   PositionEvent.X|PositionEvent.Y|PositionEvent.Z,
-				   world_cursor);
-	    positionChanged( pe);
+		new PositionEvent( CoordinateFields.this,
+				   isNative ? PositionEvent.NAT_EVENT : PositionEvent.MNI_EVENT,
+				   PositionEvent.ALL,
+				   world_cursor_mni,
+				   world_cursor_nat,
+				   label_coords );
+	    positionChangeDetected( pe);
 	}
 
 	/** for the exclusive private/internal use of actionPerformed */
 	/*private*/ Point3Dint __actionPerformed_voxel= new Point3Dint();
 
+
+	/** 
+	* This is only performed when a textfield is altered, not when mouse is clicked..
+	* It detects an alteration to a textfield, updates the relevant cursor, syncs the rest,
+	* then fires a PositionEvent to let others know
+	*/
 	synchronized public final void actionPerformed( ActionEvent ae) {
 
-	    if( DEBUG) System.out.println( ae);
+	    if (DEBUG_POSITIONCHANGED) System.out.println( "\nDataVolumePanel$CoordFields -> actionPerformed");
+	    if (DEBUG_HIGH) System.out.println("\twith ae: "+ae);
+
 	    if( ae.getID() != ActionEvent.ACTION_PERFORMED)
 		return;
 
 	    int pos_event_mask;
 	    TextField source= (TextField)ae.getSource();
 	    // alias them to local (stack) var-s for speed:
-	    final Point3Dfloat 	world_cursor= this.world_cursor;
-	    final Point3Dint 	voxel_cursor= this.voxel_cursor;
+	    final Point3Dfloat 	world_cursor_mni= this.world_cursor_mni;
+	    final Point3Dint 	voxel_cursor_mni= this.voxel_cursor_mni;
+	    final Point3Dfloat 	world_cursor_nat= this.world_cursor_nat;
+	    final Point3Dint 	voxel_cursor_nat= this.voxel_cursor_nat;
+	    final LabelCoords 	label_coords= this.label_coords;
+
+	    // similar to isNative, but reflects which textfield group is modified instead of volume type
+	    int source_type;
+	    int max_dimension_size;
+	    int min_dimension_size;
 
 	    if( VOXEL_COORDINATES == coordinates_type) {
 		/* == VOXEL COORDINATES == */
-		try { 
-		    int new_value= Short.parseShort( ae.getActionCommand()); 
+		try {
+		    //Get new value (as both, because if it's an anatomy label textfield, it's a float)
+		    int new_value_int= Short.parseShort( ae.getActionCommand()); 
+		    float new_value_float= Float.valueOf( ae.getActionCommand()).floatValue();
 
-		    int dimension_size;
-		    if( source == x_field) dimension_size= getXSize();
-		    else if( source == y_field) dimension_size= getYSize();
-		    else if( source == z_field) dimension_size= getZSize();
-		    else {
+		    //Get old_value, max_dimension_size, min_dimension_size
+		    //They are needed to check validity of new_value
+		    int old_value_int;
+		    float old_value_float; // because label_coords are floats
+		    if( source == x_field_mni) {
+			pos_event_mask= PositionEvent.X_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getXmniSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_mni.x;
+			old_value_float= 0;
+		    }
+		    else if( source == y_field_mni) {
+			pos_event_mask= PositionEvent.Y_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getYmniSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_mni.y;
+			old_value_float= 0;
+		    }
+		    else if( source == z_field_mni) {
+			pos_event_mask= PositionEvent.Z_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getZmniSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_mni.z;
+			old_value_float= 0;
+		    }
+		    else if( source == x_field_native) {
+			pos_event_mask= PositionEvent.X_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+//### THIS IS NOT CORRECT!
+			max_dimension_size= getXnatSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_nat.x;
+			old_value_float= 0;
+		    }
+		    else if( source == y_field_native) {
+			pos_event_mask= PositionEvent.Y_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+			max_dimension_size= getYnatSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_nat.y;
+			old_value_float= 0;
+		    }
+		    else if( source == z_field_native) {
+			pos_event_mask= PositionEvent.Z_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+			max_dimension_size= getZnatSize();
+			min_dimension_size= 0;
+			old_value_int= voxel_cursor_nat.z;
+			old_value_float= 0;
+		    }
+		    else if( source == post_field) {
+			pos_event_mask= PositionEvent.POST;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getPostMax();
+			min_dimension_size= getPostMin();
+			old_value_float= label_coords.post;
+			old_value_int= 0;
+		    }
+		    else if( source == sup_field) {
+			pos_event_mask= PositionEvent.SUP;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getSupMax();
+			min_dimension_size= getSupMin();
+			old_value_float= label_coords.sup;
+			old_value_int= 0;
+		    }
+		    else if( source == lat_field) {
+			pos_event_mask= PositionEvent.LAT;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getLatMax();
+			min_dimension_size= getLatMin();
+			old_value_float= label_coords.lat;
+			old_value_int= 0;
+		    }
+		    else
 			throw new IllegalArgumentException( "unexpected source:" + ae);
-		    }
-		    // remember: the event producer should check the range!
-		    if( new_value < 0 || new_value >= dimension_size) {
-			throw new NumberFormatException( "out of range...");
-		    }
-		    // recall: voxel_cursor and world_cursor
-		    // are always consistent with each other!
-		    if( source == x_field) {
-			voxel_cursor.x = new_value;
-			pos_event_mask= PositionEvent.X;
-		    }
-		    else if( source == y_field) {
-			voxel_cursor.y = new_value;
-			pos_event_mask= PositionEvent.Y;
+
+		    //If number is the same, do nothing
+		    if (source_type != PositionEvent.LABEL_EVENT) {
+			if (new_value_int == old_value_int) {
+			    if(DEBUG_POSITIONCHANGED)
+				System.out.println("Actually no change from original: "+old_value_int+"\n\n");
+			    return;
+			}
 		    }
 		    else {
-			voxel_cursor.z = new_value;
-			pos_event_mask= PositionEvent.Z;
+			if (new_value_float == old_value_float) {
+			    if(DEBUG_POSITIONCHANGED)
+				System.out.println("Actually no change from original: "+old_value_float+"\n\n");
+			    return;
+			}
 		    }
-		    CoordConv.voxel2world( world_cursor, voxel_cursor);
+
+		    // remember: this, the event producer should check the range!
+		    if( new_value_int <= min_dimension_size || new_value_int >= max_dimension_size)
+				throw new NumberFormatException( "out of range...");
+
+
+		    // Now, update cursors with new_value
+		    if( source == x_field_mni)
+			voxel_cursor_mni.x = new_value_int;
+		    else if( source == y_field_mni)
+			voxel_cursor_mni.y = new_value_int;
+		    else if( source == z_field_mni)
+			voxel_cursor_mni.z = new_value_int;
+		    else if( source == x_field_native)
+			voxel_cursor_nat.x = new_value_int;
+		    else if( source == y_field_native)
+			voxel_cursor_nat.y = new_value_int;
+		    else if( source == z_field_native)
+			voxel_cursor_nat.z = new_value_int;
+		    else if( source == post_field)
+			label_coords.post = new_value_float;
+		    else if( source == sup_field)
+			label_coords.sup = new_value_float;
+		    else
+			label_coords.lat = new_value_float;
+
+		    //Now resync cursors
+		    if (source_type == PositionEvent.MNI_EVENT) {
+			CoordConv.voxel2world_mni( world_cursor_mni, voxel_cursor_mni);
+		        CoordConv.mni2native(world_cursor_nat, world_cursor_mni);
+			CoordConv.mni2labels(label_coords, world_cursor_mni);
+		    }
+		    else if (source_type == PositionEvent.NAT_EVENT) {
+			CoordConv.voxel2world_nat( world_cursor_nat, voxel_cursor_nat);
+			CoordConv.native2mni( world_cursor_mni, world_cursor_nat);
+			CoordConv.mni2labels(label_coords, world_cursor_mni);
+		    }
+		    else if (source_type == PositionEvent.LABEL_EVENT) {
+			CoordConv.labels2mni( world_cursor_mni, label_coords);
+		        CoordConv.mni2native(world_cursor_nat, world_cursor_mni);
+		    }
+
 		    /* Note: the PositionEvent constructor makes a _copy_
-		       of its last argument (the cursor) */
+		       of the cursors */
 		    _firePositionEvent( new PositionEvent( CoordinateFields.this, 
+							   source_type, 
 							   pos_event_mask, 
-							   world_cursor));
-		}
+							   world_cursor_mni,
+							   world_cursor_nat,
+							   label_coords ));
+		}// end try
 		catch( NumberFormatException exception) { 
 		    /* the code below is suboptimal (we could figure out
 		       which one text field to update), but it's only run
 		       in exceptional situations (and when speed is not an
 		       issue because the user just typed something...) */
-		    x_field.setText( String.valueOf( voxel_cursor.x));
-		    y_field.setText( String.valueOf( voxel_cursor.y));
-		    z_field.setText( String.valueOf( voxel_cursor.z));
+		    x_field_mni.setText( String.valueOf( voxel_cursor_mni.x));
+		    y_field_mni.setText( String.valueOf( voxel_cursor_mni.y));
+		    z_field_mni.setText( String.valueOf( voxel_cursor_mni.z));
+		    x_field_native.setText( String.valueOf( voxel_cursor_nat.x));
+		    y_field_native.setText( String.valueOf( voxel_cursor_nat.y));
+		    z_field_native.setText( String.valueOf( voxel_cursor_nat.z));
+		    post_field.setText( myRound( label_coords.post));
+		    lat_field.setText( myRound( label_coords.lat));
+		    sup_field.setText( myRound( label_coords.sup));
 		}
 		return;
 	    }
 	    /* == WORLD COORDINATES == */
 	    try {
-		float new_value= 
-		    Float.valueOf( ae.getActionCommand()).floatValue();
+		// new_value could be int if it originated from anatomy label coord textfields
+		// so, store both new_value_float and new_value_int:
+		float new_value_world= Float.valueOf( ae.getActionCommand()).floatValue();
 
-		if( source == x_field) {
-		    CoordConv.world2voxel( __actionPerformed_voxel, 
-					   new_value, world_cursor.y, world_cursor.z);
-		    /* FIXME: the range test below _assumes_ that the
-                       world coords axes are the same as the voxel
-                       coords axes! */
-		    if( __actionPerformed_voxel.x < 0 || 
-			__actionPerformed_voxel.x >= getXSize() )
-			throw new NumberFormatException( "out of range...");
-		    world_cursor.x= new_value;
-		    pos_event_mask= PositionEvent.X;
+		//Get old_value, max_dimension_size, min_dimension_size
+		//They are needed to check validity of new_value
+		//Also set source_type (to allow testing on int if source is anatomy label field)
+		//Also set new_value_vox (it depends on which field new_value originated in)
+		float old_value_world;
+		int new_value_vox;
+		if( source == x_field_mni) {
+			pos_event_mask= PositionEvent.X_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getXmniSize();
+			min_dimension_size= 0;
+			_world2voxel_mni( __actionPerformed_voxel, 
+				new_value_world, world_cursor_mni.y, world_cursor_mni.z);
+			new_value_vox= __actionPerformed_voxel.x;
+			old_value_world= world_cursor_mni.x;
 		}
-		else if( source == y_field) { 
-		    CoordConv.world2voxel( __actionPerformed_voxel, 
-					   world_cursor.x, new_value, world_cursor.z);
-		    if( __actionPerformed_voxel.y < 0 || 
-			__actionPerformed_voxel.y >= getYSize() )
-			throw new NumberFormatException( "out of range...");
-		    world_cursor.y= new_value;
-		    pos_event_mask= PositionEvent.Y;
+		else if( source == y_field_mni) {
+			pos_event_mask= PositionEvent.Y_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getYmniSize();
+			min_dimension_size= 0;
+			_world2voxel_mni( __actionPerformed_voxel, 
+				world_cursor_mni.x, new_value_world, world_cursor_mni.z);
+			new_value_vox= __actionPerformed_voxel.y;
+			old_value_world= world_cursor_mni.y;
 		}
-		else if( source == z_field) {
-		    CoordConv.world2voxel( __actionPerformed_voxel, 
-					   world_cursor.x, world_cursor.y, new_value);
-		    if( __actionPerformed_voxel.z < 0 || 
-			__actionPerformed_voxel.z >= getZSize() )
-			throw new NumberFormatException( "out of range...");
-		    world_cursor.z= new_value;
-		    pos_event_mask= PositionEvent.Z;
+		else if( source == z_field_mni) {
+			pos_event_mask= PositionEvent.Z_MNI;
+			source_type= PositionEvent.MNI_EVENT;
+			max_dimension_size= getZmniSize();
+			min_dimension_size= 0;
+			_world2voxel_mni( __actionPerformed_voxel, 
+				world_cursor_mni.x, world_cursor_mni.y, new_value_world);
+			new_value_vox= __actionPerformed_voxel.z;
+			old_value_world= world_cursor_mni.z;
 		}
-		else {
+		else if( source == x_field_native) {
+			pos_event_mask= PositionEvent.X_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+			max_dimension_size= getXnatSize();
+			min_dimension_size= 0;
+			_world2voxel_nat( __actionPerformed_voxel, 
+				new_value_world, world_cursor_nat.y, world_cursor_nat.z);
+			new_value_vox= __actionPerformed_voxel.x;
+			old_value_world= world_cursor_nat.x;
+		}
+		else if( source == y_field_native) {
+			pos_event_mask= PositionEvent.Y_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+			max_dimension_size= getYnatSize();
+			min_dimension_size= 0;
+			_world2voxel_nat( __actionPerformed_voxel, 
+				world_cursor_nat.x, new_value_world, world_cursor_nat.z);
+			new_value_vox= __actionPerformed_voxel.y;
+			old_value_world= world_cursor_nat.y;
+		}
+		else if( source == z_field_native) {
+			pos_event_mask= PositionEvent.Z_NAT;
+			source_type= PositionEvent.NAT_EVENT;
+			max_dimension_size= getZnatSize();
+			min_dimension_size= 0;
+			_world2voxel_nat( __actionPerformed_voxel, 
+				world_cursor_nat.x, world_cursor_nat.y, new_value_world);
+			new_value_vox= __actionPerformed_voxel.z;
+			old_value_world= world_cursor_nat.z;
+		}
+		else if( source == post_field) {
+			pos_event_mask= PositionEvent.POST;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getPostMax();
+			min_dimension_size= getPostMin();
+			new_value_vox= (int) new_value_world;
+			old_value_world= label_coords.post;
+		}
+		else if( source == sup_field) {
+			pos_event_mask= PositionEvent.SUP;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getSupMax();
+			min_dimension_size= getSupMin();
+			new_value_vox= (int) new_value_world;
+			old_value_world= label_coords.sup;
+		}
+		else if( source == lat_field) {
+			pos_event_mask= PositionEvent.LAT;
+			source_type= PositionEvent.LABEL_EVENT;
+			max_dimension_size= getLatMax();
+			min_dimension_size= getLatMin();
+			new_value_vox= (int) new_value_world;
+			old_value_world= label_coords.lat;
+		}
+		else 
 		    throw new IllegalArgumentException( "unexpected source:" + ae);
-		}	
-		__actionPerformed_voxel.copyInto( voxel_cursor);
+
+		//If number is the same, do nothing
+		if (new_value_world == old_value_world) {
+			if(DEBUG_POSITIONCHANGED) System.out.println("Actually no change from original: "+old_value_world+"\n\n");
+			return;
+		}
+
+		// remember: this, the event producer should check the range!
+		// (need to check in voxel not world coords)
+		/* FIXME: the range test below _assumes_ that the
+			world coords axes are the same as the voxel
+			coords axes! */
+		if( new_value_vox <= min_dimension_size || new_value_vox >= max_dimension_size)
+			throw new NumberFormatException( "out of range...");
+
+		// Now, update cursors with new_value_world:
+		// recall: voxel_cursor_mni and world_cursor_mni
+		// are always consistent with each other!
+		// and: world_cursor_mni and world_cursor_nat
+		// should always be consistent as well..
+		if( source == x_field_mni) {
+		    world_cursor_mni.x= new_value_world;
+		    voxel_cursor_mni.x= new_value_vox;
+		}
+		else if( source == y_field_mni) 
+		    world_cursor_mni.y= new_value_world;
+		else if( source == z_field_mni)
+		    world_cursor_mni.z= new_value_world;
+		else if( source == x_field_native)
+		    world_cursor_nat.x= new_value_world;
+		else if( source == y_field_native)
+		    world_cursor_nat.y= new_value_world;
+		else if( source == z_field_native)
+		    world_cursor_nat.z= new_value_world;
+		else if( source == post_field)
+		    label_coords.post= new_value_world;
+		else if( source == sup_field)
+		    label_coords.sup= new_value_world;
+		else //( source == lat_field)
+		    label_coords.lat= new_value_world;
+
+		//Now, resync cursors:
+		if (source_type == PositionEvent.MNI_EVENT) {
+		    CoordConv.mni2native(world_cursor_nat, world_cursor_mni);
+		    CoordConv.mni2labels(label_coords, world_cursor_mni);
+		}
+		else if (source_type == PositionEvent.NAT_EVENT) {
+		    CoordConv.native2mni(world_cursor_mni, world_cursor_nat);
+		    CoordConv.mni2labels(label_coords, world_cursor_mni);
+		}
+		else if (source_type == PositionEvent.LABEL_EVENT) {
+		    CoordConv.labels2mni( world_cursor_mni, label_coords);
+		    CoordConv.mni2native(world_cursor_nat, world_cursor_mni);
+		}
+
+
 		/* Note: the PositionEvent constructor makes a _copy_
-		   of its last argument (the cursor) */
+		   of its last two arguments (the cursors) */
 		_firePositionEvent( new PositionEvent( CoordinateFields.this, 
+						       source_type, 
 						       pos_event_mask, 
-						       world_cursor));
+						       world_cursor_mni,
+						       world_cursor_nat,
+						       label_coords ));
 	    }
 	    catch( NumberFormatException exception) {
 		/* the code below is suboptimal (we could figure out
 		   which one text field to update), but it's only run
 		   in exceptional situations (and when speed is not an
-		   issue because the user just typed something...) */
-		x_field.setText( String.valueOf( world_cursor.x));
-		y_field.setText( String.valueOf( world_cursor.y));
-		z_field.setText( String.valueOf( world_cursor.z));
+		   issue because the user just typed something...) */ 
+		x_field_mni.setText( myRound( world_cursor_mni.x));
+		y_field_mni.setText( myRound( world_cursor_mni.y));
+		z_field_mni.setText( myRound( world_cursor_mni.z));
+		x_field_native.setText( myRound( world_cursor_nat.x));
+		y_field_native.setText( myRound( world_cursor_nat.y));
+		z_field_native.setText( myRound( world_cursor_nat.z));
+		post_field.setText( myRound( label_coords.post));
+		lat_field.setText( myRound( label_coords.lat));
+		sup_field.setText( myRound( label_coords.sup));
 	    }
 	    /* NB: ActionEvents are not a subclass of InputEvent,
 	       thus cannot be marked "consumed" ... 
 	    */
 	} // end of actionPerformed()
 
-	synchronized final public void positionChanged( PositionEvent e) {
+
+	/** This method only directly changes the textfields and not the viewports. */
+	synchronized final public void positionChangeDetected( PositionEvent e) {
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t*DVP$CoordFields.positionChangeDetected");
+
+	    if (DEBUG_POSITIONCHANGED) System.out.print("\nDataVolumePanel$CoordFields -> positionChangeDetected");
+	    if (DEBUG_HIGH) System.out.println(" with e:"+e);
+	    else if (DEBUG_POSITIONCHANGED) System.out.println();
 
 	    // alias them to local (stack) var-s for speed:
-	    final Point3Dfloat 	world_cursor= this.world_cursor;
-	    final Point3Dint 	voxel_cursor= this.voxel_cursor;
+	    final Point3Dfloat 	world_cursor_mni= this.world_cursor_mni;
+	    final Point3Dint 	voxel_cursor_mni= this.voxel_cursor_mni;//overwritten below!
+	    final Point3Dfloat 	world_cursor_nat= this.world_cursor_nat;
+	    final Point3Dint 	voxel_cursor_nat= this.voxel_cursor_nat;//overwritten below!
+	    final LabelCoords 	label_coords= this.label_coords;
+	    String 		anatomy_label;
 
-	    if( e.isXValid())
-		world_cursor.x= e.getX();
-	    if( e.isYValid())
-		world_cursor.y= e.getY();
-	    if( e.isZValid())
-		world_cursor.z= e.getZ();
-	    CoordConv.world2voxel( voxel_cursor, world_cursor);
+	    //Adjust the world_cursor's and label_coords to the new PositionEvent
+	    if( e.isXmniChanged())
+		world_cursor_mni.x= e.getXmni();
+	    if( e.isYmniChanged())
+		world_cursor_mni.y= e.getYmni();
+	    if( e.isZmniChanged())
+		world_cursor_mni.z= e.getZmni();
+	    if( e.isXnatChanged())
+		world_cursor_nat.x= e.getXnat();
+	    if( e.isYnatChanged())
+		world_cursor_nat.y= e.getYnat();
+	    if( e.isZnatChanged())
+		world_cursor_nat.z= e.getZnat();
+	    if( e.isPostChanged())
+		label_coords.post= e.getPost();
+	    if( e.isSupChanged())
+		label_coords.sup= e.getSup();
+	    if( e.isLatChanged())
+		label_coords.lat= e.getLat();
 
-	    if( value_field != null) {
-		int new_voxel_value= _getVoxelValue( voxel_cursor);
-		value_field.setText( _voxel2string( new_voxel_value));
+	    // Update the voxel cursors:
+	    // (No need to sync the mni/native/label world cursors - this is ensured when creating)
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP$CoordFields.positionChangeDetected -> _world2voxel_mni");
+	    _world2voxel_mni( voxel_cursor_mni, world_cursor_mni);
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP$CoordFields.positionChangeDetected -> _world2voxel_nat");
+	    _world2voxel_nat( voxel_cursor_nat, world_cursor_nat);
+
+	    //////////////////////////////////////////////////////////
+	    // Reset the textfields to display the new cursor position:
+
+	    //label_coords and label textfields:
+	    if( e.isPostChanged())
+		post_field.setText( myRound( label_coords.post));
+	    if( e.isSupChanged())
+		sup_field.setText( myRound( label_coords.sup));
+	    if( e.isLatChanged())
+		lat_field.setText( myRound( label_coords.lat));
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP$CoordFields.positionChangeDetected -> _getLabelValue");
+	    anatomy_label= _getLabelValue( world_cursor_mni);
+	    anatomy_label_field.setText(anatomy_label);
+
+	    //intensity:
+	    if( intensity_value_field != null) {
+		int new_voxel_value;
+		if(!isNative) {
+			if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP$CoordFields.positionChangeDetected -> _getVoxelValue(_world2voxel_common())");
+			new_voxel_value= _getVoxelValue( _world2voxel_common( world_cursor_mni));
+		}
+		else {
+			if (DEBUG_TRACE) System.out.println("\t\t\t\t**DVP$CoordFields.positionChangeDetected -> _getVoxelValue(_world2voxel_common())");
+			new_voxel_value= _getVoxelValue( _world2voxel_nat( world_cursor_nat));
+		}
+		intensity_value_field.setText( _voxel2string( new_voxel_value));
 	    }
+
+
+	    // mni and native textfields, according to voxel or world type:
 	    if( VOXEL_COORDINATES == coordinates_type) {
 		/* == VOXEL COORDINATES == */
-		if( e.isXValid())
-		    x_field.setText( String.valueOf( voxel_cursor.x));
-		if( e.isYValid())
-		    y_field.setText( String.valueOf( voxel_cursor.y));
-		if( e.isZValid())
-		    z_field.setText( String.valueOf( voxel_cursor.z));
-		return;
+		if( e.isXmniChanged())
+		    x_field_mni.setText( String.valueOf( voxel_cursor_mni.x));
+		if( e.isYmniChanged())
+		    y_field_mni.setText( String.valueOf( voxel_cursor_mni.y));
+		if( e.isZmniChanged())
+		    z_field_mni.setText( String.valueOf( voxel_cursor_mni.z));
+		if( e.isXnatChanged())
+		    x_field_native.setText( String.valueOf( voxel_cursor_nat.x));
+		if( e.isYnatChanged())
+		    y_field_native.setText( String.valueOf( voxel_cursor_nat.y));
+		if( e.isZnatChanged())
+		    z_field_native.setText( String.valueOf( voxel_cursor_nat.z));
 	    }
-	    /* == WORLD COORDINATES == */
-	    if( e.isXValid())
-		x_field.setText( String.valueOf( world_cursor.x));
-	    if( e.isYValid())
-		y_field.setText( String.valueOf( world_cursor.y));
-	    if( e.isZValid())
-		z_field.setText( String.valueOf( world_cursor.z));
+	    else {
+		/* == WORLD COORDINATES == */
+		if( e.isXmniChanged())
+		    x_field_mni.setText( myRound(world_cursor_mni.x));
+		if( e.isYmniChanged())
+		    y_field_mni.setText( myRound( world_cursor_mni.y));
+		if( e.isZmniChanged())
+		    z_field_mni.setText( myRound( world_cursor_mni.z));
+		if( e.isXnatChanged())
+		    x_field_native.setText( myRound( world_cursor_nat.x));
+		if( e.isYnatChanged())
+		    y_field_native.setText( myRound( world_cursor_nat.y));
+		if( e.isZnatChanged())
+		    z_field_native.setText( myRound( world_cursor_nat.z));
+	    }
 
-	} // end of positionChanged()
+
+	    //Override unknown textfields if there was no native2mni transform
+	    if (CoordConv.MNI2NAT == null) {
+		if (e.source_type != PositionEvent.MNI_EVENT) {
+			x_field_native.setText("-");
+			y_field_native.setText("-");
+			z_field_native.setText("-");
+			x_field_native.setBackground(Color.YELLOW);
+			y_field_native.setBackground(Color.YELLOW);
+			z_field_native.setBackground(Color.YELLOW);
+		}
+		else {  // don't need MNI2NAT to show NATIVE generated event
+			x_field_native.setBackground(Color.WHITE);
+			y_field_native.setBackground(Color.WHITE);
+			z_field_native.setBackground(Color.WHITE);
+		}
+	    }
+	    if (CoordConv.NAT2MNI == null) {
+		if (e.source_type == PositionEvent.NAT_EVENT) {
+//			(this.!isNative)
+			x_field_mni.setText("-");
+			y_field_mni.setText("-");
+			z_field_mni.setText("-");
+			post_field.setText("-");
+			sup_field.setText("-");
+			lat_field.setText("-");
+			anatomy_label_field.setText("No Native2MNI transform");
+			x_field_mni.setBackground(Color.YELLOW);
+			y_field_mni.setBackground(Color.YELLOW);
+			z_field_mni.setBackground(Color.YELLOW);
+			post_field.setBackground(Color.YELLOW);
+			sup_field.setBackground(Color.YELLOW);
+			lat_field.setBackground(Color.YELLOW);
+			anatomy_label_field.setBackground(Color.YELLOW);
+			x_field_native.setBackground(Color.WHITE);
+			y_field_native.setBackground(Color.WHITE);
+			z_field_native.setBackground(Color.WHITE);
+		}
+		else {  // don't need NAT2MNI to show MNI or LABEL generated event
+			x_field_mni.setBackground(Color.WHITE);
+			y_field_mni.setBackground(Color.WHITE);
+			z_field_mni.setBackground(Color.WHITE);
+			post_field.setBackground(Color.WHITE);
+			sup_field.setBackground(Color.WHITE);
+			lat_field.setBackground(Color.WHITE);
+			anatomy_label_field.setBackground(Color.WHITE);
+		}
+	    }
+
+	    //Override unknown textfields if there was no labels2mni transform
+	    if (CoordConv.MNI2LABELS == null) {
+		if (e.source_type != PositionEvent.LABEL_EVENT) {
+			post_field.setText("-");
+			sup_field.setText("-");
+			lat_field.setText("-");
+			anatomy_label_field.setText("No MNI2LABELS transform");
+			post_field.setBackground(Color.YELLOW);
+			sup_field.setBackground(Color.YELLOW);
+			lat_field.setBackground(Color.YELLOW);
+			anatomy_label_field.setBackground(Color.YELLOW);
+		}
+		else { // don't need MNI2LABELS to show LABEL generated event
+			post_field.setBackground(Color.WHITE);
+			sup_field.setBackground(Color.WHITE);
+			lat_field.setBackground(Color.WHITE);
+			anatomy_label_field.setBackground(Color.WHITE);
+		}
+	    }
+	    if (CoordConv.LABELS2MNI == null) {
+		if (e.source_type == PositionEvent.LABEL_EVENT) {
+			x_field_mni.setText("-");
+			y_field_mni.setText("-");
+			z_field_mni.setText("-");
+			x_field_mni.setBackground(Color.YELLOW);
+			y_field_mni.setBackground(Color.YELLOW);
+			z_field_mni.setBackground(Color.YELLOW);
+			x_field_native.setText("-");
+			y_field_native.setText("-");
+			z_field_native.setText("-");
+			x_field_native.setBackground(Color.YELLOW);
+			y_field_native.setBackground(Color.YELLOW);
+			z_field_native.setBackground(Color.YELLOW);
+		}
+		else { // don't need LABELS2MNI to show MNI or NATIVE generated event
+			x_field_mni.setBackground(Color.WHITE);
+			y_field_mni.setBackground(Color.WHITE);
+			z_field_mni.setBackground(Color.WHITE);
+			x_field_native.setBackground(Color.WHITE);
+			y_field_native.setBackground(Color.WHITE);
+			z_field_native.setBackground(Color.WHITE);
+		}
+	    }
+	    if (CoordConv.label_array == null)
+		anatomy_label_field.setText("No labels loaded");
+
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t*DVP$CoordFields.positionChangeDetected DONE!\n");
+	} // end of positionChangeDetected()
 	
 	final public int getMaxSliceNumber() { return -1; }
 	final public float getOrthoStep() { return Float.NaN; }
@@ -658,9 +1264,96 @@ abstract public class DataVolumePanel
 		event_listeners.removeElement( pl);
 	}
 
-	/** returns the current cursor position (in world coordinates) */
-	public Point3Dfloat getCursorPosition() { return world_cursor; }
+	/** returns the current cursor positions (in world coordinates) */
+	public Point3Dfloat getMNICursorPosition() { return world_cursor_mni; }
+	public Point3Dfloat getNativeCursorPosition() { return world_cursor_nat; }
+	public LabelCoords getLabelCoords() { return label_coords; }
+
+	private String myRound(float num) {
+		return String.valueOf( (float)(Math.round(num*10.0f)/10.0f));
+	}
+
+
+        /** world2voxel */
+        final protected Point3Dint _world2voxel_mni( Point3Dfloat world_mni) {
+		if(!isNative) {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> local_sampling.world2voxel");
+			return local_sampling.world2voxel( world_mni);
+		}
+		else {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> CoordConv.world2voxel_mni");
+			return CoordConv.world2voxel_mni( world_mni);
+		}
+        }
+        private void _world2voxel_mni( Point3Dint voxel_mni, float wx, float wy, float wz) {
+		if(!isNative) {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> local_sampling.world2voxel");
+			local_sampling.world2voxel( voxel_mni, wx, wy, wz);
+		}
+		else {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> CoordConv.world2voxel_mni");
+			CoordConv.world2voxel_mni( voxel_mni, wx, wy, wz);
+		}
+        }
+        private void _world2voxel_mni( Point3Dint voxel_mni, Point3Dfloat world_mni) {
+		if(!isNative) {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> local_sampling.world2voxel");
+			local_sampling.world2voxel( voxel_mni, world_mni);
+		}
+		else {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_mni -> CoordConv.world2voxel_mni");
+			CoordConv.world2voxel_mni( voxel_mni, world_mni);
+		}
+        }
+        private Point3Dint _world2voxel_nat( Point3Dfloat world_nat) {
+		if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_nat -> CoordConv.world2voxel_nat");
+		return CoordConv.world2voxel_nat( world_nat);
+        }
+        private void _world2voxel_nat( Point3Dint voxel_nat, float wx, float wy, float wz) {
+		if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_nat -> CoordConv.world2voxel_nat");
+		CoordConv.world2voxel_nat( voxel_nat, wx, wy, wz);
+        }
+        private void _world2voxel_nat( Point3Dint voxel_nat, Point3Dfloat world_nat) {
+		if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_nat -> CoordConv.world2voxel_nat");
+		CoordConv.world2voxel_nat(voxel_nat, world_nat);
+        }
+
+        private Point3Dint _world2voxel_common( Point3Dfloat world) {
+		if (DEBUG_VW) System.out.println("DataVolumePanel.w2vox_common -> CoordConv.world2voxel_common");
+		return CoordConv.world2voxel_common( world);
+        }
+
+        /** voxel2world */
+        private void _voxel2world_mni( Point3Dfloat world_cursor_mni, Point3Dint voxel_cursor_mni) {
+		if(!isNative) {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.vox2w_mni -> local_sampling.voxel2world");
+			local_sampling.voxel2world(world_cursor_mni, voxel_cursor_mni);
+		}
+		else {
+			if (DEBUG_VW) System.out.println("DataVolumePanel.vox2w_mni -> CoordConv.voxel2world_mni");
+			CoordConv.voxel2world_mni(world_cursor_mni, voxel_cursor_mni);
+		}
+        }
+        private void _voxel2world_nat( Point3Dfloat world_nat, Point3Dint voxel_nat) {
+		if (DEBUG_VW) System.out.println("DataVolumePanel.vox2w_nat -> CoordConv.voxel2world_nat");
+		CoordConv.voxel2world_nat( world_nat, voxel_nat);
+        }
+
+
+
+
+
+	public String toString(){
+		if (DEBUG)
+			return getTitle()+" - DataVolumePanel$CoordFields [isNative:"+isNative+",cursor:"+world_cursor_mni+"]";
+		else
+			return getTitle()+" - DataVolumePanel$CoordFields";
+	}
 
     } // end of class CoordinateFields
+
+    public String toString(){
+	return getTitle()+" - DataVolumePanel [isNative:"+isNative+",cursor:"+global_cursor_mni+"]";
+    }
 
 } // end of class DataVolumePanel

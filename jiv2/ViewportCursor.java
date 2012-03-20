@@ -1,26 +1,25 @@
-
-// $Id: ViewportCursor.java,v 1.1 2001-04-08 00:04:28 cc Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
-package jiv;
+package jiv2;
 
 import java.awt.*;
 
@@ -31,8 +30,8 @@ import java.awt.*;
  * cross-hair with alternating red and blue lines (to improve its
  * visibility over various backgrounds).
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: ViewportCursor.java,v 1.1 2001-04-08 00:04:28 cc Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: ViewportCursor.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
 */
 public final class ViewportCursor {
 
@@ -65,6 +64,9 @@ public final class ViewportCursor {
     /**
      * @param p new cursor (X,Y) viewport coordinates
      */
+    /* NOTE: if DataVolumePanel is Combined instead of Individual, this is 
+       not called when switching to sync mode. But it is called when in 
+       sync mode and cursor is moved.*/
     final public void setPosition( final Point p) {
 	this.x= p.x; this.y= p.y;
     }
@@ -138,6 +140,10 @@ public final class ViewportCursor {
 		     x - 1, y - START_OFFSET );
 	gr.drawLine( x - 1, y + START_OFFSET, 
 		     x - 1, y + END_OFFSET );
+    }
+
+    public String toString(){
+	return "("+x+","+y+")";
     }
 
 } // end of class ViewportCursor

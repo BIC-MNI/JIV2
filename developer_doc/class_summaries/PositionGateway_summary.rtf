@@ -1,0 +1,65 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww12780\viewh13860\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 package jiv_monkey;\
+\
+import java.util.Vector;\
+\
+/**\
+ * Provides a gateway ("firewall") for exchanging\
+ * <code>PositionEvent</code>-s between two sets of\
+ * <code>PositionListener/PositionGenerator</code>-s.\
+ * This way, the two sets (called "internal" and "external") are not\
+ * aware of each other.  The two interfaces implemented by this class\
+ * are for the "internal" side of the gateway.\
+ *\
+ */\
+public final class PositionGateway extends PositionListenerAdapter \
+    implements PositionGenerator \{\
+\
+    protected static final boolean DEBUG= false;\
+\
+    Vector internal_listeners= new Vector();\
+    Vector external_listeners= new Vector();\
+\
+    /** For INTERNAL to EXTERNAL events */\
+    synchronized final public void positionChangeDetected( PositionEvent e) \{\
+	external_listeners(..).positionChangeDetected( e)\
+    \}\
+	\
+    /** For EXTERNAL to INTERNAL events */\
+    synchronized final public void positionChangeDetected_External( PositionEvent e) \{\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 	internal_listeners(..).positionChangeDetected( e)\
+    \}\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 	\
+\
+    /** For INTERNAL listeners (i.e. within the same panel) */\
+    synchronized public void addPositionListener( PositionListener pl) \{\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 	internal_listeners.addElement( pl)\
+    \}\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0     synchronized public void removePositionListener( PositionListener pl) \{\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 	internal_listeners.removeElement( pl)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0     \}\
+\
+    /** For EXTERNAL listeners (i.e. within the same panel) */\
+    synchronized public void addPositionListener_External( PositionListener pl) \{\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 	external_listeners.addElement( pl)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0     \}\
+    synchronized public void removePositionListener_External( PositionListener pl) \{\
+	external_listeners.removeElement( pl)\
+    \}\
+\
+\}\
+\
+}

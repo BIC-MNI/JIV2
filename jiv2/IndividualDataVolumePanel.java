@@ -1,27 +1,26 @@
-
-// $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -32,19 +31,29 @@ import java.util.*;
  * Provides the volume panel functionality specific to panels
  * displaying a single image volume.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: IndividualDataVolumePanel.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 public final class IndividualDataVolumePanel extends DataVolumePanel {
 
     /** used for debugging the problem with non-working popup menu cmds */
     /*protected*/ static final boolean		DEBUG_POPUP_CMDS= false;
 
+    /** initial label for 1st textfield in "label" row */
+    /*private*/ static final String		DEFAULT_POST_LABEL= "Post";
+    /** initial label for 2nd textfield in "label" row */
+    /*private*/ static final String		DEFAULT_SUP_LABEL= "Sup";
+    /** initial label for 3rd textfield in "label" row */
+    /*private*/ static final String		DEFAULT_LAT_LABEL= "Lat";
     /** initial "low" setting of the colormap controls slider */
     /*private*/ static final short		DEFAULT_CMAP_START= 0;
     /** initial "high" setting of the colormap controls slider */
     /*private*/ static final short		DEFAULT_CMAP_END= 255;
     /*private*/ static final int		DEFAULT_COLOR_CODING= ColorCoding.GRAY;
+    /** initial color below "low" setting of the colormap controls slider */
+    /*private*/ static final Color		DEFAULT_CMAP_COLOR_UNDER= Color.black;
+    /** initial color above "high" setting of the colormap controls slider */
+    /*private*/ static final Color		DEFAULT_CMAP_COLOR_ABOVE= Color.white;
     /*private*/ static final boolean		INITIAL_CMAP_TIED_MODE= false;
 
     /*private*/ Data3DVolume 		data_volume; 
@@ -53,18 +62,25 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
     /*private*/ ColormapDisplay		cmap_display;
 
     public IndividualDataVolumePanel( Data3DVolume data_volume, 
+				      VolumeHeader local_sampling,
 				      Container parent_container,
 				      int grid_column,
 				      Main applet_root
 				      ) {
-	this( data_volume, parent_container, grid_column, 
+	this( data_volume, parent_container, 
+	      DEFAULT_POST_LABEL, DEFAULT_SUP_LABEL, DEFAULT_LAT_LABEL,
+	      grid_column,
 	      new Point3Dfloat(), true, false,
 	      DEFAULT_CMAP_START, DEFAULT_CMAP_END, DEFAULT_COLOR_CODING, 
-	      applet_root);
+	      DEFAULT_CMAP_COLOR_UNDER, DEFAULT_CMAP_COLOR_ABOVE,
+	      local_sampling, false, applet_root);
     }
     
     public IndividualDataVolumePanel( Data3DVolume data_volume, 
 				      Container parent_container,
+				      String post_label,
+				      String sup_label,
+				      String lat_label,
 				      int grid_column,
 				      Point3Dfloat initial_world_cursor,
 				      boolean enable_world_coords,
@@ -72,31 +88,48 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 				      short initial_cmap_start,
 				      short initial_cmap_end,
 				      int color_coding_type,
+				      Color initial_cmap_color_under,
+				      Color initial_cmap_color_above,
+				      VolumeHeader local_sampling,
+				      boolean isNative,
 				      Main applet_root
 				      ) {
 	// initialization done in the superclass (part 1/2)
-	super( parent_container, grid_column, initial_world_cursor,
-	       enable_world_coords, byte_voxel_values, 
-	       applet_root);
+	super( parent_container, post_label, sup_label, lat_label,
+	       grid_column, initial_world_cursor,
+	       enable_world_coords, byte_voxel_values, isNative,
+	       local_sampling, applet_root);
 
 	this.data_volume= data_volume;
 
 	/* any specific (non-shared) popup menu commands can be added here:
 	 */
 	// Note: the ColormapControl constructor adds to popup_menu 
-	cmap_control= new ColormapControl( initial_cmap_start, initial_cmap_end,
-					   color_coding_type, INITIAL_CMAP_TIED_MODE,
-					   popup_menu 
-					   );
-	Point3Dint initial_slices= CoordConv.world2voxel( initial_world_cursor);
+	cmap_control= new ColormapControl( initial_cmap_start,
+					   initial_cmap_end,
+					   color_coding_type,
+					   initial_cmap_color_under,
+					   initial_cmap_color_above,
+					   INITIAL_CMAP_TIED_MODE,
+					   popup_menu );
+	//## initial_slices should ideally be different if isNative, 
+	//   but not necessary because the view is changed later anyway!
+	
+	if (DEBUG) System.out.println("IndivDVP -> CoordConv.world2voxel_common");
+
+	Point3Dint initial_slices;
+	if (!isNative)
+		initial_slices= CoordConv.world2voxel_common( initial_world_cursor);
+	else
+		initial_slices= CoordConv.world2voxel_nat( initial_world_cursor);
 
 	slice_producers= new SliceImageProducer[] {
-		new TransverseSliceImageProducer( data_volume, initial_slices.z, 
-						  cmap_control.getColormap()),
-		new SagittalSliceImageProducer( data_volume, initial_slices.x, 
-						cmap_control.getColormap()),
-		new CoronalSliceImageProducer( data_volume, initial_slices.y, 
-					       cmap_control.getColormap())
+		new TransverseSliceImageProducer( data_volume, initial_world_cursor, initial_slices.z, 
+						  cmap_control.getColormap(), isNative),
+		new SagittalSliceImageProducer( data_volume, initial_world_cursor, initial_slices.x, 
+						cmap_control.getColormap(), isNative),
+		new CoronalSliceImageProducer( data_volume, initial_world_cursor, initial_slices.y, 
+					       cmap_control.getColormap(), isNative)
 	};
 	GridBagConstraints gbc= new GridBagConstraints();
 	gbc.fill= GridBagConstraints.HORIZONTAL;
@@ -125,9 +158,10 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
     public SliceImageProducer getATransverseSliceImageProducer( int initial_slice) {
 	
 	SliceImageProducer ret= 
-	    new TransverseSliceImageProducer( data_volume, 
+	    new TransverseSliceImageProducer( data_volume,
+					isNative ? global_cursor_nat : global_cursor_mni,
 					      initial_slice, 
-					      cmap_control.getColormap());
+					      cmap_control.getColormap(), isNative);
 	cmap_control.addColormapListener( ret);
 	return ret;
     }
@@ -136,8 +170,10 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	
 	SliceImageProducer ret= 
 	    new SagittalSliceImageProducer( data_volume, 
+					isNative ? global_cursor_nat : global_cursor_mni,
 					    initial_slice, 
-					    cmap_control.getColormap());
+					    cmap_control.getColormap(),
+					    isNative);
 	cmap_control.addColormapListener( ret);
 	return ret;
     }
@@ -146,21 +182,75 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	
 	SliceImageProducer ret= 
 	    new CoronalSliceImageProducer( data_volume, 
+					isNative ? global_cursor_nat : global_cursor_mni,
 					   initial_slice, 
-					   cmap_control.getColormap());
+					   cmap_control.getColormap(),
+					   isNative);
 	cmap_control.addColormapListener( ret);
 	return ret;
     }
 
-    final public int getXSize() { return data_volume.getXSize(); }
-    final public int getYSize() { return data_volume.getYSize(); }
-    final public int getZSize() { return data_volume.getZSize(); }
+
+    /** The six methods below are only used by DataVolumePanel CoordFields */
+    final public int getXmniSize() {
+	if (null != applet_root.mni_volume)
+		return applet_root.mni_volume.getXSize();
+	else
+//### FIX getXmniSize() when mni_volume is null
+		return Integer.MAX_VALUE;
+    }
+    final public int getYmniSize() {
+	if (null != applet_root.mni_volume)
+		return applet_root.mni_volume.getYSize();
+	else
+		return Integer.MAX_VALUE;
+    }
+    final public int getZmniSize() {
+	if (null != applet_root.mni_volume)
+		return applet_root.mni_volume.getZSize();
+	else
+		return Integer.MAX_VALUE;
+    }
+    final public int getXnatSize() {
+	if (null != applet_root.native_volume)
+		return applet_root.native_volume.getXSize();
+	else
+//### FIX getXnatSize() when native_volume is null
+		return Integer.MAX_VALUE;
+    }
+    final public int getYnatSize() {
+	if (null != applet_root.native_volume)
+		return applet_root.native_volume.getYSize();
+	else
+		return Integer.MAX_VALUE;
+    }
+    final public int getZnatSize() {
+	if (null != applet_root.native_volume)
+		return applet_root.native_volume.getZSize();
+	else
+		return Integer.MAX_VALUE;
+    }
+
+//### FIX getPostMax()!
+    final public int getPostMax() { return 1000; }
+    final public int getSupMax() { return 1000; }
+    final public int getLatMax() { return 1000; }
+    final public int getPostMin() { return -1000; }
+    final public int getSupMin() { return -1000; }
+    final public int getLatMin() { return -1000; }
 
     final public String getTitle() { return data_volume.getNickName(); }
 
     /** aid to DataVolumePanel.CoordinateFields */
     protected final int _getVoxelValue( Point3Dint voxel_pos) {
 	return data_volume.getVoxelAsInt( voxel_pos);
+    }
+
+    protected final String _getLabelValue( Point3Dfloat world_mni) {
+	if (null != applet_root.label_volume)
+		return applet_root.label_volume.getLabel( world_mni);
+	else
+		return "No label volume detected!";
     }
 
     protected final float _image_byte2real( short voxel_value) {
@@ -177,7 +267,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapControl</code>. 
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003/12/21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControl 
      */
@@ -216,7 +306,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * controls for adjusting the colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003/12/21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapControlMenus 
      */
@@ -251,9 +341,11 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 	protected ColormapControl( int initial_lower_value, 
 				   int initial_upper_value,
 				   int color_coding_type,
+				   Color initial_under_color,
+				   Color initial_over_color,
 				   boolean initial_tied_mode,
 				   PopupMenu popup_menu       ) {
-	    
+
 	    tied_mode= initial_tied_mode;
 
 	    ActionListener al= new ActionListener() {
@@ -309,12 +401,15 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
 		    IllegalArgumentException( "initial_cmap_start > initial_cmap_end");
 	    crt_colormap= color_coder.get8bitColormap( color_coding_type, 
 						       initial_lower_value, 
-						       initial_upper_value );
+						       initial_upper_value,
+						       initial_under_color,
+						       initial_over_color);
 	    _old_lower_value= lower_value= initial_lower_value;
 	    _old_upper_value= upper_value= initial_upper_value;
 	    _old_coding_type= ( (Integer)color_coding_menu.getSelection() ).intValue();
-	    _old_under_color= (Color)under_color_menu.getSelection();
-	    _old_over_color= (Color)over_color_menu.getSelection();
+	    _old_under_color= initial_under_color;
+            _old_over_color= initial_over_color;
+
 
 	    lower_value_tf= new TextField( _voxel2string( lower_value), 
 					   byte_voxel_values ? 
@@ -572,7 +667,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * <code>IndividualDataVolumePanel.ColormapDisplay</code>.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003/12/21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplay 
      */
@@ -596,7 +691,7 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
      * the current colormap.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003-12-21 15:29:43 crisco Exp $ 
+     * @version $Id: IndividualDataVolumePanel.java,v 1.6 2003/12/21 15:29:43 crisco Exp $ 
      *
      * @see IndividualDataVolumePanel.ColormapDisplayConstants 
      */
@@ -712,4 +807,5 @@ public final class IndividualDataVolumePanel extends DataVolumePanel {
     } // end of class ColormapDisplay
 
 } // end of class IndividualDataVolumePanel
+
 

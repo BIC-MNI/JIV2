@@ -1,27 +1,26 @@
-
-// $Id: Data3DVolume.java,v 1.13 2002-04-24 14:31:56 cc Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.net.*;
 import java.io.*;
@@ -46,12 +45,20 @@ import java.util.zip.*;
 /**
  * Loads, stores, and provides access to a 3D image volume.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: Data3DVolume.java,v 1.13 2002-04-24 14:31:56 cc Exp $
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: Data3DVolume.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 public final class Data3DVolume {
 
+    /** shows which files are loaded */
+    /*private*/ static final boolean    VERBOSE= true;
+
+    /** for development only: see methods called when you click on a viewport! */
+    /*private*/ static final boolean    DEBUG_TRACE= false;
+
+    /** for development only: see what's happening */
     /*private*/ static final boolean 	DEBUG= false;
+    /*private*/ static final boolean 	DEBUG_A= false;
 
     /** for development only: artificially delay the downloads */
     /*private*/ static final boolean DELAY_DOWNLOAD= false;
@@ -76,7 +83,7 @@ public final class Data3DVolume {
 	slice_dirname[1][2]= slice_dirname[2][1]= "12";
     }
 
-    /*private*/ byte[][][] 	voxels;     // (z,y,x)!
+    /*private*/ byte[][][] 	common_voxels;     // (z,y,x)!
 
     /*private*/ VolumeHeader.ResampleTable	resample_table;
 
@@ -100,36 +107,43 @@ public final class Data3DVolume {
     /*private*/ Thread 			bg_dnld;
 
     /*private*/ String 		volume_url;	// eg http://www/foo/colin27.raw.gz
+    /*private*/ URL 		url_context; // eg http://www/foo/CONFIG
     /*private*/ String 		slice_url_base; // eg http://www/foo/colin27
     /*private*/ String 		slice_url_ext;  // eg .raw.gz
 
     /*private*/ String 		nick_name;
+    /*private*/ boolean		isNative;
 
     /** header associated with the data in volume_url */
     /*private*/ VolumeHeader	volume_header;
     /*private*/ VolumeHeader	common_sampling;
 
 
-    public Data3DVolume( VolumeHeader common_sampling)
+    public Data3DVolume( VolumeHeader common_sampling,
+			 VolumeHeader volume_header)
     {
 	this.common_sampling= common_sampling;
-	voxels= new byte[ getZSize()][ getYSize()][ getXSize()];
+	this.volume_header= volume_header;
+	common_voxels= new byte[ getZSize()][ getYSize()][ getXSize()];
     }
 
     /** Note: it's not _required_ to declare SecurityException (since
      it's a subclass of RuntimeException), but we do it for clarity --
      this error is likely to happen when working with url-s...
     */
-    public Data3DVolume( VolumeHeader common_sampling, 
-			 final URL source_url, 
+    public Data3DVolume( boolean isNative,
+			 VolumeHeader common_sampling, 
+			 URL url_context,
+			 String volume_file_name,
 			 VolumeHeader volume_header, 
-			 String nick_name, 
+			 String nick_name,
 			 int download_method ) 
 	throws IOException, SecurityException
     {
-	this( common_sampling);
+	this( common_sampling, volume_header);
+	this.url_context= url_context;
+	final URL source_url= new URL(url_context, volume_file_name);
 
-	this.volume_header= volume_header;
 	volume_url= source_url.toString();
 	slice_url_ext= Util.getExtension( volume_url);
 	if( slice_url_ext.length() > 0 ) {
@@ -140,7 +154,9 @@ public final class Data3DVolume {
 	    slice_url_base= volume_url;
 	}
 	this.nick_name= (nick_name != null) ? nick_name : "(unnamed)";
+	this.isNative= false;
 
+	if (VERBOSE) System.out.println("*** NICKNAME: "+this.nick_name+" ***");
 	resample_table= volume_header.getResampleTable( common_sampling);
 
 	/* initialize this volume's region to the dummy pattern
@@ -150,7 +166,7 @@ public final class Data3DVolume {
 	    int[][] 	map_start= this.resample_table.start;
 	    int[][] 	map_end= this.resample_table.end;
 	    int start_x, end_x, start_y, end_y, start_z, end_z;
-	    /* need to use min/max because volume_header can some have
+	    /* need to use min/max because volume_header can sometimes have
                steps<0 */
 	    start_x= Math.min( _first( map_start[0]), _last( map_start[0]));
 	    end_x=   Math.max( _first( map_end[0]),   _last( map_end[0]));
@@ -159,19 +175,18 @@ public final class Data3DVolume {
 	    start_z= Math.min( _first( map_start[2]), _last( map_start[2]));
 	    end_z=   Math.max( _first( map_end[2]),   _last( map_end[2]));
 
-	    if( DEBUG) 
-		System.out.println( this + " extents : " + start_x +" "+ end_x +" "+ start_y +" "+ end_y +" "+ start_z +" "+ end_z);
+	    if( DEBUG) System.out.println( this + " extents : " + start_x +" "+ end_x +" "+ start_y +" "+ end_y +" "+ start_z +" "+ end_z);
 
+	    // Initialize the space with grey (255*0.2)
 	    int 	line_len= end_x - start_x + 1;
 	    byte[] 	dummy_line1= new byte[ line_len];
 	    byte 	dummy_val= (byte)(255*0.2);
 	    for( int i= 0; i < line_len; ++i) 
 		dummy_line1[ i]= dummy_val;
-
 	    for( int z= start_z; z <= end_z; ++z)
 		for( int y= start_y; y <= end_y ; ++y)
 		    System.arraycopy( dummy_line1, 0, 
-				      voxels[ z][ y], start_x,
+				      common_voxels[ z][ y], start_x,
 				      line_len);
 	}
 
@@ -218,6 +233,12 @@ public final class Data3DVolume {
 	}
     }
 
+    public void setNative(boolean isNative) {
+	if (VERBOSE && isNative)
+		System.out.println("Setting "+nick_name+" to be native.");
+	this.isNative= isNative;
+    }
+
     /** Kills the background download threads. (note: currently, only
         the lengthy full-volume download thread is killed...) 
     */
@@ -249,9 +270,16 @@ public final class Data3DVolume {
 
     final public String getNickName() { return nick_name; }
 
+    /** This method should only be called when 'this' is the label volume.. */
+    final public String getLabel(Point3Dfloat world_mni) {
+	Point3Dint voxel= common_sampling.world2voxel(world_mni);
+	int intensity= getVoxelAsInt(voxel.x, voxel.y, voxel.z);
+	return CoordConv.intensity2label(intensity);
+    }
+
     final public byte getVoxel( int x, int y, int z)
     {
-	return voxels[ z][ y][ x];
+	return common_voxels[ z][ y][ x];
     }
 
     final public byte getVoxel( Point3Dint voxel)
@@ -276,10 +304,10 @@ public final class Data3DVolume {
 	or in other words "flipped" -- hence, it can be then directly fed to an 
 	image producer mechanism. 
     */
-    final public byte[] getTransverseSlice( final int z )
+    final public byte[] getTransverseSlice( final Point3Dfloat world, final int slice_z )
     {
 	byte[] slice= new byte[ getYSize() * getXSize()];
-	getTransverseSlice( z, slice, null);
+	getTransverseSlice( world, slice_z, slice, null);
 	return slice;
     }
 
@@ -290,9 +318,14 @@ public final class Data3DVolume {
 	<em>Note:</em> param 'slice' should not be used outside the 
 	current thread!!
     */
-    final public void getTransverseSlice( final int z, byte[] slice,
+    final public void getTransverseSlice( final Point3Dfloat world,
+					  final int common_z,
+					  byte[] slice,
 					  final SliceImageProducer consumer )
     {
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getTransverseSlice");
+
 	boolean already_downloaded;
 
 	/* TODO: you can use if( all_data_downloaded ) to speed this
@@ -303,7 +336,9 @@ public final class Data3DVolume {
 	   issue??? do I ever have multiple threads calling this
 	   method??) -- Yes (callback to sliceDataUpdated from the
 	   slice download threads) */
-	Point3Dfloat world= common_sampling.voxel2world( 0, 0, z);
+
+	if (DEBUG_A) System.out.println("5 world2voxel to get local (not common) voxel coords in Data3DVolume for new slice");
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getTransverseSlice -> volume_header.world2voxel()");
 	final Point3Dint file_voxel= volume_header.world2voxel( world);
 
 	if( file_voxel.z < 0 || file_voxel.z >= t_slice_downloaded.length)
@@ -313,38 +348,53 @@ public final class Data3DVolume {
 
 	final int x_size= getXSize();
 	final int y_size= getYSize();
-	byte[][][] voxels= this.voxels;
+	byte[][][] common_voxels= this.common_voxels;
 	// NB: this vertically flips the image...
 	// (decreasing index loops are rumored to run faster in Java)
+
 	for( int y= y_size - 1, offset= 0; y >= 0; --y, offset += x_size)
-	    System.arraycopy( voxels[ z][ y], 0, slice, offset, x_size);
+	    System.arraycopy( common_voxels[ common_z][ y], 0, slice, offset, x_size);
+
 	
-	if( already_downloaded )
+	// If not already stored locally, download from source..
+	if( already_downloaded ) {
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getTransverseSlice DONE!\n");
 	    return;
+	}
 
 	// download the slice in a parallel (bg) thread
 	Thread t= new Thread() {
 		public void run() {
-		    _asyncDownloadSlice( 1, 0, file_voxel.z, consumer, z); 
+		    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getTransverseSlice -> _asyncDownloadSlice");
+		    _asyncDownloadSlice( 1, 0, file_voxel.z, consumer, common_z); 
 		}
 	    };
 	// TODO: maybe use (MIN_PRIORITY+1), or even MIN_PRIORITY, instead???
 	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getTransverseSlice DONE!\n");
     }
 
-    final public byte[] getSagittalSlice( final int x )
+    final public byte[] getSagittalSlice( final Point3Dfloat world, final int x)
     {
 	byte[] slice= new byte[ getZSize() * getYSize()];
-	getSagittalSlice( x, slice, null);
+	getSagittalSlice( world, x, slice, null);
 	return slice;
     }
 
-    final public void getSagittalSlice( final int x, byte[] slice,
+    final public void getSagittalSlice( final Point3Dfloat world,
+					final int common_x,
+					byte[] slice,
 					final SliceImageProducer consumer)
     {
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getSagittalSlice");
+
 	boolean already_downloaded;
-	Point3Dfloat world= common_sampling.voxel2world( x, 0, 0);
+
+	if (DEBUG_A) System.out.println("5 world2voxel to get local (not common) voxel coords in Data3DVolume for new slice");
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getSagittalSlice -> volume_header.world2voxel()");
 	final Point3Dint file_voxel= volume_header.world2voxel( world);
 
 	if( file_voxel.x < 0 || file_voxel.x >= s_slice_downloaded.length)
@@ -354,37 +404,50 @@ public final class Data3DVolume {
 
 	final int y_size= getYSize();
 	final int z_size= getZSize();
-	byte[][][] voxels= this.voxels;
+	byte[][][] common_voxels= this.common_voxels;
+
 	// NB: this vertically flips the image...
 	for( int z= z_size - 1, offset= 0; z >= 0; --z, offset += y_size) 
 	    for( int y= y_size - 1; y >= 0; --y)
-		slice[ offset + y]= voxels[ z][ y][ x];
+		slice[ offset + y]= common_voxels[ z][ y][ common_x];
 
-	if( already_downloaded )
+	if( already_downloaded ) {
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getSagittalSlice DONE!\n");
 	    return;
+	}
 
 	// download the slice in a parallel (bg) thread
 	Thread t= new Thread() {
 		public void run() {
-		    _asyncDownloadSlice( 2, 1, file_voxel.x, consumer, x); 
+		    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getSagittalSlice -> _asyncDownloadSlice");
+		    _asyncDownloadSlice( 2, 1, file_voxel.x, consumer, common_x); 
 		}
 	    };
 	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getSagittalSlice DONE!\n");
     }
 
-    final public byte[] getCoronalSlice( final int y )
+    final public byte[] getCoronalSlice( final Point3Dfloat world, final int y )
     {
 	byte[] slice= new byte[ getZSize() * getXSize()];
-	getCoronalSlice( y, slice, null);
+	getCoronalSlice( world, y, slice, null);
 	return slice;
     }
 
-    final public void getCoronalSlice( final int y, byte[] slice,
+    final public void getCoronalSlice( final Point3Dfloat world,
+				       final int common_y,
+				       byte[] slice,
 				       final SliceImageProducer consumer)
     {
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getCoronalSlice");
+
 	boolean already_downloaded;
-	Point3Dfloat world= common_sampling.voxel2world( 0, y, 0);
+
+	if (DEBUG_A) System.out.println("Data3DVolume.getCoronalSlice -> volume_header.world2voxel(world)");
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getCoronalSlice -> volume_header.world2voxel()");
 	final Point3Dint file_voxel= volume_header.world2voxel( world);
 
 	if( file_voxel.y < 0 || file_voxel.y >= c_slice_downloaded.length)
@@ -394,22 +457,27 @@ public final class Data3DVolume {
 
 	final int x_size= getXSize();
 	final int z_size= getZSize();
-	byte[][][] voxels= this.voxels;
+	byte[][][] common_voxels= this.common_voxels;
+
 	// NB: this vertically flips the image...
 	for( int z= z_size - 1, offset= 0; z >= 0; --z, offset += x_size)
-	    System.arraycopy( voxels[ z][ y], 0, slice, offset, x_size);
+	    System.arraycopy( common_voxels[ z][ common_y], 0, slice, offset, x_size);
 
-	if( already_downloaded )
+	if( already_downloaded ) {
+	    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getCoronalSlice DONE!\n");
 	    return;
-
+	}
 	// download the slice in a parallel (bg) thread
 	Thread t= new Thread() {
 		public void run() {
-		    _asyncDownloadSlice( 2, 0, file_voxel.y, consumer, y); 
+		    if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^^getCoronalSlice -> _asyncDownloadSlice()");
+		    _asyncDownloadSlice( 2, 0, file_voxel.y, consumer, common_y); 
 		}
 	    };
 	t.setPriority( Thread.currentThread().getPriority() - 1 ); 
 	t.start();
+
+	if (DEBUG_TRACE) System.out.println("\t\t\t\t\t\t^getCoronalSlice DONE!\n");
     }
 
     /**
@@ -432,8 +500,8 @@ public final class Data3DVolume {
     // debugging aid...
     public void printTrueRange() 
     {
-	int min= voxels[ 0][ 0][ 0];
-	int max= voxels[ 0][ 0][ 0];
+	int min= common_voxels[ 0][ 0][ 0];
+	int max= common_voxels[ 0][ 0][ 0];
 	for( int z= 0; z < getZSize(); ++z)
 	    for( int y= 0; y < getYSize(); ++y)
 		for( int x= 0; x < getXSize(); ++x) {
@@ -478,6 +546,7 @@ public final class Data3DVolume {
                                catch and rewrite exception...) : */
 			    source_url.toString(),
 			    buff, size_2, size_1);
+
 		slab_start[ 0]= d_0;
 
 		if( this.resample_table.fast_resample )
@@ -489,7 +558,7 @@ public final class Data3DVolume {
 		/* this should help on a slow & non-preemptive jvm ... */
 		Thread.yield();
 	    }
-	    System.out.println( source_url + " loading done!");
+	    if (VERBOSE) System.out.println( source_url + " loading done!");
 	}
 	finally {
 	    if( input_stream != null) {
@@ -514,6 +583,7 @@ public final class Data3DVolume {
      * @param vert_dim canonical vertical dimension of the slice (0 for x, etc)
      * @param horiz_dim canonical horizontal dimension of the slice
      * @param input_slice_no voxel coordinate of this slice in the input volume file
+     * @param consumer_slice_no voxel coordinate of this slice in the common sampling coordinates???
      */
     final /*private*/ void _asyncDownloadSlice( int vert_dim, 
 						int horiz_dim, 
@@ -521,6 +591,12 @@ public final class Data3DVolume {
 						SliceImageProducer consumer, 
 						int consumer_slice_no ) 
     {
+	if (DEBUG) {
+		System.out.println("_asyncDownloadSlice..");
+		System.out.println("\tinput_slice_no (jpg): "+input_slice_no);
+		System.out.println("\tconsumer_slice_no: "+consumer_slice_no);
+		System.out.println("\tconsumer: "+consumer);
+	}
 	int[] dim_perm= volume_header.getDimPermutation();
 	int[] sizes= volume_header.getSizes();
 	int size_v= sizes[ vert_dim];
@@ -636,21 +712,22 @@ public final class Data3DVolume {
 	int[] 		dim_order= volume_header.getDimOrder();
 	int[] 		dim_perm= volume_header.getDimPermutation();
 	// for speed, use a stack variable instead of the instance field:
-	byte[][][] 	voxels= this.voxels;
+	byte[][][] 	common_voxels= this.common_voxels;
 	int		in_0, in_1, in_2;
 	int[] 		out= new int[ 3];
 	int[][] 	map_start= this.resample_table.start;
 	int[][] 	map_end= this.resample_table.end;
 
 	if( false && DEBUG ) {
-	    System.out.println( Util.arrayToString( start));
-	    System.out.println( Util.arrayToString( size));
-	    System.out.println( Util.arrayToString( map_start[0]));
-	    System.out.println( Util.arrayToString( map_end[0]));
-	    System.out.println( Util.arrayToString( map_start[1]));
-	    System.out.println( Util.arrayToString( map_end[1]));
-	    System.out.println( Util.arrayToString( map_start[2]));
-	    System.out.println( Util.arrayToString( map_end[2]));
+	    System.out.println("_saveSlab");
+	    System.out.println("start: "+Util.arrayToString( start));
+	    System.out.println("size: "+Util.arrayToString( size));
+	    System.out.println("map_start x: "+Util.arrayToString( map_start[0]));
+	    System.out.println("map_end x: "+Util.arrayToString( map_end[0]));
+	    System.out.println("map_start y: "+Util.arrayToString( map_start[1]));
+	    System.out.println("map_end y: "+Util.arrayToString( map_end[1]));
+	    System.out.println("map_start z: "+Util.arrayToString( map_start[2]));
+	    System.out.println("map_end z: "+Util.arrayToString( map_end[2]));
 	}
 
 	for( in_0= start[0]; in_0 < start[0]+size[0]; in_0++) 
@@ -672,7 +749,7 @@ public final class Data3DVolume {
 				    System.out.println( slab_index);
 				}
 
-				voxels[ out[dim_perm[2]] ][ out[dim_perm[1]] ][ out[dim_perm[0]] ]= 
+				common_voxels[ out[dim_perm[2]] ][ out[dim_perm[1]] ][ out[dim_perm[0]] ]= 
 				    slab[ slab_index];
 				/* OUCH! :-) */
 			    }
@@ -700,7 +777,7 @@ public final class Data3DVolume {
 					   int[] size )
     {
 	// for speed, use a stack variable instead of the instance field:
-	byte[][][] 	voxels= this.voxels;
+	byte[][][] 	common_voxels= this.common_voxels;
 	int[][] 	map_start= this.resample_table.start;
 	int[][] 	map_end= this.resample_table.end;
 
@@ -712,8 +789,7 @@ public final class Data3DVolume {
 	final int y_end= y_start + y_size;
 
 	for( int y= y_start, offset= 0; y < y_end; ++y, offset += x_size)
-	    System.arraycopy( slab, offset, voxels[ z_start][ y], x_start, x_size);
-
+	    System.arraycopy( slab, offset, common_voxels[ z_start][ y], x_start, x_size);
     }
 
     
@@ -731,6 +807,10 @@ public final class Data3DVolume {
     final static /*private*/ int _last( final int[] array ) 
     {
 	return array[ array.length - 1 ];
+    }
+
+    public String toString(){
+	return nick_name;
     }
 
 }

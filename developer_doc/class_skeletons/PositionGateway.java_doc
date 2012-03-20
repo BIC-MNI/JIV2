@@ -1,0 +1,45 @@
+package jiv_monkey;
+
+import java.util.Vector;
+
+/**
+ * Provides a gateway ("firewall") for exchanging
+ * <code>PositionEvent</code>-s between two sets of
+ * <code>PositionListener/PositionGenerator</code>-s.
+ * This way, the two sets (called "internal" and "external") are not
+ * aware of each other.  The two interfaces implemented by this class
+ * are for the "internal" side of the gateway.
+ *
+ */
+public final class PositionGateway extends PositionListenerAdapter 
+    implements PositionGenerator {
+
+    protected static final boolean DEBUG= false;
+
+    Vector internal_listeners= new Vector();
+    Vector external_listeners= new Vector();
+
+    /** For INTERNAL to EXTERNAL events */
+    synchronized final public void positionChangeDetected( PositionEvent e) {    }
+	
+    /** For EXTERNAL to INTERNAL events */
+    synchronized final public void positionChangeDetected_External( PositionEvent e) {    }
+	
+    /** PRIVATE for implementation of inversion */
+    final void _forwardEvent( Vector destinations, PositionEvent event) {    }
+
+
+    /** For INTERNAL listeners (i.e. within the same panel) */
+    synchronized public void addPositionListener( PositionListener pl) {    }
+    synchronized public void removePositionListener( PositionListener pl) {    }
+
+    /** For EXTERNAL listeners (i.e. within the same panel) */
+    synchronized public void addPositionListener_External( PositionListener pl) {    }
+    synchronized public void removePositionListener_External( PositionListener pl) {    }
+
+    /** PRIVATE implementation */
+    void _addPositionListener( Vector vec, PositionListener pl) {    }
+    void _removePositionListener( Vector vec, PositionListener pl) {    }
+
+}
+

@@ -1,0 +1,73 @@
+Directory structure of JIV2 after unzipping:
+/XYZ/JIV2/ (== $JIV_ROOT)
+  BUGS		|\
+  CHANGES	||
+  COPYING	||
+  README	||
+  atlas_volumes/||<= files included in non-developer release
+  bin/		||
+  demo/		||
+  demo_web/	||
+  doc/		|/
+  src/
+	BUGS
+	CHANGES
+	COPYING (soft-linked to $JIV_ROOT/COPYING)
+	Makefile
+	README_SRC
+	README_SRC_FULL
+	clean_all.sh
+	compile_all.sh
+	do_all.sh
+	test_run.sh
+	jiv2/
+		*.java
+	developer_doc/
+
+1) Download the source code
+http://www.bic.mni.mcgill.ca/ServicesSoftwareVisualization/JIV2/
+
+2) Unzip the source code
+> cd $JIV_ROOT
+> mv <path_to_downloaded>/jiv_2.0_src.tgz .
+> tar -xvvzf jiv_2.0_src.tgz
+
+3) move the original jar file to a safe spot
+> mv $JIV_ROOT/bin/jiv2.jar $JIV_ROOT/bin/jiv2-original.jar
+
+4) Compile the source code
+> cd $JIV_ROOT/src/
+> make all
+OR
+> ./compile_all.sh
+IF YOU DON'T HAVE "make" command
+
+You should get:
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+5A) Test newly compiled as standalone:
+> cd $JIV_ROOT/src/
+> ./test_run.sh
+
+In the shell you should get the following output:
+*** JIV2: reading config... ***
+file:/JIV2/atlas_volumes/monkey/paxinos/paxinos2macaque_lin.xfm loading done!
+file:/JIV2/demo/sample_cyno2macaque_lin.xfm loading done!
+file:/JIV2/atlas_volumes/monkey/paxinos/paxinos_labels.txt loading done!
+*** JIV2: loading data... ***
+*** NICKNAME: sample_cyno-NATIVE ***
+file:/JIV2/demo/sample_cyno.raw_byte.gz loading done!
+*** NICKNAME: macaque_model-MNI ***
+file:/JIV2/atlas_volumes/monkey/macaque_model/macaque_25_model-MNI.raw_byte.gz loading done!
+*** NICKNAME: paxinos-MNI ***
+file:/JIV2/atlas_volumes/monkey/paxinos/paxinos-MNI.raw_byte.gz loading done!
+*** JIV2: opening window... ***
+Setting sample_cyno-NATIVE to be native.
+*** JIV2: init done. ***
+
+5B) Test newly compiled as applet:
+In your browser, go to
+$JIV_ROOT/demo_web/sample_monkey.html

@@ -1,27 +1,26 @@
-
-// $Id: CombinedDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $
 /* 
-  This file is part of JIV.  
-  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca)
+  This file is part of JIV2.  
+  Copyright (C) 2000, 2001 Chris A. Cocosco (crisco@bic.mni.mcgill.ca),
+  2010 Lara Bailey (bailey@bic.mni.mcgill.ca).
 
-  JIV is free software; you can redistribute it and/or modify it under
+  JIV2 is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
   Software Foundation; either version 2 of the License, or (at your
   option) any later version.
 
-  JIV is distributed in the hope that it will be useful, but WITHOUT
+  JIV2 is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with JIV; if not, write to the Free Software Foundation, Inc.,
+  along with JIV2; if not, write to the Free Software Foundation, Inc.,
   59 Temple Place, Suite 330, Boston, MA 02111-1307 USA, 
   or see http://www.gnu.org/copyleft/gpl.html
 */
 
 
-package jiv;
+package jiv2;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -31,8 +30,8 @@ import java.awt.event.*;
  * Implements the volume panel functionality specific to panels
  * displaying a combination of two image volumes.
  *
- * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
- * @version $Id: CombinedDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
+ * @author Chris Cocosco, Lara Bailey (bailey@bic.mni.mcgill.ca)
+ * @version $Id: CombinedDataVolumePanel.java,v 2.0 2010/02/21 11:20:41 bailey Exp $
  */
 public final class CombinedDataVolumePanel extends DataVolumePanel {
 
@@ -44,21 +43,29 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
 
     public CombinedDataVolumePanel( IndividualDataVolumePanel source_panel_1,
 				    IndividualDataVolumePanel source_panel_2,
+				    VolumeHeader local_sampling,
 				    Container parent_container,
+				    String post_label,
+				    String sup_label,
+				    String lat_label,
 				    int grid_column,
 				    Point3Dfloat initial_world_cursor,
 				    boolean enable_world_coords,
 				    Main applet_root
 				    ) {
 	// initialization done in the superclass (part 1/2)
-	super( parent_container, grid_column, initial_world_cursor,
-	       enable_world_coords, false, applet_root);
+	super( parent_container, post_label, sup_label, lat_label,
+	       grid_column, initial_world_cursor,
+	       enable_world_coords, false, false, local_sampling, applet_root);
 
 	source_panels= new IndividualDataVolumePanel[] {
 	    source_panel_1,
 	    source_panel_2
 	};
-	Point3Dint initial_slices= CoordConv.world2voxel( initial_world_cursor);
+
+	if (DEBUG) System.out.println("CombinedDVP -> CoordConv.world2voxel_common");
+
+	Point3Dint initial_slices= CoordConv.world2voxel_common( initial_world_cursor);
 	SliceImageProducer[][] src_producers= new SliceImageProducer[ 2][];
 	for( int i= 0; i < 2; ++i) {
 	    src_producers[ i]= new SliceImageProducer[] {
@@ -95,9 +102,54 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
     /** NB: the current implementation _assumes_ that both source_panels 
 	have the same sizes! 
     */
-    final public int getXSize() { return source_panels[ 0].getXSize(); }
-    final public int getYSize() { return source_panels[ 0].getYSize(); }
-    final public int getZSize() { return source_panels[ 0].getZSize(); }
+/** The six methods below are only used by DataVolumePanel CoordFields
+        for checking if native textfield coord request is valid */
+    final public int getXmniSize() {
+        if (null != applet_root.mni_volume)
+                return applet_root.mni_volume.getXSize();
+        else
+//### FIX getXmniSize() when mni_volume is null
+                return Integer.MAX_VALUE;
+    }
+    final public int getYmniSize() {
+        if (null != applet_root.mni_volume)
+                return applet_root.mni_volume.getYSize();
+        else
+                return Integer.MAX_VALUE;
+    }
+    final public int getZmniSize() {
+        if (null != applet_root.mni_volume)
+                return applet_root.mni_volume.getZSize();
+        else
+                return Integer.MAX_VALUE;
+    }
+    final public int getXnatSize() {
+        if (null != applet_root.native_volume)
+                return applet_root.native_volume.getXSize();
+        else
+//### FIX getXnatSize() when native_volume is null
+                return Integer.MAX_VALUE;
+    }
+    final public int getYnatSize() {
+        if (null != applet_root.native_volume)
+                return applet_root.native_volume.getYSize();
+        else
+                return Integer.MAX_VALUE;
+    }
+    final public int getZnatSize() {
+        if (null != applet_root.native_volume)
+                return applet_root.native_volume.getZSize();
+        else
+                return Integer.MAX_VALUE;
+    }
+
+//### FIX getPostMax()!
+    final public int getPostMax() { return 1000; }
+    final public int getSupMax() { return 1000; }
+    final public int getLatMax() { return 1000; }
+    final public int getPostMin() { return -1000; }
+    final public int getSupMin() { return -1000; }
+    final public int getLatMin() { return -1000; }
 
     final public String getTitle() { 
 
@@ -119,6 +171,13 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
 	return -1;
     }
 
+    protected final String _getLabelValue( Point3Dfloat world_mni) {
+	if (null != applet_root.label_volume)
+		return applet_root.label_volume.getLabel( world_mni);
+	else
+		return "No label volume detected!";
+    }
+
     protected final float _image_byte2real( short voxel_value) {
 	throw new IllegalArgumentException( this + " CombinedDataVolumePanel#_image_byte2real not yet implemented...");
     }
@@ -134,7 +193,7 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
      * (in RGB color space).
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
+     * @version $Id: CombinedDataVolumePanel.java,v 1.4 2001/10/04 19:26:31 cc Exp $ 
      */
     /*private*/ final class BlendedCombinedImageSource extends CombinedImageSource {
 
@@ -270,6 +329,11 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
 	    public short[] blues= new short[ 256];
 	} 
 
+	public String toString(){
+		return getTitle()+" - CombinedDataVolumePanel$BlendedCombinedImageSource";
+        }
+
+
     } // end of class BlendedCombinedImageSource
 
 
@@ -278,7 +342,7 @@ public final class CombinedDataVolumePanel extends DataVolumePanel {
      * adjusting the blending factor.
      *
      * @author Chris Cocosco (crisco@bic.mni.mcgill.ca)
-     * @version $Id: CombinedDataVolumePanel.java,v 1.4 2001-10-04 19:26:31 cc Exp $ 
+     * @version $Id: CombinedDataVolumePanel.java,v 1.4 2001/10/04 19:26:31 cc Exp $ 
      */
     /*private*/ final class BlendControl extends LightweightPanel {
 

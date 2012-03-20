@@ -1,12 +1,33 @@
-
-** [03-aug-2005] :
-
-- Ant buildfile, build.xml, created
-- util/*.pl updated for things like /path/to/perl to be filled by
-  build system
-- jiv/StandaloneAppletContext.java updated to include stub methods
-  for compatibility with javac 1.4+
-
+** ver_2_0 [27-feb-2010] :
+-added atlas_directory option to config
+-added option to config to allow specification of the label coord textfields
+-changed world2voxel and voxel2world to include direction cosines
+-added native_rhesus and paxinos_labels coordinate textfields
+-added atlas label display textfield (and moved intensity display textfield beside it)
+-added code to convert label intensity to anatomic label
+-added code to convert between MNI_RHESUS, native_rhesus, and paxinos atlas coordinates
+-added code to update cursor in native volume to show mni position
+-added code to read native xfm from config file
+-added to minc2jiv2.pl:
+	use Carp qw( croak );
+	-read direction cosines from minc header and write in jiv header
+-added many comments & DEBUG statements
+-added developer documentation for the confusing stuff that I dealt with
+-updated Makefile:
+	-> removed all instances of "-depend" and "-deprecation"
+-added shell scripts for those who don't have make
+-made shell script to run demo (test_run.sh)
+	-and increased the available memory to enable reading of large volumes
+	-> -Xmx250m
+-added more feedback to Main.java for:
+	-when user doesn't include config in command line
+	-when user doesn't include mni/template or label volumes or .xfm's
+-added "demo" directory with all necessary .htm, CONFIG, and volume files for testing
+-moved sample .htm & config files from "util" into new directory "samples" under "doc"
+-added ability to set "over" and "under" color from config
+	-> summary of changes is in CHANGES-COLOR
+-added "I" label for intensity text field (DataVolumePanel.java)
+-updated to work with java 1.5 (currently default at BIC)
 
 ** ver_2_4 [26-apr-2004] :
 

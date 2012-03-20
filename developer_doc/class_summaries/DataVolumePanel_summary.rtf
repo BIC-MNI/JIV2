@@ -1,0 +1,198 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;\f1\fswiss\fcharset77 Helvetica-Bold;\f2\fswiss\fcharset77 Helvetica-Oblique;
+}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww17840\viewh15040\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 package jiv_monkey;\
+\
+import java.awt.*;\
+import java.awt.image.*;\
+import java.awt.event.*;\
+import java.util.*;\
+\
+/**\
+ * Provides the functionality common for both volume panel types\
+ * (individual and combined).  <br><i>Note:</i> despite its name,\
+ * this is not a subclass of <code>awt.Panel</code>, and not even a\
+ * <code>Container</code>; its <code>Component</code>-s are managed by\
+ * an outside <code>Container</code>, which is supplied as an argument\
+ * to the constructor.\
+ *\
+ */\
+abstract public class DataVolumePanel \
+    extends PositionListenerAdapter implements PositionGenerator \{\
+\
+    protected static final boolean	DEBUG= false;\
+    protected static final boolean	DEBUG_POSITIONCHANGED= false;\
+    protected static final int 		IMAGE_VALUE_TEXTFIELD_WIDTH= 8;\
+    protected static final int		ATLAS_LABEL_TEXTFIELD_WIDTH=18;// The width of the atlas label display textfield\
+\
+    Container 	parent_container;//The grid containing each of the data panels, title "JIV"\
+    Frame		parent_frame;//The window holding the above Container and the About.popFullVersion\
+    int 			grid_column;//our column in parent_container's grid\
+    Point3Dfloat	initial_world_cursor;\
+\
+    protected ImageProducer[]	slice_producers; // built-in java class //initialized by the subclasses\
+    protected boolean 		enable_world_coords;\
+    protected boolean 		byte_voxel_values;\
+    protected Container		controls_panel; \
+    protected PopupMenu		popup_menu;\
+    PositionGateway		pos_event_gateway; \
+\
+    Slice2DViewport[] 		slice_vports;\
+    Component			title;\
+    CoordinateFields		coord_fields;\
+    CheckboxMenuItem	sync_menu_item;\
+\
+\
+    boolean 	isNative;\
+    Main		applet_root;\
+\
+    public DataVolumePanel( /** it's expected to have a GridBagLayout-manager! */\
+			    Container parent_container, //this is the jiv_frame created in Main.java\
+			    int grid_column, //to be used for GridBagConstraints.gridx\
+			    Point3Dfloat initial_world_cursor,\
+			    boolean enable_world_coords,\
+			    boolean byte_voxel_values,\
+			    boolean isNative,\
+			    Main applet_root\
+			    ) \{\
+\
+	
+\f1\b set: parent_container, parent_frame, grid_column,\
+		initial_world_cursor,\
+		enable_world_coords,\
+		byte_voxel_values,\
+		isNative,\
+		applet_root
+\f0\b0 \
+	
+\f1\b create: controls_panel
+\f0\b0 = new LightweightPanel( new GridBagLayout());\
+	
+\f1\b create: popup_menu
+\f0\b0 = new PopupMenu();\
+	
+\f1\b create: pos_event_gateway
+\f0\b0 = new PositionGateway();\
+    \}\
+\
+    /** completes the initalization process started by constructor(s) */\
+    protected final void _finish_initialization() \{\
+\
+	create: popup_adapter= new MouseAdapter() \{..\}\
+	create: gbc= new GridBagConstraints()\
+	
+\f1\b create: coord_fields
+\f0\b0 = new CoordinateFields( initial_world_cursor, popup_menu, enable_world_coords)\
+	create: sv1_trans= new TransverseSlice2DViewport( slice_producers[ 0], \
+					   (PositionListener)slice_producers[ 0],\
+					   initial_world_cursor, isNative),\
+	create: sv2_sag= new SagittalSlice2DViewport( slice_producers[ 1], \
+					 (PositionListener)slice_producers[ 1],\
+					 initial_world_cursor, isNative),\
+	create: sv3_cor= new CoronalSlice2DViewport( slice_producers[ 2], \
+					(PositionListener)slice_producers[ 2],\
+					initial_world_cursor, isNative)\
+	
+\f1\b fill: slice_vports
+\f0\b0 = new Slice2DViewport[] \{ sv1_trans, sv2_sag, sv3_cor\}\
+	
+\f1\b set: title
+\f0\b0 = new Label( getTitle(), Label.CENTER)\
+\
+	controls_panel.add( coord_fields, gbc)\
+	parent_container.add( popup_menu)\
+	parent_container.add( title, gbc)\
+	parent_container.add( sv1_trans, gbc)\
+	parent_container.add( sv2_sag, gbc)\
+	parent_container.add( sv3_cor, gbc)\
+	parent_container.add( controls_panel, gbc);\
+\
+	controls_panel.addMouseListener( popup_adapter);\
+	sv1_trans.addMouseListener( popup_adapter)\
+	sv2_sag.addMouseListener( popup_adapter)\
+	sv3_cor.addMouseListener( popup_adapter)\
+\
+	// hookup the position communication lines\
+	create: listeners= new Vector()\
+	create: generators= new Vector()\
+	fill: listeners (with slice_producers[1-3])\
+	fill: listeners (with slice_vports[1-3])\
+	fill: generators (with slice_vports[1-3])\
+\
+	fill: listeners( with coord_fields)\
+	fill: generators (with coord_fields)\
+	fill: listeners (with pos_event_gateway)\
+	fill: generators (with pos_event_gateway)\
+\
+	for each generator:\
+		generator.addPositionListener(all listeners)\
+\
+	
+\f1\b create: sync_menu_item
+\f0\b0 = new PositionSyncMenuItem( applet_root);\
+	create: hm= new Menu( "Help", true );\
+	popup_menu.add( sync_menu_item);\
+	popup_menu.add( hm);\
+	popup_menu.add( new QuitMenuItem( applet_root));\
+\
+    \} // end of _finish_initialization()\
+\
+\
+\
+\
+    //This is only used when sync mode is on to tell other panels.\
+    public final void positionChanged( PositionEvent e) \{\
+	
+\f2\i do: pos_event_gateway.positionChanged_External
+\f0\i0 ( e);\
+    \}\
+	\
+    public void addPositionListener( PositionListener pl) \{    \}\
+    public void addPositionListener( PositionListener pl, boolean send_event) \{    \}\
+    public void removePositionListener( PositionListener pl) \{    \}\
+    public void setPositionSync( boolean new_setting) \{    \}\
+    protected final short _string2voxel( String string) \
+	throws NumberFormatException \{    \}\
+    protected final String _voxel2string( int voxel_value) \{    \}\
+\
+    abstract public int getXSize();\
+    abstract public int getYSize();\
+    abstract public int getZSize();\
+    abstract public int getXnatSize(); //Only used to check native textfield coord requests\
+    abstract public int getYnatSize(); //Only used to check native textfield coord requests\
+    abstract public int getZnatSize(); //Only used to check native textfield coord requests\
+    abstract public int getFigSize();\
+    abstract public int getSupSize();\
+    abstract public int getLatSize();\
+\
+    abstract public String getTitle();\
+\
+    abstract protected int _getVoxelValue( Point3Dint voxel_pos);\
+    abstract protected String _getLabelValue( Point3Dint voxel_pos);\
+    abstract protected float _image_byte2real( short voxel_value);\
+    abstract protected short _image_real2byte( float image_value);\
+\
+    /** \
+     * Support interface for the <code>CoordinateFields</code> inner class\
+     *\
+     */\
+    interface CoordinateTypes \{\
+\
+	int	VOXEL_COORDINATES= 0;\
+	int	WORLD_COORDINATES= 1;\
+\
+	int[]	TEXTFIELD_WIDTH= \{ \
+	    3, // voxel coords\
+	    5  // world coords\
+	\};\
+    \}\
+\
+\
+\
+\
+\} // end of class DataVolumePanel\
+}

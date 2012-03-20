@@ -1,0 +1,242 @@
+$_newCursor
+$$_newCursor -> _world2voxel()
+        CoordConv.world2voxel_nat - world: (9.4,51.1,-2.5) voxel: (64,72,39)
+$$_newCursor -> _voxel2world()
+        CoordConv.voxel2world_nat - voxel: (64.0,100.0,40.0) world: (9.437309,33.8414,-9.426926)
+$$_newCursor -> %_newCursor()
+	%_newCursor
+	%%_newCursor -> vport_cursor.getPosition()
+	%%_newCursor -> _local_cursor_setXY()
+	%%_newCursor -> _local_cursor_setZ()
+	%%_newCursor -> #_updateVportCursorPosition()
+		#_updateVportCursorPosition
+		##_updateVportCursorPosition -> &_world2viewport()
+			&_world2viewport
+			&&_world2viewport -> _world2voxel()
+			        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+			&_world2viewport DONE!
+		##_updateVportCursorPosition -> vport_cursor.setPosition()
+		#_updateVportCursorPosition DONE!
+	%%_newCursor -> vport_cursor.getPosition()
+	%%_newCursor -> $_firePositionEvent()
+		$SagSlice2DVP._firePositionEvent from %%_newCursor() or _newSlice()
+		$$_firePositionEvent -> @__aid_to_firePositionEvent()
+			@__aid_to_firePositionEvent
+			@@__aid_to_firePositionEvent -> *monkey_003-NATIVE-IP.positionChangeDetected
+				*SagIP.positionChangeDetected
+				**SagIP.positionChangeDetected -> CoordConv.world2voxel_nat
+				        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+				*SagIP.positionChangeDetected DONE!
+
+*SagVP.positionChangeDetected - DOESN'T HAPPEN BECAUSE IT'S ORIGINATOR
+
+			@@__aid_to_firePositionEvent -> *monkey_003-NATIVE-IP.positionChangeDetected
+				*TransIP.positionChangeDetected
+				**TransIP.positionChangeDetected -> CoordConv.world2voxel_common/nat
+				        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+				**TransIP.positionChangeDetected -> !_getNewSliceData()
+					!_getNewSliceData
+					!!_getNewSliceData -> ^data_volume.getTransverseSlice()
+						^getTransverseSlice
+						^^getTransverseSlice -> volume_header.world2voxel()
+						^getTransverseSlice DONE!
+					!!_getNewSliceData -> newPixels()
+					!_getNewSliceData DONE!
+				*TransIP.positionChangeDetected DONE!
+
+			@@__aid_to_firePositionEvent -> *monkey_003-NATIVE-VP.positionChangeDetected
+				*TransVP.positionChangeDetected
+				**TransVP.positionChangeDetected -> %_newCursor
+					%_newCursor
+					%%_newCursor -> vport_cursor.getPosition()
+					%%_newCursor -> _local_cursor_setXY()
+					%%_newCursor -> _local_cursor_setZ()
+					%%_newCursor -> #_updateVportCursorPosition()
+						#_updateVportCursorPosition
+						##_updateVportCursorPosition -> &_world2viewport()
+							&_world2viewport
+							&&_world2viewport -> _world2voxel()
+							        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+							&_world2viewport DONE!
+						##_updateVportCursorPosition -> vport_cursor.setPosition()
+						#_updateVportCursorPosition DONE!
+					%%_newCursor -> vport_cursor.getPosition()
+					%%_newCursor -> $_firePositionEvent()
+					%_newCursor DONE!!
+				*TransVP.positionChangeDetected DONE!
+
+			@@__aid_to_firePositionEvent -> *monkey_003-NATIVE-IP.positionChangeDetected
+				*CorIP.positionChangeDetected
+				**CorIP.positionChangeDetected -> CoordConv.world2voxel_common/nat
+				        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+				**CorIP.positionChangeDetected -> !_getNewSliceData
+					!_getNewSliceData
+					!!_getNewSliceData -> ^data_volume.getCoronalSlice()
+						^getCoronalSlice
+						^^getCoronalSlice -> volume_header.world2voxel()
+						^getCoronalSlice DONE!
+					!!_getNewSliceData -> newPixels()
+					!_getNewSliceData DONE!
+				*CorIP.positionChangeDetected DONE!
+
+			@@__aid_to_firePositionEvent -> *monkey_003-NATIVE-VP.positionChangeDetected
+				*CorVP.positionChangeDetected
+				**CorVP.positionChangeDetected -> %_newCursor
+					%_newCursor
+					%%_newCursor -> vport_cursor.getPosition()
+					%%_newCursor -> _local_cursor_setXY()
+					%%_newCursor -> _local_cursor_setZ()
+					%%_newCursor -> #_updateVportCursorPosition()
+						#_updateVportCursorPosition
+						##_updateVportCursorPosition -> &_world2viewport()
+							&_world2viewport
+							&&_world2viewport -> _world2voxel()
+							        CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+							&_world2viewport DONE!
+						##_updateVportCursorPosition -> vport_cursor.setPosition()
+						#_updateVportCursorPosition DONE!
+					%%_newCursor -> vport_cursor.getPosition()
+					%%_newCursor -> $_firePositionEvent()
+					%_newCursor DONE!!
+				*CorVP.positionChangeDetected DONE!
+
+
+			@@__aid_to_firePositionEvent -> *monkey-DVP$CoordFields.positionChangeDetected
+				*DVP$CoordFields.positionChangeDetected
+				**DVP$CoordFields.positionChangeDetected -> _world2voxel_mni
+					CoordConv.world2voxel_mni - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+				**DVP$CoordFields.positionChangeDetected -> _world2voxel_nat
+					CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+				**DVP$CoordFields.positionChangeDetected -> _getLabelValue
+				**DVP$CoordFields.positionChangeDetected -> _getVoxelValue(_world2voxel_common())
+					CoordConv.world2voxel_common - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+				*DVP$CoordFields.positionChangeDetected DONE!
+
+			@@__aid_to_firePositionEvent -> *PositionGateway.positionChangeDetected
+				*PG.positionChangeDetected
+				**PG.positionChangeDetected -> ~_forwardEvent()
+					~_forwardEvent
+					~~_forwardEvent -> *rhesus-DVP.positionChangeDetected()
+					~_forwardEvent
+					~~_forwardEvent -> *rhesus-IP.positionChangeDetected()
+						*TransIP.positionChangeDetected
+						**TransIP.positionChangeDetected -> CoordConv.world2voxel_common/nat
+						        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+						**TransIP.positionChangeDetected -> !_getNewSliceData()
+							!_getNewSliceData
+							!!_getNewSliceData -> ^data_volume.getTransverseSlice()
+								^getTransverseSlice
+								^^getTransverseSlice -> volume_header.world2voxel()
+								^getTransverseSlice DONE!
+							!!_getNewSliceData -> newPixels()
+							!_getNewSliceData DONE!
+
+						*TransIP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-VP.positionChangeDetected()
+						*TransVP.positionChangeDetected
+						**TransVP.positionChangeDetected -> %_newCursor
+							%_newCursor
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> _local_cursor_setXY()
+							%%_newCursor -> _local_cursor_setZ()
+							%%_newCursor -> #_updateVportCursorPosition()
+								#_updateVportCursorPosition
+								##_updateVportCursorPosition -> &_world2viewport()
+									&_world2viewport
+									&&_world2viewport -> _world2voxel()
+									        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+									&_world2viewport DONE!
+								##_updateVportCursorPosition -> vport_cursor.setPosition()
+								#_updateVportCursorPosition DONE!
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> $_firePositionEvent()
+							%_newCursor DONE!!
+						*TransVP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-IP.positionChangeDetected()
+						*SagIP.positionChangeDetected
+						**SagIP.positionChangeDetected -> CoordConv.world2voxel_common
+						        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+						**SagIP.positionChangeDetected -> !_getNewSliceData
+							!_getNewSliceData
+							!!_getNewSliceData -> ^data_volume.getSagittalSlice()
+								^getSagittalSlice
+								^^getSagittalSlice -> volume_header.world2voxel()
+								^getSagittalSlice DONE!
+							!!_getNewSliceData -> newPixels()
+							!_getNewSliceData DONE!
+						*SagIP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-VP.positionChangeDetected()
+						*SagVP.positionChangeDetected
+						**SagVP.positionChangeDetected -> %_newCursor()
+							%_newCursor
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> _local_cursor_setXY()
+							%%_newCursor -> _local_cursor_setZ()
+							%%_newCursor -> #_updateVportCursorPosition()
+								#_updateVportCursorPosition
+								##_updateVportCursorPosition -> &_world2viewport()
+									&_world2viewport
+									&&_world2viewport -> _world2voxel()
+									        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+									&_world2viewport DONE!
+								##_updateVportCursorPosition -> vport_cursor.setPosition()
+								#_updateVportCursorPosition DONE!
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> $_firePositionEvent()
+							%_newCursor DONE!!
+						*SagVP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-IP.positionChangeDetected()
+						*CorIP.positionChangeDetected
+						**CorIP.positionChangeDetected -> CoordConv.world2voxel_common/nat
+						        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+						**CorIP.positionChangeDetected -> !_getNewSliceData
+							!_getNewSliceData
+							!!_getNewSliceData -> ^data_volume.getCoronalSlice()
+								^getCoronalSlice
+								^^getCoronalSlice -> volume_header.world2voxel()
+								^getCoronalSlice DONE!
+							!!_getNewSliceData -> newPixels()
+							!_getNewSliceData DONE!
+						*CorIP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-VP.positionChangeDetected()
+						*CorVP.positionChangeDetected
+						**CorVP.positionChangeDetected -> %_newCursor
+							%_newCursor
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> _local_cursor_setXY()
+							%%_newCursor -> _local_cursor_setZ()
+							%%_newCursor -> #_updateVportCursorPosition()
+								#_updateVportCursorPosition
+								##_updateVportCursorPosition -> &_world2viewport()
+									&_world2viewport
+									&&_world2viewport -> _world2voxel()
+									        CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+									&_world2viewport DONE!
+								##_updateVportCursorPosition -> vport_cursor.setPosition()
+								#_updateVportCursorPosition DONE!
+							%%_newCursor -> vport_cursor.getPosition()
+							%%_newCursor -> $_firePositionEvent()
+							%_newCursor DONE!!
+						*CorVP.positionChangeDetected DONE!
+
+					~~_forwardEvent -> *rhesus-DVP$CoordFields.positionChangeDetected()
+						CoordConv.world2voxel_nat - world: (9.437309,33.8414,-9.426926) voxel: (64,100,40)
+						CoordConv.world2voxel_common - world: (2.0695715,-27.3825,0.83159256) voxel: (32,23,23)
+
+					~_forwardEvent DONE!
+					~_forwardEvent DONE!
+
+				*PG.positionChangeDetected DONE!
+
+			@__aid_to_firePositionEvent DONE!
+
+		$_firePositionEvent DONE!
+
+	%_newCursor DONE!!
+
+$_newCursor DONE!

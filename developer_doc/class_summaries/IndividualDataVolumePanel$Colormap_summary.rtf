@@ -1,0 +1,176 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf480
+{\fonttbl\f0\fswiss\fcharset77 Helvetica;\f1\fswiss\fcharset77 Helvetica-Oblique;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww17240\viewh16680\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0     /** \
+     * Member (inner) class : the user interface input\
+     * controls for adjusting the colormap.\
+     *\
+     */\
+    /*private*/ final class ColormapControl extends LightweightPanel\
+		    implements ColormapControlMenus, ActionListener, AdjustmentListener \{\
+\
+	/*private*/ IndexColorModel crt_colormap;\
+\
+	/*private*/ int		lower_value;\
+	/*private*/ TextField 	lower_value_tf;\
+	/*private*/ Scrollbar 	lower_value_sb;\
+	/*private*/ int		upper_value;\
+	/*private*/ TextField 	upper_value_tf;\
+	/*private*/ Scrollbar 	upper_value_sb;\
+\
+	/*private*/ boolean	tied_mode; \
+\
+	/*private*/ ChoiceMenu	color_coding_menu;\
+	/*private*/ ChoiceMenu	under_color_menu;\
+	/*private*/ ChoiceMenu	over_color_menu;\
+\
+	/*private*/ Vector 		event_listeners;\
+	/*private*/ GridBagConstraints 	gbc= new GridBagConstraints();\
+\
+	/* these are exclusively for internal use: */\
+	/*private*/ int 	_old_lower_value;   \
+	/*private*/ int 	_old_upper_value;\
+	/*private*/ int 	_old_coding_type;\
+	/*private*/ Color 	_old_under_color;\
+	/*private*/ Color 	_old_over_color;\
+	protected ColormapControl( int initial_lower_value, \
+				   int initial_upper_value,\
+				   int color_coding_type,\
+				   Color initial_under_color,\
+				   Color initial_over_color,\
+				   boolean initial_tied_mode,\
+				   PopupMenu popup_menu       ) \{\
+		..uninteresting..\
+	\}\
+\
+	/*private*/ Scrollbar _new_scrollbar( int initial_value) \{	\}\
+	/*private*/ void _add_comp( Component what, int gx, int gy, int row_span) \{    \}\
+	public final IndexColorModel getColormap() \{ return crt_colormap; \}\
+\
+	synchronized public final void actionPerformed( ActionEvent ae) \{\
+\
+	    int new_value;\
+	    if( !tied_mode) \{\
+		new_value= _string2voxel( ae.getActionCommand());\
+		if (source == lower_value_tf)\
+			lower_value_sb.setValue( lower_value= new_value);\
+		else\
+			upper_value_sb.setValue( upper_value= new_value);\
+		source.setText( _voxel2string( new_value));\
+		changeColormap();\
+		return;\
+	    \}\
+	    // tied_mode is ON\
+		..uninteresting..\
+	\}\
+\
+	synchronized public final void adjustmentValueChanged( AdjustmentEvent ae) \{\
+		..uninteresting..\
+	\}\
+\
+	synchronized /*private*/ final void setTiedMode( final boolean new_setting) \{\
+	    tied_mode= new_setting;\
+	\}\
+\
+	synchronized /*private*/ final void changeColormap() \{\
+	    		..uninteresting..\
+	    create: crt_colormap= color_coder.get8bitColormap( coding_type, \
+						       lower_value, upper_value,\
+						       under_color, over_color\
+						       );\
+	    
+\f1\i do: _fireColormapEvent
+\f0\i0 ( 
+\f1\i \ul new ColormapEvent
+\f0\i0 \ulnone ( ColormapControl.this, crt_colormap));\
+	\}\
+\
+	final /*private*/ void _fireColormapEvent( final ColormapEvent e) \{\
+		event_listeners.elementAt( i)).colormapChanged( e);\
+	\}\
+\
+	synchronized void addColormapListener( ColormapListener cl) \{    \}\
+\
+	synchronized void removeColormapListener( ColormapListener cl) \{    \}\
+\
+    \} // end of class ColormapControl\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+/** \
+     * Member (inner) class: produces a visual representation of\
+     * the current colormap.\
+     *\
+     */\
+    /*private*/ final class ColormapDisplay \
+	extends Panel implements ColormapListener, ColormapDisplayConstants \{\
+\
+	IndexColorModel	colormap;\
+	int		width; /** == 'component width - 2' */\
+	int[]		ramp;\
+\
+	//for double-buffering the screen updates.\
+	// doLayout() updates them when vport_dims is changed.\
+	Image 		offscreen_buffer;\
+	Graphics 	offscreen_gc;\
+    \
+	protected ColormapDisplay( IndexColorModel initial_colormap) \{\
+	    set: colormap\
+	\}\
+\
+	final public void colormapChanged( ColormapEvent e ) \{\
+	    set: colormap\
+	    do: repaint( 1, TICKS_HEIGHT+1, width, BAR_HEIGHT);\
+	\}\
+\
+	final public void paint( Graphics g) \{\
+		..uninteresting..\
+	\}\
+\
+	final public void update( Graphics g) \{ \
+	    do: _draw_colormap( g);\
+	\}\
+\
+	final public void doLayout() \{\
+		..uninteresting..\
+	\}\
+\
+	/** override this in order to prevent being "squished" ... */\
+	final public Dimension getMinimumSize() \{ return MINIMUM_SIZE; \}\
+\
+	/** override this in order to prevent being "squished" ... */\
+	final public Dimension getPreferredSize() \{ return getMinimumSize(); \}\
+\
+	final /*private*/ void _draw_ticks( Graphics g) \{\
+		..uninteresting..\
+	\}\
+\
+	final /*private*/ void _draw_colormap( Graphics g) \{\
+		..uninteresting..\
+	\}\
+    \} // end of class ColormapDisplay\
+}

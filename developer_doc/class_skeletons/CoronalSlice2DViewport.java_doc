@@ -1,0 +1,37 @@
+package jiv_monkey;
+
+import java.awt.image.*;
+
+/**
+ * A <code>Slice2DViewport</code> customized for "coronal"
+ * (Y=constant) slices.
+ *
+ */
+public final class CoronalSlice2DViewport extends Slice2DViewport {
+
+    protected static final boolean DEBUG= false;
+    protected static final boolean DEBUG_HIGH= false;
+
+    public CoronalSlice2DViewport( ImageProducer ip, 
+				   PositionListener pos_listener_for_ip,
+				   Point3Dfloat initial_world_cursor,
+				   boolean isNative ) {
+	super( ip, pos_listener_for_ip, 
+	       new Point3Dfloat( initial_world_cursor.x, // vport horiz
+				 initial_world_cursor.z, // vport vert
+				 initial_world_cursor.y ), // ortho to vport
+		isNative   );
+    }
+
+    synchronized final public void positionChanged( PositionEvent e ) {    }
+
+    final protected void _firePositionEvent( final int crt_changed_coords_mask) {    }
+
+    final protected void _voxel2world( Point3Dfloat world, 
+				       float vx, float vy, float vz) {    }
+
+    final protected void _world2voxel( Point3Dint voxel,
+				       float wx, float wy, float wz) {    }
+}
+
+
